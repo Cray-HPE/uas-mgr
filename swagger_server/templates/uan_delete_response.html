@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Cray User Access Delete Confirmation</h2>
+<div class="bodycontainer">
+    <p>The following User Access Nodes were deleted</p>
+        {% for item in uan_list %}
+    <ul>
+        <li><b>Name:</b> {{ item['uan_name'] }}</li>
+    </ul>
+    {% endfor %}
+</div>
+
+<div class="button_container">
+    <form action="{{ url_for('.swagger_server_controllers_uas_controller_uas_request_home') }}" method="get">
+        <button type="submit" class="cancelbtn">Cancel</button>
+    </form>
+</div>
+
+{% endblock %}

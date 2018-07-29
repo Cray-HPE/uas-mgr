@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<form class="requestform" action="{{ url_for('.swagger_server_controllers_uas_controller_uas_request_handler') }}" method="delete">
+  <h2>Remote Terminal Delete Request</h2>
+  <div class="bodycontainer">
+    <p>Select one or more of the following remote terminals to delete:</p>
+
+    {% for item in uan_list %}
+    <input type="checkbox" name="uan_list" value="{{ item['uan_name'] }}">
+    <b>Name:</b> {{ item['uan_name'] }} <b>Status:</b> {{ item['uan_status'] }}<br>
+    {% endfor %}
+  </div>
+
+  <div class="button_container">
+    <button type="button" class="cancelbtn" onclick="location.href='{{ url_for('.swagger_server_controllers_uas_controller_uas_request_home') }}'">
+      Cancel</button>
+    <button type="submit" name="uas_request" value="delete_uans">Submit</button>
+  </div>
+
+</form>
+
+{% endblock %}
+

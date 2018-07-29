@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Cray User Access Request Error</h2>
+
+<div class="bordered">
+    {{ error_msg }}
+    <div class="button_container">
+        <form action="{{ url_for('.swagger_server_controllers_uas_controller_uas_request_home') }}" method="get">
+            <button type="submit" class="cancelbtn">Cancel</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

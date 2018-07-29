@@ -1,0 +1,358 @@
+---
+swagger: "2.0"
+info:
+  description: "User Access Service. This service is responsible for the management\
+    \ of User Access Node lifecycles and handling requests from eproxy."
+  version: "0.1.0"
+  title: "Cray User Access Service"
+paths:
+  /:
+    get:
+      tags:
+      - "Versions"
+      summary: "List supported UAS API versions"
+      description: "Returns supported UAS API versions"
+      operationId: "root_get"
+      produces:
+      - "application/json"
+      - "text/html"
+      parameters: []
+      responses:
+        200:
+          description: "Version response"
+          schema:
+            $ref: "#/definitions/Versions"
+      x-swagger-router-controller: "swagger_server.controllers.versions_controller"
+  /v1/uas_access:
+    get:
+      tags:
+      - "UAS"
+      summary: "UAS home page"
+      description: "Request UAS home page"
+      operationId: "uas_request_home"
+      produces:
+      - "text/html"
+      parameters:
+      - name: "uas_request"
+        in: "query"
+        description: "User request"
+        required: false
+        type: "string"
+      - name: "uan_list"
+        in: "query"
+        description: "List of UANs to delete"
+        required: false
+        type: "array"
+        items:
+          type: "string"
+        collectionFormat: "multi"
+      responses:
+        200:
+          description: "UAS Access"
+        401:
+          description: "UAS Unauthorized"
+      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+    post:
+      tags:
+      - "UAS"
+      summary: "Handle UAS request forms"
+      description: "Handle form data from the UAS home page"
+      operationId: "uas_request_handler"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "text/html"
+      parameters:
+      - name: "username"
+        in: "formData"
+        description: "Users name"
+        required: false
+        type: "string"
+      - name: "uas_request"
+        in: "formData"
+        description: "User request"
+        required: false
+        type: "string"
+      - name: "uan_image"
+        in: "formData"
+        description: "User requested UAN image"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "UAS operation successful"
+        401:
+          description: "UAS operation denied"
+      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+    delete:
+      tags:
+      - "UAS"
+      summary: "Handle UAS delete form"
+      description: "Handle form data from UAS delete page"
+      operationId: "uas_delete_handler"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "text/html"
+      parameters:
+      - name: "uan_list"
+        in: "query"
+        description: "List of UANs to delete"
+        required: true
+        type: "array"
+        items:
+          type: "string"
+        collectionFormat: "multi"
+      responses:
+        200:
+          description: "UAS operation successful"
+        401:
+          description: "UAS operation denied"
+      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+  /v1/uans:
+    get:
+      tags:
+      - "UAS"
+      summary: "List UANs"
+      description: "List all available UANs."
+      operationId: "get_all_uans"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "List all UANs"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/UAN"
+        404:
+          description: "UANs not found"
+      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+    delete:
+      tags:
+      - "UAS"
+      summary: "Delete all UANs"
+      description: "Delete all available UANs"
+      operationId: "delete_all_uans"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "All UANs deleted"
+        404:
+          description: "Failed to delete UANs"
+      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+  /v1/uans/{username}:
+    get:
+      tags:
+      - "UAS"
+      summary: "List all UANs for username"
+      description: "List all available UANs for username"
+      operationId: "get_uans_for_username"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "username"
+        in: "path"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "List all UANs for username"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/UAN"
+      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+    delete:
+      tags:
+      - "UAS"
+      summary: "Delete all UANs for username"
+      description: "Delete all UANs for username"
+      operationId: "delete_all_uans_for_user"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "username"
+        in: "path"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "All UANs deleted for user {username}"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/UAN"
+        404:
+          description: "Failed to delete UANs user"
+      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+  /v1/uan:
+    get:
+      tags:
+      - "UAS"
+      summary: "List UAN info by uan_name"
+      description: "List UAN info by uan_name"
+      operationId: "get_uan_by_name"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "uan_name"
+        in: "query"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "UAN by name"
+          schema:
+            type: "object"
+            properties: {}
+        404:
+          description: "UAN with {uan_name} not found"
+      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+    post:
+      tags:
+      - "UAS"
+      summary: "Create a new UAN for username"
+      description: "Create a new UAN for the username"
+      operationId: "create_uan"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "username"
+        in: "query"
+        description: "Create UAN for username"
+        required: true
+        type: "string"
+      - name: "imagename"
+        in: "query"
+        description: "Image to use for UAN"
+        required: false
+        type: "string"
+        default: "uan-default-image"
+      responses:
+        201:
+          description: "UAN created"
+          schema:
+            type: "object"
+            properties: {}
+        404:
+          description: "Not able to provide UAN"
+          schema:
+            type: "object"
+            properties: {}
+      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+    delete:
+      tags:
+      - "UAS"
+      summary: "Delete UAN with uan_name"
+      description: "Delete UAN with uan_name. Takes a list of UAN names and deletes\
+        \ the associated UAN instances."
+      operationId: "delete_uan_by_name"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "uan_list"
+        in: "query"
+        required: true
+        type: "array"
+        items:
+          type: "string"
+        collectionFormat: "csv"
+      responses:
+        200:
+          description: "UANs deleted"
+        404:
+          description: "Failed to delete UAN with {uan_id}"
+      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+definitions:
+  Versions:
+    type: "object"
+    required:
+    - "versions"
+    properties:
+      versions:
+        type: "array"
+        items:
+          $ref: "#/definitions/Versions_versions"
+    example:
+      versions:
+      - patch: 0
+        major: 1
+        minor: 0
+        id: "v1/"
+      - patch: 0
+        major: 1
+        minor: 0
+        id: "v1/"
+  Versions_versions:
+    required:
+    - "id"
+    - "major"
+    - "minor"
+    - "patch"
+    properties:
+      id:
+        type: "string"
+        example: "v1/"
+      major:
+        type: "integer"
+        example: 1
+      minor:
+        type: "integer"
+        example: 0
+      patch:
+        type: "integer"
+        example: 0
+    example:
+      patch: 0
+      major: 1
+      minor: 0
+      id: "v1/"
+  UAN_response:
+    type: "object"
+    properties:
+      uan_access:
+        type: "string"
+    example:
+      uan_access: "uan_access_string"
+  UAN:
+    type: "object"
+    properties:
+      uan_name:
+        type: "string"
+      username:
+        type: "string"
+      usersshkey:
+        type: "string"
+      uan_img:
+        type: "string"
+      uan_ip:
+        type: "string"
+      uan_status:
+        type: "string"
+      uan_msg:
+        type: "string"
+    example:
+      uan_id: "user-uan-uan_image"
+      username: "user_name"
+      uan_img: "uan_img"
+      uan_ip: "10.248.0.23"
+      uan_status: "Running"
+      uan_reason: "Deploying"
