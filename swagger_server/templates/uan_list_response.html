@@ -9,15 +9,16 @@
     {% for item in uan_list %}
     <ul>
         <li><b>Name:</b> {{ item['uan_name'] }}</li>
+        <li><b>Image:</b> {{ item['uan_img'] }}</li>
         <li><b>Status:</b> {{ item['uan_status'] }}</li>
         {% if item['uan_msg'] %}
         <li><b>Reason:</b> {{ item['uan_msg'] }}</li>
         {% endif %}
         <li><b>Connect String:</b> ssh {{ username }}@{{ item['uan_ip'] }} -p 207</li>
     </ul>
+    {% endfor %}
     {% else %}
     No UANs found.
-    {% endfor %}
     {% endif %}
 
     <div class="button_container">

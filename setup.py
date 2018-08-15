@@ -29,7 +29,7 @@ setup(
     entry_points={
         'console_scripts': ['swagger_server=swagger_server.__main__:main']},
     long_description="""\
-    User Access Service. This service is responsible for the management of User Access Node lifecycles and handling requests from eproxy.
+    User Access Service. This service is responsible for the management of User Access Node lifecycles.
     """
 )
 

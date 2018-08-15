@@ -1,3 +1,10 @@
+#
+# Copyright 2018, Cray Inc.  All Rights Reserved.
+#
+# Description:
+#   Manages Cray User Access Node instances.
+#
+
 import logging
 import sys
 
@@ -100,6 +107,9 @@ class UanManager(object):
         for pod in resp.items:
             if pod.metadata.name.startswith(pod_prefix + "-"):
                 uan.uan_name = pod_prefix
+                for ctr in pod.spec.containers:
+                    if ctr.name == pod_prefix:
+                        uan.uan_img = ctr.image
                 uan.uan_ip = pod.status.host_ip
                 uan.uan_status = pod.status.phase
                 uan.uan_msg = pod.status.reason
@@ -139,8 +149,6 @@ class UanManager(object):
         for deployment in resp.items:
             if deployment.metadata.name.startswith(username + "-"):
                 uan_list.append(self.get_pod_info(deployment.metadata.name))
-        if not uan_list:
-            uan_list.append('No UANs found for %s' % (username))
         return uan_list
 
     def delete_uans(self, deployment_list, namespace='default'):

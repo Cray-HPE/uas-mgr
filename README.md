@@ -123,7 +123,7 @@ image: uan-ci.us.cray.com:5000/cray-user-access-service:my_version
 ```
 
 5. Pull the cray-user-access-service image from the local docker
-registry.
+registry to all kubernetes masters.
 (uan-ci.us.cray.com:5000/cray-user-access-service:my_version): <br>
 **Note:**
 This download (pull) must be performed on all nodes in the Kubernetes
@@ -154,4 +154,19 @@ following command on the Kubernetes master node:
 ```bash
 kubectl cluster-info
 ```
+
+## Stopping the Cray User Access Service
+
+To stop the Cray User Access Service, please execute the following
+instructions.
+
+1. Log into the Kubernetes master node as root.
+
+2. Run the following commands:
+
+```bash
+kubectl delete deployment cray-user-access-service
+kubectl delete service cray-user-access-service
+```
+
 

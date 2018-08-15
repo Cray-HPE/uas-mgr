@@ -2,7 +2,7 @@
 swagger: "2.0"
 info:
   description: "User Access Service. This service is responsible for the management\
-    \ of User Access Node lifecycles and handling requests from eproxy."
+    \ of User Access Node lifecycles."
   version: "0.1.0"
   title: "Cray User Access Service"
 paths:

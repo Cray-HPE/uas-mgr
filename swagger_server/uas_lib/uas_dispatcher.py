@@ -1,4 +1,10 @@
-from ast import literal_eval
+#
+# Copyright 2018, Cray Inc.  All Rights Reserved.
+#
+# Description:
+#   Dispatches requests for Cray User Access Node instances.
+#
+
 from flask import request, jsonify, render_template
 from swagger_server.uas_lib.uan_mgr import UanManager
 
