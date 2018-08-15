@@ -46,30 +46,45 @@ class UanManager(object):
 
     def create_deployment(self, deployment, namespace):
         # Create deployment
-        resp = self.extensions_v1beta1.create_namespaced_deployment(
-            body=deployment,
-            namespace=namespace)
-        print("Deployment created. status='%s'" % str(resp.status))
+        try:
+            resp = self.extensions_v1beta1.create_namespaced_deployment(
+                body=deployment,
+                namespace=namespace)
+        except ApiException as e:
+            if e.status != 404:
+                UAN_LOGGER.error("Unknown error: %s" % e)
+                sys.exit(1)
         return resp
 
     def update_deployment(self, deployment, deployment_name, imagename, namespace):
         # Update container image
         deployment.spec.template.spec.containers[0].image = imagename
         # Update the deployment
-        resp = self.extensions_v1beta1.patch_namespaced_deployment(
-            name=deployment_name,
-            namespace=namespace,
-            body=deployment)
-        print("Deployment updated. status='%s'" % str(resp.status))
+        try:
+            resp = self.extensions_v1beta1.patch_namespaced_deployment(
+                name=deployment_name,
+                namespace=namespace,
+                body=deployment)
+        except ApiException as e:
+            if e.status != 404:
+                UAN_LOGGER.error("Unknown error: %s" % e)
+                sys.exit(1)
+        return resp
 
     def delete_deployment(self, deployment_name, namespace):
         # Delete deployment
-        resp = self.extensions_v1beta1.delete_namespaced_deployment(
-            name=deployment_name,
-            namespace=namespace,
-            body=client.V1DeleteOptions(
-                propagation_policy='Foreground',
-                grace_period_seconds=5))
+        resp = None
+        try:
+            resp = self.extensions_v1beta1.delete_namespaced_deployment(
+                name=deployment_name,
+                namespace=namespace,
+                body=client.V1DeleteOptions(
+                    propagation_policy='Foreground',
+                    grace_period_seconds=5))
+        except ApiException as e:
+            if e.status != 404:
+                UAN_LOGGER.error("Unknown error: %s" % e)
+                sys.exit(1)
         return resp
 
     def get_pod_info(self, pod_prefix, namespace='default'):
