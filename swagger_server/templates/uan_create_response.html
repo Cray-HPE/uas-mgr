@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Cray User Access Request Confirmation</h2>
+<div class="bordered">
+    <h3>User Access Info:</h3>
+    <b>UAN Name: </b>{{ uan_name }}<br>
+    <b>UAN Image: </b>{{ uan_img }}<br>
+    <b>Status: </b>{{ phase }}
+    {% if reason %}
+    <b>Reason: </b>{{ reason }}
+    {% endif %}
+    <br><b>UAN Connection: </b>ssh {{ username }}@{{ host_ip }} -p 207
+    <div class="button_container">
+           <button type="button" class="cancelbtn" onclick="location.href='{{ url_for('.swagger_server_controllers_uas_controller_uas_request_home') }}'">
+               Cancel</button>
+    </div>
+</div>
+
+{% endblock %}
