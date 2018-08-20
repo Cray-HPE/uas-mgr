@@ -14,7 +14,7 @@
         {% if item['uan_msg'] %}
         <li><b>Reason:</b> {{ item['uan_msg'] }}</li>
         {% endif %}
-        <li><b>Connect String:</b> ssh {{ username }}@{{ item['uan_ip'] }} -p 207</li>
+        <li><b>Connect String:</b> ssh {{ username }}@{{ item['uan_ip'] }} -p {{ item['uan_port'] }} -i ~/.ssh/id_rsa</li>
     </ul>
     {% endfor %}
     {% else %}

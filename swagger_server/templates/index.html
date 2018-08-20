@@ -1,20 +1,26 @@
 {% extends "base.html" %}
 
 {% block content %}
-<form class="requestform" action="{{ url_for('.swagger_server_controllers_uas_controller_uas_request_handler') }}" method="post">
+<form class="requestform" action="{{ url_for('.swagger_server_controllers_uas_controller_uas_request_handler') }}" method="post" enctype="multipart/form-data">
   <h2>Please select an action:</h2>
 
   <div class="bodycontainer">
     <label for="username"><b>Username (required)</b></label>
     <input type="text" placeholder="Enter Username" name="username"
            id="username" required><br>
-    <input type="radio" name="uas_request" value="create_uan" checked="true">
+    <label for="usersshpubkey"><b>SSH Public Key<br>(required to request remote terminal)</b></label>
+    <input type="file" placeholder="Public SSH key" name="usersshpubkey"
+           id="usersshpubkey" accept=".pub"><br>
+    <input type="radio" name="uas_request" id="create_uan" value="create_uan" checked="true"
+           onclick="document.getElementById('usersshpubkey').disabled = false;">
     Request Remote Terminal
     <input type="text" placeholder="Environment: leave blank for default"
            name="uan_image" id="uan_image"><br>
-    <input type="radio" name="uas_request" value="list_uans">
+    <input type="radio" name="uas_request" value="list_uans"
+           onclick="document.getElementById('usersshpubkey').disabled = true;">
     List Remote Terminal Info<br>
-    <input type="radio" name="uas_request" value="delete_uan_request">
+    <input type="radio" name="uas_request" value="delete_uan_request"
+           onclick="document.getElementById('usersshpubkey').disabled = true;">
     Delete Remote Terminals<br>
   </div>
 

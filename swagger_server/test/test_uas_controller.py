@@ -19,9 +19,11 @@ class TestUASController(BaseTestCase):
         """
         query_string = [('username', 'username_example'),
                         ('imagename', 'uan-default-image')]
+        data = dict(usersshpubkey=(BytesIO(b'some file data'), 'file.txt'))
         response = self.client.open(
             '/v1/uan',
             method='POST',
+            data=data,
             content_type='application/json',
             query_string=query_string)
         self.assert200(response,
@@ -123,13 +125,14 @@ class TestUASController(BaseTestCase):
         Handle UAS request forms
         """
         data = dict(username='username_example',
+                    usersshpubkey=(BytesIO(b'some file data'), 'file.txt'),
                     uas_request='uas_request_example',
                     uan_image='uan_image_example')
         response = self.client.open(
             '/v1/uas_access',
             method='POST',
             data=data,
-            content_type='application/x-www-form-urlencoded')
+            content_type='multipart/form-data')
         self.assert200(response,
                        'Response body is : ' + response.data.decode('utf-8'))
 
