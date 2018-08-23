@@ -3,7 +3,7 @@ swagger: "2.0"
 info:
   description: "User Access Service. This service is responsible for the management\
     \ of User Access Node lifecycles."
-  version: "0.1.0"
+  version: "0.2.0"
   title: "Cray User Access Service"
 paths:
   /:
@@ -59,7 +59,7 @@ paths:
       description: "Handle form data from the UAS home page"
       operationId: "uas_request_handler"
       consumes:
-      - "application/x-www-form-urlencoded"
+      - "multipart/form-data"
       produces:
       - "text/html"
       parameters:
@@ -68,6 +68,11 @@ paths:
         description: "Users name"
         required: false
         type: "string"
+      - name: "usersshpubkey"
+        in: "formData"
+        description: "Public ssh key for the user"
+        required: false
+        type: "file"
       - name: "uas_request"
         in: "formData"
         description: "User request"
@@ -230,6 +235,7 @@ paths:
       operationId: "create_uan"
       consumes:
       - "application/json"
+      - "multipart/form-data"
       produces:
       - "application/json"
       parameters:
@@ -238,6 +244,11 @@ paths:
         description: "Create UAN for username"
         required: true
         type: "string"
+      - name: "usersshpubkey"
+        in: "formData"
+        description: "Public ssh key for the user"
+        required: false
+        type: "file"
       - name: "imagename"
         in: "query"
         description: "Image to use for UAN"
@@ -325,13 +336,6 @@ definitions:
       major: 1
       minor: 0
       id: "v1/"
-  UAN_response:
-    type: "object"
-    properties:
-      uan_access:
-        type: "string"
-    example:
-      uan_access: "uan_access_string"
   UAN:
     type: "object"
     properties:
@@ -339,7 +343,7 @@ definitions:
         type: "string"
       username:
         type: "string"
-      usersshkey:
+      usersshpubkey:
         type: "string"
       uan_img:
         type: "string"
@@ -349,9 +353,14 @@ definitions:
         type: "string"
       uan_msg:
         type: "string"
+      uan_port:
+        type: "string"
+      uan_connect_string:
+        type: "string"
     example:
       uan_id: "user-uan-uan_image"
       username: "user_name"
+      usersshpubkey: "/Users/user/.ssh/id_rsa.pub"
       uan_img: "uan_img"
       uan_ip: "10.248.0.23"
       uan_status: "Running"

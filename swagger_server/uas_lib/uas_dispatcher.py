@@ -23,8 +23,9 @@ class DispatchManager(object):
 
     def create_uan(self, uan_args):
         username = uan_args['username']
-        if not username:
-            err_msg = 'No username given.'
+        usersshpubkey = uan_args['usersshpubkey']
+        if not username or not usersshpubkey:
+            err_msg = 'No username or ssh public key path given.'
             return render_template('uas_error_response.html',
                                    error_msg=err_msg)
         uan_image = 'default'
@@ -33,12 +34,13 @@ class DispatchManager(object):
             # of the uan_image list.
             uan_image = uan_args['uan_image']
 
-        uan = self.uan_mgr.create_uan(username, uan_image)
+        uan = self.uan_mgr.create_uan(username, usersshpubkey, uan_image)
         return render_template('uan_create_response.html',
                                username=username, imagename=uan_image,
                                uan_name=uan.uan_name,
                                host_ip=uan.uan_ip, phase=uan.uan_status,
-                               reason=uan.uan_msg)
+                               reason=uan.uan_msg,
+                               uan_port=uan.uan_port)
 
     def list_uans(self, uan_args):
         username = uan_args['username']

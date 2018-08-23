@@ -15,15 +15,15 @@ class UAN(Model):
     Do not edit the class manually.
     """
 
-    def __init__(self, uan_name: str=None, username: str=None, usersshkey: str=None, uan_img: str=None, uan_ip: str=None, uan_status: str=None, uan_msg: str=None):  # noqa: E501
+    def __init__(self, uan_name: str=None, username: str=None, usersshpubkey: str=None, uan_img: str=None, uan_ip: str=None, uan_status: str=None, uan_msg: str=None, uan_port: str=None, uan_connect_string: str=None):  # noqa: E501
         """UAN - a model defined in Swagger
 
         :param uan_name: The uan_name of this UAN.  # noqa: E501
         :type uan_name: str
         :param username: The username of this UAN.  # noqa: E501
         :type username: str
-        :param usersshkey: The usersshkey of this UAN.  # noqa: E501
-        :type usersshkey: str
+        :param usersshpubkey: The usersshpubkey of this UAN.  # noqa: E501
+        :type usersshpubkey: str
         :param uan_img: The uan_img of this UAN.  # noqa: E501
         :type uan_img: str
         :param uan_ip: The uan_ip of this UAN.  # noqa: E501
@@ -32,34 +32,44 @@ class UAN(Model):
         :type uan_status: str
         :param uan_msg: The uan_msg of this UAN.  # noqa: E501
         :type uan_msg: str
+        :param uan_port: The uan_port of this UAN.  # noqa: E501
+        :type uan_port: str
+        :param uan_connect_string: The uan_connect_string of this UAN.  # noqa: E501
+        :type uan_connect_string: str
         """
         self.swagger_types = {
             'uan_name': str,
             'username': str,
-            'usersshkey': str,
+            'usersshpubkey': str,
             'uan_img': str,
             'uan_ip': str,
             'uan_status': str,
-            'uan_msg': str
+            'uan_msg': str,
+            'uan_port': str,
+            'uan_connect_string': str
         }
 
         self.attribute_map = {
             'uan_name': 'uan_name',
             'username': 'username',
-            'usersshkey': 'usersshkey',
+            'usersshpubkey': 'usersshpubkey',
             'uan_img': 'uan_img',
             'uan_ip': 'uan_ip',
             'uan_status': 'uan_status',
-            'uan_msg': 'uan_msg'
+            'uan_msg': 'uan_msg',
+            'uan_port': 'uan_port',
+            'uan_connect_string': 'uan_connect_string'
         }
 
         self._uan_name = uan_name
         self._username = username
-        self._usersshkey = usersshkey
+        self._usersshpubkey = usersshpubkey
         self._uan_img = uan_img
         self._uan_ip = uan_ip
         self._uan_status = uan_status
         self._uan_msg = uan_msg
+        self._uan_port = uan_port
+        self._uan_connect_string = uan_connect_string
 
     @classmethod
     def from_dict(cls, dikt) -> 'UAN':
@@ -115,25 +125,25 @@ class UAN(Model):
         self._username = username
 
     @property
-    def usersshkey(self) -> str:
-        """Gets the usersshkey of this UAN.
+    def usersshpubkey(self) -> str:
+        """Gets the usersshpubkey of this UAN.
 
 
-        :return: The usersshkey of this UAN.
+        :return: The usersshpubkey of this UAN.
         :rtype: str
         """
-        return self._usersshkey
+        return self._usersshpubkey
 
-    @usersshkey.setter
-    def usersshkey(self, usersshkey: str):
-        """Sets the usersshkey of this UAN.
+    @usersshpubkey.setter
+    def usersshpubkey(self, usersshpubkey: str):
+        """Sets the usersshpubkey of this UAN.
 
 
-        :param usersshkey: The usersshkey of this UAN.
-        :type usersshkey: str
+        :param usersshpubkey: The usersshpubkey of this UAN.
+        :type usersshpubkey: str
         """
 
-        self._usersshkey = usersshkey
+        self._usersshpubkey = usersshpubkey
 
     @property
     def uan_img(self) -> str:
@@ -218,3 +228,45 @@ class UAN(Model):
         """
 
         self._uan_msg = uan_msg
+
+    @property
+    def uan_port(self) -> str:
+        """Gets the uan_port of this UAN.
+
+
+        :return: The uan_port of this UAN.
+        :rtype: str
+        """
+        return self._uan_port
+
+    @uan_port.setter
+    def uan_port(self, uan_port: str):
+        """Sets the uan_port of this UAN.
+
+
+        :param uan_port: The uan_port of this UAN.
+        :type uan_port: str
+        """
+
+        self._uan_port = uan_port
+
+    @property
+    def uan_connect_string(self) -> str:
+        """Gets the uan_connect_string of this UAN.
+
+
+        :return: The uan_connect_string of this UAN.
+        :rtype: str
+        """
+        return self._uan_connect_string
+
+    @uan_connect_string.setter
+    def uan_connect_string(self, uan_connect_string: str):
+        """Sets the uan_connect_string of this UAN.
+
+
+        :param uan_connect_string: The uan_connect_string of this UAN.
+        :type uan_connect_string: str
+        """
+
+        self._uan_connect_string = uan_connect_string

@@ -19,13 +19,15 @@ uas_dispatch = {
 }
 
 
-def create_uan(username, imagename=None):  # noqa: E501
+def create_uan(username, usersshpubkey=None, imagename=None):  # noqa: E501
     """Create a new UAN for username
 
     Create a new UAN for the username # noqa: E501
 
     :param username: Create UAN for username
     :type username: str
+    :param usersshpubkey: Public ssh key for the user
+    :type usersshpubkey: werkzeug.datastructures.FileStorage
     :param imagename: Image to use for UAN
     :type imagename: str
 
@@ -34,7 +36,7 @@ def create_uan(username, imagename=None):  # noqa: E501
     if not username:
         return "Must supply username for UAN creation."
 
-    uan_response = dm.uan_mgr.create_uan(username, imagename)
+    uan_response = dm.uan_mgr.create_uan(username, usersshpubkey, imagename)
     return uan_response
 
 
@@ -128,13 +130,15 @@ def uas_delete_handler(uan_list):  # noqa: E501
     return resp
 
 
-def uas_request_handler(username=None, uas_request=None, uan_image=None):  # noqa: E501
+def uas_request_handler(username=None, usersshpubkey=None, uas_request=None, uan_image=None):  # noqa: E501
     """Handle UAS request forms
 
     Handle form data from the UAS home page # noqa: E501
 
     :param username: Users name
     :type username: str
+    :param usersshpubkey: Public ssh key for the user
+    :type usersshpubkey: werkzeug.datastructures.FileStorage
     :param uas_request: User request
     :type uas_request: str
     :param uan_image: User requested UAN image
@@ -143,7 +147,7 @@ def uas_request_handler(username=None, uas_request=None, uan_image=None):  # noq
     :rtype: str
     """
     uan_args = {'username': username, 'uas_request': uas_request,
-                'uan_image': uan_image}
+                'uan_image': uan_image, 'usersshpubkey': usersshpubkey}
     return uas_dispatch[uas_request](uan_args)
 
 

@@ -6,7 +6,6 @@
 #
 
 import logging
-import sys
 
 from kubernetes import config, client
 from kubernetes.client import Configuration
@@ -28,13 +27,80 @@ class UanManager(object):
         self.api = core_v1_api.CoreV1Api()
         self.extensions_v1beta1 = client.ExtensionsV1beta1Api()
 
-    def create_deployment_object(self, deployment_name, imagename):
+    def get_user_credentials(self, username):
+        """
+        Returns the output of 'getent passwd username'.
+
+        :param username:
+        :type username: str
+        :return: output of 'getent passwd username'
+        :type return: str
+        """
+        # TODO: Hardcoded to crayadm for testing
+        return 'crayadm:x:12795:14901:crayadm:/home/crayadm:/bin/bash'
+
+    def create_service_object(self, deployment_name):
+        """
+        Create a service object for the deployment of the UAN.
+
+        :param deployment_name:
+        :type deployment_name: str
+        :return: service object
+        """
+        spec = client.V1ServiceSpec(
+            selector={'app': deployment_name},
+            type="NodePort",
+            ports=[client.V1ServicePort(name=deployment_name,
+                                        port=30123,
+                                        protocol="TCP")]
+        )
+        service = client.V1Service(
+            api_version="v1",
+            kind="Service",
+            metadata=client.V1ObjectMeta(name=deployment_name),
+            spec=spec
+        )
+        return service
+
+    def create_service(self, service, namespace):
+        # Create the service
+        resp = None
+        try:
+            resp = self.api.create_namespaced_service(body=service,
+                                                      namespace=namespace)
+        except ApiException as e:
+            if e.status != 404:
+                UAN_LOGGER.error("Unknown error: %s" % e)
+        return resp
+
+    def delete_service(self, service, namespace):
+        # Delete the service
+        resp = None
+        try:
+            resp = self.api.delete_namespaced_service(
+                    name=service,
+                    namespace=namespace,
+                    body=client.V1DeleteOptions(
+                        propagation_policy='Foreground',
+                        grace_period_seconds=5))
+        except ApiException as e:
+            if e.status != 404:
+                UAN_LOGGER.error("Unknown error: %s" % e)
+        return resp
+
+    def create_deployment_object(self, username, deployment_name, imagename,
+                                 usersshpubkey):
         # Configure Pod template container
         container = client.V1Container(
             name=deployment_name,
             image=imagename,
-            args=["/bin/sh", "-c", "while true;do date;sleep 5; done"],
-            ports=[client.V1ContainerPort(container_port=80)])
+            env=[client.V1EnvVar(
+                     name='UAN_PASSWD',
+                     value=self.get_user_credentials(username)),
+                 client.V1EnvVar(
+                     name='UAN_PUBKEY',
+                     value=usersshpubkey.read().decode())],
+            ports=[client.V1ContainerPort(container_port=30123)])
         # Create and configure a spec section
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(labels={"app": deployment_name}),
@@ -60,7 +126,6 @@ class UanManager(object):
         except ApiException as e:
             if e.status != 404:
                 UAN_LOGGER.error("Unknown error: %s" % e)
-                sys.exit(1)
         return resp
 
     def update_deployment(self, deployment, deployment_name, imagename, namespace):
@@ -75,7 +140,6 @@ class UanManager(object):
         except ApiException as e:
             if e.status != 404:
                 UAN_LOGGER.error("Unknown error: %s" % e)
-                sys.exit(1)
         return resp
 
     def delete_deployment(self, deployment_name, namespace):
@@ -91,20 +155,19 @@ class UanManager(object):
         except ApiException as e:
             if e.status != 404:
                 UAN_LOGGER.error("Unknown error: %s" % e)
-                sys.exit(1)
         return resp
 
     def get_pod_info(self, pod_prefix, namespace='default'):
-        resp = None
+        pod_resp = None
         uan = UAN()
+        uan.username = pod_prefix.split('-')[0]
         try:
-            resp = self.api.list_namespaced_pod(namespace=namespace,
-                                                include_uninitialized=True)
+            pod_resp = self.api.list_namespaced_pod(namespace=namespace,
+                                                    include_uninitialized=True)
         except ApiException as e:
             if e.status != 404:
                 UAN_LOGGER.error("Unknown error: %s" % e)
-                sys.exit(1)
-        for pod in resp.items:
+        for pod in pod_resp.items:
             if pod.metadata.name.startswith(pod_prefix + "-"):
                 uan.uan_name = pod_prefix
                 for ctr in pod.spec.containers:
@@ -113,27 +176,66 @@ class UanManager(object):
                 uan.uan_ip = pod.status.host_ip
                 uan.uan_status = pod.status.phase
                 uan.uan_msg = pod.status.reason
+                srv_resp = None
+                try:
+                    srv_resp = self.api.read_namespaced_service(name=pod_prefix,
+                                                                namespace=namespace)
+                except ApiException as e:
+                    if e.status != 404:
+                        UAN_LOGGER.error("Unknown error: %s" % e)
+                if srv_resp:
+                    uan.uan_port = srv_resp.spec.ports[0].node_port
+                uan = self.gen_connection_string(uan)
         return uan
 
-    def create_uan(self, username, imagename, namespace='default'):
+    def gen_connection_string(self, uan):
+        """
+        This function generates the uan.uan_connect_string for creating a
+        ssh connection to the uan.
+
+        The string will look like:
+          ssh uan.username@uan.uan_ip -p uan.uan_port -i ~/.ssh/id_rsa
+
+        :param uan:
+        :type uan: uan
+        :return: uan:
+        """
+        uan.uan_connect_string = ("ssh %s@%s -p %s -i ~/.ssh/id_rsa" %
+                                  (uan.username,
+                                   uan.uan_ip,
+                                   uan.uan_port))
+        return uan
+
+    def create_uan(self, username, usersshpubkey, imagename, namespace='default'):
         deployment_image = imagename
         for i in [':', '/', '.']:
             if i in deployment_image:
                 deployment_image = deployment_image.replace(i, '-')
         deployment_name = username + '-' + deployment_image
-        deployment = self.create_deployment_object(deployment_name, imagename)
-        resp = None
+        deployment = self.create_deployment_object(username, deployment_name,
+                                                   imagename, usersshpubkey)
+        service = self.create_service_object(deployment_name)
+        deploy_resp = None
         try:
-            resp = self.extensions_v1beta1.read_namespaced_deployment(deployment_name, namespace)
+            deploy_resp = self.extensions_v1beta1.read_namespaced_deployment(deployment_name, namespace)
         except ApiException as e:
             if e.status != 404:
                 UAN_LOGGER.error("Unknown error: %s" % e)
-                sys.exit(1)
-        if not resp:
-            resp = self.create_deployment(deployment, namespace)
-        uan_info = self.get_pod_info(resp.metadata.name, namespace)
+        if not deploy_resp:
+            deploy_resp = self.create_deployment(deployment, namespace)
+        srv_resp = None
+        try:
+            srv_resp = self.api.read_namespaced_service(name=deployment_name,
+                                                        namespace=namespace)
+        except ApiException as e:
+            if e.status != 404:
+                UAN_LOGGER.error("Unknown error: %s" % e)
+        if not srv_resp:
+            srv_resp = self.api.create_namespaced_service(body=service,
+                                                          namespace=namespace)
+        uan_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
         while not uan_info.uan_ip:
-            uan_info = self.get_pod_info(resp.metadata.name, namespace)
+            uan_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
         return uan_info
 
     def list_uans_for_user(self, username, namespace='default'):
@@ -145,7 +247,6 @@ class UanManager(object):
         except ApiException as e:
             if e.status != 404:
                 UAN_LOGGER.error("Unknown error: %s" % e)
-                sys.exit(1)
         for deployment in resp.items:
             if deployment.metadata.name.startswith(username + "-"):
                 uan_list.append(self.get_pod_info(deployment.metadata.name))
