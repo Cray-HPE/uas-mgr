@@ -183,27 +183,27 @@ class UanManager(object):
                 abort(e.status, "Failed in delete_deployment")
         return resp
 
-    def get_pod_info(self, pod_prefix, namespace='default'):
+    def get_pod_info(self, deployment_name, namespace='default'):
         pod_resp = None
         uan = UAN()
-        uan.username = pod_prefix.split('-')[0]
+        uan.username = deployment_name.split('-')[0]
         try:
             pod_resp = self.api.list_namespaced_pod(namespace=namespace,
                                                     include_uninitialized=True)
         except ApiException as e:
             abort(e.status, "Failed to get pod info")
         for pod in pod_resp.items:
-            if pod.metadata.name.startswith(pod_prefix + "-"):
-                uan.uan_name = pod_prefix
+            if pod.metadata.name.startswith(deployment_name):
+                uan.uan_name = deployment_name
                 for ctr in pod.spec.containers:
-                    if ctr.name == pod_prefix:
+                    if ctr.name == deployment_name:
                         uan.uan_img = ctr.image
                 uan.uan_ip = pod.status.host_ip
                 uan.uan_status = pod.status.phase
                 uan.uan_msg = pod.status.reason
                 srv_resp = None
                 try:
-                    srv_resp = self.api.read_namespaced_service(name=pod_prefix,
+                    srv_resp = self.api.read_namespaced_service(name=deployment_name,
                                                                 namespace=namespace)
                 except ApiException as e:
                     abort(e.status, "Failed to get service info")
@@ -235,7 +235,11 @@ class UanManager(object):
         for i in [':', '/', '.']:
             if i in deployment_image:
                 deployment_image = deployment_image.replace(i, '-')
-        deployment_name = username + '-' + deployment_image
+        # Kubernetes will truncate the deployment_name at 59 characters
+        # when they add the hash for creating a pod name.  So we will
+        # truncate our deployment name to 59 characters here.
+        raw_dname = username + '-' + deployment_image
+        deployment_name = (raw_dname[:58]) if len(raw_dname) > 58 else raw_dname
         deployment = self.create_deployment_object(username, deployment_name,
                                                    imagename, usersshpubkey,
                                                    namespace)
