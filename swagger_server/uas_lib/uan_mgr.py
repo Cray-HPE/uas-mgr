@@ -29,7 +29,7 @@ class UanManager(object):
         self.api = core_v1_api.CoreV1Api()
         self.extensions_v1beta1 = client.ExtensionsV1beta1Api()
 
-    def get_user_credentials(self, username, namespace):
+    def get_user_account_info(self, username, namespace):
         """
         This function locates the uas-id service pod and performs
         an exec of 'getent passwd <username>' via the kubernetes api to
@@ -62,6 +62,8 @@ class UanManager(object):
         uas_id = stream(self.api.connect_get_namespaced_pod_exec, uas_id_pod,
                         namespace, command=exec_command, stdout=True,
                         stdin=False, tty=False)
+        if not uas_id:
+            abort(404, 'user not found. (%s)' % username)
         return uas_id
 
     def create_service_object(self, deployment_name):
@@ -120,7 +122,7 @@ class UanManager(object):
             image=imagename,
             env=[client.V1EnvVar(
                      name='UAN_PASSWD',
-                     value=self.get_user_credentials(username, namespace)),
+                     value=self.get_user_account_info(username, namespace)),
                  client.V1EnvVar(
                      name='UAN_PUBKEY',
                      value=usersshpubkey.read().decode())],
