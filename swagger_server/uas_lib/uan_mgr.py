@@ -21,7 +21,7 @@ UAN_LOGGER = logging.getLogger('uas_mgr')
 
 class UanManager(object):
 
-    def __init__(self, cfg_file='/etc/kubernetes/admin.conf'):
+    def __init__(self, cfg_file='/etc/kube/config'):
         config.load_kube_config(cfg_file)
         self.c = Configuration()
         self.c.assert_hostname = False
@@ -121,16 +121,33 @@ class UanManager(object):
             name=deployment_name,
             image=imagename,
             env=[client.V1EnvVar(
+                     name='EPROXY_KUBECONFIG',
+                     value='/etc/kube/config'),
+                 client.V1EnvVar(
                      name='UAN_PASSWD',
                      value=self.get_user_account_info(username, namespace)),
                  client.V1EnvVar(
                      name='UAN_PUBKEY',
                      value=usersshpubkey.read().decode())],
-            ports=[client.V1ContainerPort(container_port=30123)])
+            ports=[client.V1ContainerPort(container_port=30123)],
+            volume_mounts = [client.V1VolumeMount(name='kube-cfg',
+                                                  mount_path='/etc/kube',
+                                                  read_only=True),
+                             client.V1VolumeMount(name='scratch',
+                                                  mount_path='/scratch')])
+        # Create a volumes template
+        volumes = [client.V1Volume(name='kube-cfg',
+                                   secret=client.V1SecretVolumeSource(
+                                       secret_name='kube-cfg')),
+                   client.V1Volume(name='scratch',
+                                   host_path=client.V1HostPathVolumeSource(
+                                       path='/scratch',
+                                       type='DirectoryOrCreate'))]
         # Create and configure a spec section
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(labels={"app": deployment_name}),
-            spec=client.V1PodSpec(containers=[container]))
+            spec=client.V1PodSpec(containers=[container],
+                                  volumes=volumes))
         # Create the specification of deployment
         spec = client.ExtensionsV1beta1DeploymentSpec(
             replicas=1,
