@@ -51,15 +51,9 @@ class DispatchManager(object):
     def delete_uan_request(self, uan_args):
         username = uan_args['username']
         resp = self.uan_mgr.list_uans_for_user(username, namespace='default')
-        if request_wants_json():
-            # TODO: Need to fix this to get the list from the resp.
-            uan_list = []
-            return jsonify(uans=[x.to_json() for x in uan_list])
         return render_template('uan_delete_select.html', username=username,
                                uan_list=resp)
 
     def delete_uans(self, uan_list):
         resp_list = self.uan_mgr.delete_uans(uan_list)
-        if request_wants_json():
-            return jsonify(uans=[x.to_json() for x in uan_list])
         return render_template('uan_delete_response.html', uan_list=resp_list)

@@ -248,6 +248,10 @@ class UanManager(object):
         return uan
 
     def create_uan(self, username, usersshpubkey, imagename, namespace='default'):
+        if not username:
+            abort(400, "Missing username.")
+        if not usersshpubkey:
+            abort(400, "Missing ssh public key.")
         deployment_image = imagename
         for i in [':', '/', '.']:
             if i in deployment_image:
