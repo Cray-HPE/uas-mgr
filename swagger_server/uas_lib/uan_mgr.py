@@ -215,9 +215,17 @@ class UanManager(object):
                 for ctr in pod.spec.containers:
                     if ctr.name == deployment_name:
                         uan.uan_img = ctr.image
+                if pod.status.container_statuses:
+                    for s in pod.status.container_statuses:
+                        if s.name == deployment_name:
+                            if s.state.running:
+                                uan.uan_status = 'Running'
+                            if s.state.terminated:
+                                uan.uan_status = 'Terminated'
+                            if s.state.waiting:
+                                uan.uan_status = 'Waiting'
+                                uan.uan_msg = s.state.waiting.reason
                 uan.uan_ip = pod.status.host_ip
-                uan.uan_status = pod.status.phase
-                uan.uan_msg = pod.status.reason
                 srv_resp = None
                 try:
                     srv_resp = self.api.read_namespaced_service(name=deployment_name,
