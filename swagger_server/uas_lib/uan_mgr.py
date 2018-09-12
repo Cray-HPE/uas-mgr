@@ -45,7 +45,7 @@ class UanManager(object):
         """
         # Find the pod name for the uas-id app.
         resp = self.api.list_namespaced_pod(namespace,
-                                            label_selector='app=uas-id')
+                                            label_selector='app=cray-uas-id')
         uas_id_pod = None
         for item in resp.items:
             uas_id_pod = item.metadata.name

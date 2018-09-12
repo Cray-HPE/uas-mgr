@@ -3,8 +3,8 @@
 dockerBuildPipeline {
     repository="cray"
     imagePrefix="cray"
-    app="user-access-service"
-    name="uan-mgr"
+    app="uas-mgr"
+    name="uas-mgr"
     runUnitTests=false
-    description="Cray User Access Service"
+    description="Cray User Access Service Manager"
 }
