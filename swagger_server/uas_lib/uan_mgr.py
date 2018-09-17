@@ -21,8 +21,8 @@ UAN_LOGGER = logging.getLogger('uas_mgr')
 
 class UanManager(object):
 
-    def __init__(self, cfg_file='/etc/kube/config'):
-        config.load_kube_config(cfg_file)
+    def __init__(self):
+        config.load_incluster_config()
         self.c = Configuration()
         self.c.assert_hostname = False
         Configuration.set_default(self.c)
