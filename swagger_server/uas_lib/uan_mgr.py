@@ -130,19 +130,13 @@ class UanManager(object):
                      name='UAN_PUBKEY',
                      value=usersshpubkey.read().decode())],
             ports=[client.V1ContainerPort(container_port=30123)],
-            volume_mounts = [client.V1VolumeMount(name='kube-cfg',
-                                                  mount_path='/etc/kube',
-                                                  read_only=True),
-                             client.V1VolumeMount(name='scratch',
+            volume_mounts = [client.V1VolumeMount(name='scratch',
                                                   mount_path='/scratch')])
         # Create a volumes template
-        volumes = [client.V1Volume(name='kube-cfg',
-                                   secret=client.V1SecretVolumeSource(
-                                       secret_name='kube-cfg')),
-                   client.V1Volume(name='scratch',
+        volumes = [client.V1Volume(name='scratch',
                                    host_path=client.V1HostPathVolumeSource(
-                                       path='/scratch',
-                                       type='DirectoryOrCreate'))]
+                                   path='/scratch',
+                                   type='DirectoryOrCreate'))]
         # Create and configure a spec section
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(labels={"app": deployment_name}),
