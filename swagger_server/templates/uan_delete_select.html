@@ -2,7 +2,7 @@
 
 {% block content %}
 
-<form class="requestform" action="{{ url_for('.swagger_server_controllers_uas_controller_uas_request_handler') }}" method="delete">
+<form class="requestform" action="/apis/uas-mgr/v1/uas_access" method="delete">
   <h2>Remote Terminal Delete Request</h2>
   <div class="bodycontainer">
     <p>Select one or more of the following remote terminals to delete:</p>
@@ -14,7 +14,7 @@
   </div>
 
   <div class="button_container">
-    <button type="button" class="cancelbtn" onclick="location.href='{{ url_for('.swagger_server_controllers_uas_controller_uas_request_home') }}'">
+    <button type="button" class="cancelbtn" onclick="location.href='/apis/uas-mgr/v1/uas_access'">
       Cancel</button>
     <button type="submit" name="uas_request" value="delete_uans">Submit</button>
   </div>

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<form class="requestform" action="{{ url_for('.swagger_server_controllers_uas_controller_uas_request_handler') }}" method="post" enctype="multipart/form-data">
+<form class="requestform" action="/apis/uas-mgr/v1/uas_access" method="post" enctype="multipart/form-data">
   <h2>Please select an action:</h2>
 
   <div class="bodycontainer">
