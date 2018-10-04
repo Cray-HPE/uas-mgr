@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Remote Terminal List</h2>
+<h2>User Access Instance List</h2>
 <div class="bordered">
-    <p>The following remote terminals are available to user <b>{{ username }}</b>:</p>
+    <p>The following User Access Instances are available to user <b>{{ username }}</b>:</p>
 
     {% if uan_list|length %}
     {% for item in uan_list %}
@@ -18,7 +18,7 @@
     </ul>
     {% endfor %}
     {% else %}
-    No UANs found.
+    No User Access Instances found for user <b>{{ username }}</b>.
     {% endif %}
 
     <div class="button_container">

@@ -5,13 +5,13 @@
 <h2>Cray User Access Request Confirmation</h2>
 <div class="bordered">
     <h3>User Access Info:</h3>
-    <b>UAN Name: </b>{{ uan_name }}<br>
-    <b>UAN Image: </b>"{{ imagename }}"<br>
+    <b>UAS Instance Name: </b>{{ uan_name }}<br>
+    <b>UAS Instance Image: </b>"{{ imagename }}"<br>
     <b>Status: </b>{{ phase }}
     {% if reason %}
     <b>Reason: </b>{{ reason }}
     {% endif %}
-    <br><b>UAN Connection: </b>ssh {{ username }}@{{ host_ip }} -p {{ uan_port }} -i ~/.ssh/id_rsa
+    <br><b>UAS Connection: </b>ssh {{ username }}@{{ host_ip }} -p {{ uan_port }} -i ~/.ssh/id_rsa
     <div class="button_container">
            <button type="button" class="cancelbtn" onclick="location.href='/apis/uas-mgr/v1/uas_access'">
                Cancel</button>

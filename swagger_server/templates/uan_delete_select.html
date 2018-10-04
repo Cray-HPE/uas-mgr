@@ -5,7 +5,7 @@
 <form class="requestform" action="/apis/uas-mgr/v1/uas_access" method="delete">
   <h2>Remote Terminal Delete Request</h2>
   <div class="bodycontainer">
-    <p>Select one or more of the following remote terminals to delete:</p>
+    <p>Select one or more of the following User Access Instances to delete:</p>
 
     {% for item in uan_list %}
     <input type="checkbox" name="uan_list" value="{{ item['uan_name'] }}">
