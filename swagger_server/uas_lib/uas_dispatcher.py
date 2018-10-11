@@ -30,18 +30,19 @@ class DispatchManager(object):
             err_msg = 'No username or ssh public key path given.'
             return render_template('uas_error_response.html',
                                    error_msg=err_msg)
-        uan_image = self.uas_cfg.get_default_image()
         if uan_args['uan_image']:
             # There is only one uan_image allowed, so take the first element
             # of the uan_image list.
             uan_image = uan_args['uan_image']
-            if not self.uas_cfg.validate_image(uan_image):
-                err_msg = ('Invalid image requested. Valid images are: %s. ' 
-                           'Default image is: %s' %
-                           (self.uas_cfg.get_images(),
-                            self.uas_cfg.get_default_image()))
-                return render_template('uas_error_response.html',
-                                       error_msg=err_msg)
+        else:
+            uan_image = self.uas_cfg.get_default_image()
+        if not self.uas_cfg.validate_image(uan_image):
+            err_msg = ('Invalid image requested. Valid images are: %s. ' 
+                       'Default image is: %s' %
+                       (self.uas_cfg.get_images(),
+                        self.uas_cfg.get_default_image()))
+            return render_template('uas_error_response.html',
+                                    error_msg=err_msg)
 
         uan = self.uan_mgr.create_uan(username, usersshpubkey, uan_image)
         return render_template('uan_create_response.html',

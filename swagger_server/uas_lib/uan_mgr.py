@@ -76,14 +76,19 @@ class UanManager(object):
         :type deployment_name: str
         :return: service object
         """
-        spec = client.V1ServiceSpec(
-            selector={'app': deployment_name},
-            type="NodePort",
-            external_i_ps=self.uas_cfg.get_external_ips(),
-            ports=[client.V1ServicePort(name=deployment_name,
-                                        port=30123,
-                                        protocol="TCP")]
-        )
+        if self.uas_cfg.get_external_ips()[0]:
+            spec = client.V1ServiceSpec(
+                selector={'app': deployment_name},
+                type="NodePort",
+                external_i_ps=self.uas_cfg.get_external_ips(),
+                ports=[client.V1ServicePort(name=deployment_name,
+                                            port=30123,
+                                            protocol="TCP")]
+            )
+        else:
+            # external gateway IP is not set.  This is an error.
+            abort(404, "UAS misconfigured (uas_ips not set). Please contact "
+                       "your system administrator.")
         service = client.V1Service(
             api_version="v1",
             kind="Service",
@@ -92,22 +97,22 @@ class UanManager(object):
         )
         return service
 
-    def create_service(self, service, namespace):
+    def create_service(self, service_name, namespace):
         # Create the service
         resp = None
         try:
-            resp = self.api.create_namespaced_service(body=service,
+            resp = self.api.create_namespaced_service(body=service_name,
                                                       namespace=namespace)
         except ApiException as e:
             abort(e.status, "Failed in create_service")
         return resp
 
-    def delete_service(self, service, namespace):
+    def delete_service(self, service_name, namespace):
         # Delete the service
         resp = None
         try:
             resp = self.api.delete_namespaced_service(
-                    name=service,
+                    name=service_name,
                     namespace=namespace,
                     body=client.V1DeleteOptions(
                         propagation_policy='Foreground',
@@ -311,5 +316,6 @@ class UanManager(object):
         resp_list = []
         for d in deployment_list:
             self.delete_deployment(d, namespace)
-            resp_list.append(self.get_pod_info(d, namespace))
+            self.delete_service(d, namespace)
+            resp_list.append(d)
         return resp_list
