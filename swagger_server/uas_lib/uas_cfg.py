@@ -34,17 +34,23 @@ class UasCfg(object):
 
     def get_images(self):
         cfg = self.get_config()
-        try:
-            images = cfg['uas_images']['images']
-        except KeyError:
+        if cfg['uas_images']:
+            try:
+                images = cfg['uas_images']['images']
+            except KeyError:
+                images = None
+        else:
             images = None
         return images
 
     def get_default_image(self):
         cfg = self.get_config()
-        try:
-            image = cfg['uas_images']['default_image']
-        except KeyError:
+        if cfg['uas_images']:
+            try:
+                image = cfg['uas_images']['default_image']
+            except KeyError:
+                image = None
+        else:
             image = None
         return image
 
