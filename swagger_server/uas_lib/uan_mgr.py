@@ -14,9 +14,10 @@ from kubernetes.client.apis import core_v1_api
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 from swagger_server.models.uan import UAN
+from swagger_server.uas_lib.uas_cfg import UasCfg
 
 
-UAN_LOGGER = logging.getLogger('uas_mgr')
+UAS_MGR_LOGGER = logging.getLogger('uas_mgr')
 
 
 class UanManager(object):
@@ -28,6 +29,7 @@ class UanManager(object):
         Configuration.set_default(self.c)
         self.api = core_v1_api.CoreV1Api()
         self.extensions_v1beta1 = client.ExtensionsV1beta1Api()
+        self.uas_cfg = UasCfg()
 
     def get_user_account_info(self, username, namespace):
         """
@@ -74,13 +76,19 @@ class UanManager(object):
         :type deployment_name: str
         :return: service object
         """
-        spec = client.V1ServiceSpec(
-            selector={'app': deployment_name},
-            type="NodePort",
-            ports=[client.V1ServicePort(name=deployment_name,
-                                        port=30123,
-                                        protocol="TCP")]
-        )
+        if self.uas_cfg.get_external_ips()[0]:
+            spec = client.V1ServiceSpec(
+                selector={'app': deployment_name},
+                type="NodePort",
+                external_i_ps=self.uas_cfg.get_external_ips(),
+                ports=[client.V1ServicePort(name=deployment_name,
+                                            port=30123,
+                                            protocol="TCP")]
+            )
+        else:
+            # external gateway IP is not set.  This is an error.
+            abort(404, "UAS misconfigured (uas_ips not set). Please contact "
+                       "your system administrator.")
         service = client.V1Service(
             api_version="v1",
             kind="Service",
@@ -89,22 +97,22 @@ class UanManager(object):
         )
         return service
 
-    def create_service(self, service, namespace):
+    def create_service(self, service_name, namespace):
         # Create the service
         resp = None
         try:
-            resp = self.api.create_namespaced_service(body=service,
+            resp = self.api.create_namespaced_service(body=service_name,
                                                       namespace=namespace)
         except ApiException as e:
             abort(e.status, "Failed in create_service")
         return resp
 
-    def delete_service(self, service, namespace):
+    def delete_service(self, service_name, namespace):
         # Delete the service
         resp = None
         try:
             resp = self.api.delete_namespaced_service(
-                    name=service,
+                    name=service_name,
                     namespace=namespace,
                     body=client.V1DeleteOptions(
                         propagation_policy='Foreground',
@@ -130,13 +138,9 @@ class UanManager(object):
                      name='UAN_PUBKEY',
                      value=usersshpubkey.read().decode())],
             ports=[client.V1ContainerPort(container_port=30123)],
-            volume_mounts = [client.V1VolumeMount(name='scratch',
-                                                  mount_path='/scratch')])
+            volume_mounts = self.uas_cfg.gen_volume_mounts())
         # Create a volumes template
-        volumes = [client.V1Volume(name='scratch',
-                                   host_path=client.V1HostPathVolumeSource(
-                                   path='/scratch',
-                                   type='DirectoryOrCreate'))]
+        volumes = self.uas_cfg.gen_volumes()
         # Create and configure a spec section
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(labels={"app": deployment_name}),
@@ -219,7 +223,7 @@ class UanManager(object):
                             if s.state.waiting:
                                 uan.uan_status = 'Waiting'
                                 uan.uan_msg = s.state.waiting.reason
-                uan.uan_ip = pod.status.host_ip
+                uan.uan_ip = self.uas_cfg.get_external_ips()[0]
                 srv_resp = None
                 try:
                     srv_resp = self.api.read_namespaced_service(name=deployment_name,
@@ -254,6 +258,10 @@ class UanManager(object):
             abort(400, "Missing username.")
         if not usersshpubkey:
             abort(400, "Missing ssh public key.")
+        if not self.uas_cfg.validate_image(imagename):
+            abort(400, "Invalid image (%s). Valid images: %s. Default: %s"
+                  % (imagename, self.uas_cfg.get_images(),
+                     self.uas_cfg.get_default_image()))
         deployment_image = imagename
         for i in [':', '/', '.']:
             if i in deployment_image:
@@ -308,5 +316,6 @@ class UanManager(object):
         resp_list = []
         for d in deployment_list:
             self.delete_deployment(d, namespace)
-            resp_list.append(self.get_pod_info(d, namespace))
+            self.delete_service(d, namespace)
+            resp_list.append(d)
         return resp_list

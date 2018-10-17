@@ -2,12 +2,12 @@
 
 {% block content %}
 
-<h2>Cray User Access Delete Confirmation</h2>
-<div class="bodycontainer">
-    <p>The following User Access Nodes were deleted</p>
+<h2>Cray User Access Instance Delete Confirmation</h2>
+<div class="bordered">
+    <p>The following User Access Instances were deleted</p>
         {% for item in uan_list %}
     <ul>
-        <li><b>Name:</b> {{ item['uan_name'] }}</li>
+        <li><b>Name:</b> {{ item }}</li>
     </ul>
     {% endfor %}
 </div>
