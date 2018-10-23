@@ -14,9 +14,16 @@
     <input type="radio" name="uas_request" id="create_uan" value="create_uan" checked="true"
            onclick="document.getElementById('usersshpubkey').disabled = false;
                     document.getElementById('usersshpubkey').required = true;">
-    Request User Access
-    <input type="text" placeholder="Environment: leave blank for default"
-           name="uan_image" id="uan_image"><br>
+    Request User Access: Select Image:
+    <select name="uan_image" id="uan_image">
+      {% for item in image_list %}
+      {% if item == default_image %}
+      <option value="{{ item }}" selected>{{ item }}</option>
+      {% else %}
+      <option value="{{ item }}">{{ item }}</option>
+      {% endif %}
+      {% endfor %}
+    </select><br>
     <input type="radio" name="uas_request" value="list_uans"
            onclick="document.getElementById('usersshpubkey').disabled = true;
                     document.getElementById('usersshpubkey').required = false;">
