@@ -6,6 +6,7 @@ from swagger_server.models.uan import UAN  # noqa: E501
 from swagger_server import util
 from swagger_server.uas_lib.uan_mgr import UanManager
 from swagger_server.uas_lib.uas_dispatcher import DispatchManager
+from swagger_server.uas_lib.uas_cfg import UasCfg
 
 
 uan_mgr = UanManager()
@@ -165,4 +166,7 @@ def uas_request_home(uas_request=None, uan_list=None):  # noqa: E501
     """
     if uas_request == 'delete_uans':
         return uas_delete_handler(uan_list)
-    return render_template('index.html')
+    image_list = UasCfg().get_images()
+    default_image = UasCfg().get_default_image()
+    return render_template('index.html', default_image=default_image,
+                           image_list=image_list)
