@@ -141,10 +141,19 @@ class UanManager(object):
             volume_mounts = self.uas_cfg.gen_volume_mounts())
         # Create a volumes template
         volumes = self.uas_cfg.gen_volumes()
+
+        # Create and configure affinity
+        node_selector_terms = [client.V1NodeSelectorTerm(match_expressions=[client.V1NodeSelectorRequirement(
+                                                                       key='uas', operator='Exists')])]
+        node_selector = client.V1NodeSelector(node_selector_terms)
+        node_affinity = client.V1NodeAffinity(required_during_scheduling_ignored_during_execution=node_selector)
+        affinity = client.V1Affinity(node_affinity=node_affinity)
+
         # Create and configure a spec section
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(labels={"app": deployment_name}),
             spec=client.V1PodSpec(containers=[container],
+                                  affinity=affinity,
                                   volumes=volumes))
         # Create the specification of deployment
         spec = client.ExtensionsV1beta1DeploymentSpec(
