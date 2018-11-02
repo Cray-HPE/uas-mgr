@@ -226,7 +226,13 @@ class UanManager(object):
                     for s in pod.status.container_statuses:
                         if s.name == deployment_name:
                             if s.state.running:
-                                uan.uan_status = 'Running'
+                                for c in pod.status.conditions:
+                                    if c.type == 'Ready':
+                                        if c.status == 'True':
+                                            uan.uan_status = 'Running: Ready'
+                                        else:
+                                            uan.uan_status = 'Running: Not Ready'
+                                            uan.uan_msg = c.message
                             if s.state.terminated:
                                 uan.uan_status = 'Terminated'
                             if s.state.waiting:
@@ -238,7 +244,8 @@ class UanManager(object):
                     srv_resp = self.api.read_namespaced_service(name=deployment_name,
                                                                 namespace=namespace)
                 except ApiException as e:
-                    abort(e.status, "Failed to get service info")
+                    if e.status != 404:
+                        abort(e.status, "Failed to get service info")
                 if srv_resp:
                     uan.uan_port = srv_resp.spec.ports[0].node_port
                 uan = self.gen_connection_string(uan)
