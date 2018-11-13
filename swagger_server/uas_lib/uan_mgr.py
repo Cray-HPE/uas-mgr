@@ -274,6 +274,8 @@ class UanManager(object):
             abort(400, "Missing username.")
         if not usersshpubkey:
             abort(400, "Missing ssh public key.")
+        if not imagename:
+            imagename = self.uas_cfg.get_default_image()
         if not self.uas_cfg.validate_image(imagename):
             abort(400, "Invalid image (%s). Valid images: %s. Default: %s"
                   % (imagename, self.uas_cfg.get_images(),
