@@ -76,7 +76,7 @@ class UanManager(object):
         :type deployment_name: str
         :return: service object
         """
-        if self.uas_cfg.get_external_ips()[0]:
+        if self.uas_cfg.get_external_ips():
             spec = client.V1ServiceSpec(
                 selector={'app': deployment_name},
                 type="NodePort",
