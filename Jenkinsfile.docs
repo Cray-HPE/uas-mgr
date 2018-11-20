@@ -1,102 +1,10 @@
 // Jenkinsfile for API DOC
 // Copyright 2018 Cray Inc. All rights reserved.
-pipeline {
-    agent {
-       node { label 'ForEveryone' }
-    }
-    environment { OUTPUT_VALUE = "0" }
 
-    // Configuration options applicable to the entire job
-    options {
-        // This build should not take long, fail the build if it appears stuck
-        timeout(time: 5, unit: 'MINUTES')
+ @Library('dst-shared@master') _
 
-        // Don't fill up the build server with unnecessary cruft
-        buildDiscarder(logRotator(numToKeepStr: '10'))
-
-        // Add timestamps and color to console output, cuz pretty
-        timestamps()
-    }
-
-    stages {
-
-    	stage('Clean'){
-    	    steps {
-    		deleteDir()
-                }
-            }
-
-    	stage('Checkout') {
-                steps {
-                     checkout scm
-                }
-
-            }
-
-        stage('Compare') {
-            steps {
-                script {
-                    sh 'export OUTPUT_VALUE=`git whatchanged -n1 | grep -E \'.yaml|.adoc|Jenkinsfile.docs\'; OUT=$?; echo $OUT > status | true`'
-                    sh 'cat status'
-                    stash name: 'status', includes: 'status'
-                }
-            }
-
-        }
-
-
-	// Use  create-adoc docker image
-        stage('adoc') {
-            // found a docs change so do the steps, otherwise skip
-            when { expression { return readFile('status').contains('0') } }
-            steps {
-                container('create-adoc') {
-                    sh 'ls -lR docs;java -jar /usr/bin/swagger2markup/swagger2markup-cli-1.3.2.jar convert -i schema/swagger.yaml -d docs/documents;ls -lR docs/documents'
-                    sh 'ls -lR docs'
-                }
-                archiveArtifacts artifacts: 'docs/documents/*.adoc', fingerprint: true
-            }
-        }
-
-
-
-        // Use  create-html docker image
-        stage('html') {
-            // found a docs change so do the steps, otherwise skip
-            when { expression { return readFile('status').contains('0') } }
-            steps {
-                container('create-html') {
-            	   sh '/usr/bin/asciidoctor --doctype book docs/index.adoc -D docs/documents'
-            	   sh '/usr/bin/asciidoctor-pdf --doctype book docs/index.adoc -D docs/documents;ls -lR docs'
-                }
-            archiveArtifacts artifacts: 'docs/documents/*.html', fingerprint: true
-            archiveArtifacts artifacts: 'docs/documents/*.pdf', fingerprint: true
-            }
-        }
-
-    	stage('Push') {
-            when { expression { return readFile('status').contains('0') } }
-            steps {
-                sh 'printenv;pwd;ls -lR'
-    		//sh 'curl -O $BUILD_URL/artifact/docs/HMSRedfish/HMSindex.html'
-    		//sh 'curl -O $BUILD_URL/artifact/docs/HMSRedfish/HMSindex.pdf'
-    		//sh 'wget -nd $BUILD_URL/artifact/*zip*/archive.zip'
-    		//sh 'zip -r HMSRedfish.zip  $BUILD_URL/artifact/docs/HMSRedfish'
-    		//sh 'rsync -v -r -e ssh HMSindex.* root@iyumcf:/var/www/html/dstrepo/artifact/dev/hms/hms-controllers/docs/adoc/'
-    		//sh 'rsync -v -r -e ssh artifact root@iyumcf:/var/www/html/dstrepo/artifact/dev/hms/hms-controllers/docs/adoc/'
-    		//sh 'rsync -v -r -e ssh archive.zip root@iyumcf:/var/www/html/dstrepo/artifact/dev/hms/hms-controllers/docs/adoc/'
-    		}
-        }
-    }
-
-    post('Post-build steps') {
-        // Clean up the local build registry whether the build was successful or not
-        success {
-            echo "Success"
-        }
-
-        failure {
-            echo "Fail"
-        }
-    }
-}
+ documentBuildPipeline {
+     yamlFile = "swagger_server/swagger/swagger.yaml"
+     jenkinsfile = "Jenkinsfile.docs"
+     serviceName = "cray-uas-mgr"
+ }

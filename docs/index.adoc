@@ -1,0 +1,14 @@
+:toc: left
+:toclevels: 3 
+:sectnums:
+:last-update-label: Copyright Cray Inc.
+
+include::./overview.adoc[]
+include::./about.adoc[]
+include::./paths.adoc[]
+include::./definitions.adoc[]
+include::./security.adoc[]
+include::./authentication.adoc[]
+include::./examples.adoc[]
+include::./changelog.adoc[]
+
