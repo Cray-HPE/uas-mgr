@@ -40,31 +40,6 @@ def create_uan(username, usersshpubkey=None, imagename=None):  # noqa: E501
     uan_response = dm.uan_mgr.create_uan(username, usersshpubkey, imagename)
     return uan_response
 
-
-def delete_all_uans():  # noqa: E501
-    """Delete all UANs
-
-    Delete all available UANs # noqa: E501
-
-
-    :rtype: None
-    """
-    return 'do some magic!'
-
-
-def delete_all_uans_for_user(username):  # noqa: E501
-    """Delete all UANs for username
-
-    Delete all UANs for username # noqa: E501
-
-    :param username: 
-    :type username: str
-
-    :rtype: List[UAN]
-    """
-    return 'do some magic!'
-
-
 def delete_uan_by_name(uan_list):  # noqa: E501
     """Delete UANs in uan_list
 
@@ -78,31 +53,6 @@ def delete_uan_by_name(uan_list):  # noqa: E501
     uan_resp = dm.uan_mgr.delete_uans(uan_list)
     return uan_resp
 
-
-def get_all_uans():  # noqa: E501
-    """List UANs
-
-    List all available UANs. # noqa: E501
-
-
-    :rtype: List[UAN]
-    """
-    return 'do some magic!'
-
-
-def get_uan_by_name(uan_name):  # noqa: E501
-    """List UAN info by uan_name
-
-    List UAN info by uan_name # noqa: E501
-
-    :param uan_name: 
-    :type uan_name: str
-
-    :rtype: UAN
-    """
-    return 'do some magic!'
-
-
 def get_uans_for_username(username):  # noqa: E501
     """List all UANs for username
 
@@ -115,7 +65,6 @@ def get_uans_for_username(username):  # noqa: E501
     """
     uan_resp = dm.uan_mgr.list_uans_for_user(username)
     return uan_resp
-
 
 def uas_delete_handler(uan_list):  # noqa: E501
     """Handle UAS delete form
