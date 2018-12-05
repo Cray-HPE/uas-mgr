@@ -1,5 +1,6 @@
 ---
 swagger: "2.0"
+basePath: /apis/uas-mgr/v1
 info:
   description: "User Access Service. This service is responsible for the management\
     \ of User Access Node lifecycles."
@@ -10,6 +11,7 @@ paths:
     get:
       tags:
       - "Versions"
+      - "cli_ignore"
       summary: "List supported UAS API versions"
       description: "Returns supported UAS API versions"
       operationId: "root_get"
@@ -23,10 +25,11 @@ paths:
           schema:
             $ref: "#/definitions/Versions"
       x-swagger-router-controller: "swagger_server.controllers.versions_controller"
-  /v1/uas_access:
+  /uas_access:
     get:
       tags:
       - "UAS"
+      - "cli_ignore"
       summary: "UAS home page"
       description: "Request UAS home page"
       operationId: "uas_request_home"
@@ -55,6 +58,7 @@ paths:
     post:
       tags:
       - "UAS"
+      - "cli_ignore"
       summary: "Handle UAS request forms"
       description: "Handle form data from the UAS home page"
       operationId: "uas_request_handler"
@@ -92,6 +96,7 @@ paths:
     delete:
       tags:
       - "UAS"
+      - "cli_ignore"
       summary: "Handle UAS delete form"
       description: "Handle form data from UAS delete page"
       operationId: "uas_delete_handler"
@@ -114,46 +119,7 @@ paths:
         401:
           description: "UAS operation denied"
       x-swagger-router-controller: "swagger_server.controllers.uas_controller"
-  /v1/uans:
-    get:
-      tags:
-      - "UAS"
-      summary: "List UANs"
-      description: "List all available UANs."
-      operationId: "get_all_uans"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      parameters: []
-      responses:
-        200:
-          description: "List all UANs"
-          schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/UAN"
-        404:
-          description: "UANs not found"
-      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
-    delete:
-      tags:
-      - "UAS"
-      summary: "Delete all UANs"
-      description: "Delete all available UANs"
-      operationId: "delete_all_uans"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      parameters: []
-      responses:
-        200:
-          description: "All UANs deleted"
-        404:
-          description: "Failed to delete UANs"
-      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
-  /v1/uans/{username}:
+  /uas/{username}:
     get:
       tags:
       - "UAS"
@@ -177,56 +143,7 @@ paths:
             items:
               $ref: "#/definitions/UAN"
       x-swagger-router-controller: "swagger_server.controllers.uas_controller"
-    delete:
-      tags:
-      - "UAS"
-      summary: "Delete all UANs for username"
-      description: "Delete all UANs for username"
-      operationId: "delete_all_uans_for_user"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      parameters:
-      - name: "username"
-        in: "path"
-        required: true
-        type: "string"
-      responses:
-        200:
-          description: "All UANs deleted for user {username}"
-          schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/UAN"
-        404:
-          description: "Failed to delete UANs user"
-      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
-  /v1/uan:
-    get:
-      tags:
-      - "UAS"
-      summary: "List UAN info by uan_name"
-      description: "List UAN info by uan_name"
-      operationId: "get_uan_by_name"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      parameters:
-      - name: "uan_name"
-        in: "query"
-        required: true
-        type: "string"
-      responses:
-        200:
-          description: "UAN by name"
-          schema:
-            type: "object"
-            properties: {}
-        404:
-          description: "UAN with {uan_name} not found"
-      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+  /uas:
     post:
       tags:
       - "UAS"
