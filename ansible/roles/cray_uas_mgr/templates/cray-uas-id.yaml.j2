@@ -1,0 +1,32 @@
+{# Copyright 2018, Cray Inc. All Rights Reserved. #}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: cray-uas-id
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: cray-uas-id
+    spec:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: uas
+                  operator: Exists
+        hostPID: true
+        containers:
+        - name: cray-uas-id
+          image: {{ cray_stack_registry_source }}/cray/cray-uas-mgr:{{ cray_uas_mgr_image_version }}
+          command: [ "/bin/bash", "-c" ]
+          args: [ "while true; do sleep 10; done;" ]
+          volumeMounts:
+          - mountPath: /host
+            name: host-mount
+        volumes:
+          - name: host-mount
+            hostPath:
+              path: /

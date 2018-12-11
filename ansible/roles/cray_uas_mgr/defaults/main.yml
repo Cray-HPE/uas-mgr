@@ -1,0 +1,14 @@
+# Copyright 2018, Cray Inc. All Rights Reserved.
+---
+# cray-uas-mgr configuration
+#
+# cray-uas-mgr reads config data from a Kubernetes configmap.
+# The configmap is created from the configmap-cray-uas-mgr.yaml.j2 template.
+# The inventory file containing the config data should be placed in the
+# group_vars/managers directory of the inventory being used.
+cray_uas_mgr_image_version: "latest"
+cray_uas_mgr_port: "8080"
+cray_uas_mgr_configmap: "cray-uas-mgr-cfgmap"
+
+# User Access Image configuration
+cray_uas_img_image_version: "latest"

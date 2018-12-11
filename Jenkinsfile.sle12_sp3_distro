@@ -1,0 +1,5 @@
+@Library('dst-shared@master') _
+sle12sp3Distro {
+    specfile = "cray-uas-mgr-deployment.spec"
+    timeout = 5
+}

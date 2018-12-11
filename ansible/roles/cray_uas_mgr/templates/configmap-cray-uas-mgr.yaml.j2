@@ -1,0 +1,59 @@
+---
+apiVersion: v1
+data:
+  cray-uas-mgr.yaml: |
+    #
+    # Copyright 2018, Cray Inc.  All Rights Reserved.
+    #
+    # Cray User Access Instance Manager Configuration file.
+    #
+    # This file provides the configuration data for the user access instance
+    # manager.
+    #
+    ---
+    # UAS Instance IP/hostname.
+    # This section defines the external IP/hostname that UAS instance services
+    # will use.
+    uas_ips:
+{% if gateways is defined %}
+{% for item in gateways.user_gw %}
+      - {{ item | default(None, true) }}
+{% endfor %}
+{% endif %}
+
+    # Volume mounts.
+    # This section defines which filesystems will be volume mounted from the
+    # host to the UAS instance.
+    #   name: name of the mount
+    #   mount_path: absolute path where the UAS instance should mount this volume.
+    #   host_path: absolute path on the host system of the volume to mount.
+    #
+    volume_mounts:
+{% if uas_mgr is defined %}
+{% for item in uas_mgr.volume_mounts %}
+      - name: {{ item.name | default(None, true) }}
+        mount_path: {{ item.mount_path | default(None, true) }}
+        host_path: {{ item.host_path | default(None, true) }}
+{% endfor %}
+{% endif %}
+
+    # UAS Images
+    # The following list contains the supported images a user may choose for
+    # their UAS instance.  Image names must be quoted if they contain special
+    # characters such as ':'.
+    #
+    #   default_image: default image name to use if none are selected.
+    #   images:
+    #     - 'repo:port/cray-uas-img:latest'
+    #
+    uas_images:
+{% if uas_mgr is defined %}
+      default_image: "{{ uas_mgr.uas_images.default_image | default(None, true) }}"
+      images:
+{% for item in uas_mgr.uas_images.images %}
+        - "{{ item | default(None, true) }}"
+{% endfor %}
+{% endif %}
+kind: ConfigMap
+metadata:
+  name: {{ cray_uas_mgr_configmap }}

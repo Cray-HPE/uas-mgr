@@ -1,0 +1,8 @@
+# Copyright 2018, Cray Inc. All Rights Reserved.
+---
+dependencies:
+  - docker
+  - kubernetes_master
+  - kong
+  - configmap_ca_certificate
+  - cray_node_discovery
