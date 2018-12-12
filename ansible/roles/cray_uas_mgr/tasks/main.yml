@@ -1,0 +1,55 @@
+# cray-uas-mgr installation ansible play
+# Copyright 2018, Cray Inc. All Rights Reserved.
+---
+
+- name: Create cray-uas-mgr Kubernetes spec
+  template:
+    src: cray-uas-mgr.yaml.j2
+    dest: /root/k8s/cray-uas-mgr.yaml
+  run_once: true
+
+- name: Create cray-uas-id Kubernetes spec
+  template:
+    src: cray-uas-id.yaml.j2
+    dest: /root/k8s/cray-uas-id.yaml
+  run_once: true
+
+- name: Copy cray-uas-mgr-rbac.yaml to /root/k8s directory
+  copy:
+    src: cray-uas-mgr-rbac.yaml
+    dest: /root/k8s/cray-uas-mgr-rbac.yaml
+  run_once: true
+
+- name: Apply cray-uas-mgr-rbac.yaml policies
+  command: kubectl apply -f /root/k8s/cray-uas-mgr-rbac.yaml
+  register: kubectl_result
+  changed_when: kubectl_result.stdout.find('created') != -1 or kubectl_result.stdout.find('configured') != -1
+  run_once: true
+
+- name: Create cray-uas-mgr Kubernetes configmap spec
+  template:
+    src: configmap-cray-uas-mgr.yaml.j2
+    dest: /root/k8s/configmap-cray-uas-mgr.yaml
+  run_once: true
+
+- name: Apply the cray-uas-mgr configmap yaml
+  command: kubectl apply -f /root/k8s/configmap-cray-uas-mgr.yaml
+  register: kubectl_result
+  changed_when: kubectl_result.stdout.find('created') != -1 or kubectl_result.stdout.find('configured') != -1
+  run_once: True
+
+- name: Apply uas-mgr Kubernetes spec
+  command: /usr/bin/kubectl apply -f cray-uas-mgr.yaml
+  args:
+    chdir: /root/k8s
+  run_once: true
+
+- name: Apply uas-id Kubernetes spec
+  command: /usr/bin/kubectl apply -f cray-uas-id.yaml
+  args:
+    chdir: /root/k8s
+  run_once: true
+
+- name: Record that cray-uas ran  # Workaround https://github.com/ansible/ansible/issues/31751
+  set_fact:
+    cray_uas_mgr_ran: True
