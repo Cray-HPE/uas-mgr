@@ -4,3 +4,4 @@
 - hosts: sms
   roles:
     - role: cray_uas_mgr
+    - role: cray_uas_mgr_auth

@@ -1,0 +1,36 @@
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: cray-uas-mgr-auth
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: cray-uas-mgr-auth
+rules:
+  - apiGroups: ["extensions"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["get"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: cray-uas-mgr-auth
+subjects:
+  - kind: ServiceAccount
+    name: cray-uas-mgr-auth
+    namespace: default
+roleRef:
+  kind: Role
+  name: cray-uas-mgr-auth
+  apiGroup: rbac.authorization.k8s.io

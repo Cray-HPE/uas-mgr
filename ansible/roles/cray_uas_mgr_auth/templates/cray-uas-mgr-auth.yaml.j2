@@ -1,0 +1,78 @@
+{# Copyright 2018, Cray Inc. All Rights Reserved. #}
+apiVersion: v1
+kind: Service
+metadata:
+  name: cray-uas-mgr-auth
+spec:
+  selector:
+      app: cray-uas-mgr-auth
+  ports:
+  - name: cray-uas-mgr-auth
+    port: {{ cray_uas_mgr_port }}
+    protocol: TCP
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: cray-uas-mgr-auth
+  labels:
+    app: cray-uas-mgr-auth
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: cray-uas-mgr-auth
+        api-gateway: upstream
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: uas
+                operator: Exists
+      serviceAccountName: cray-uas-mgr-auth
+      volumes:
+      - name: ca-vol
+        configMap:
+          name: cray-configmap-ca-public-key
+      - name: cray-uas-mgr-cfgmap
+        configMap:
+          name: {{ cray_uas_mgr_configmap }}
+      - name: admin-client-auth
+        secret:
+          secretName: "{{ kong_admin_client_auth_secret_name }}"
+      containers:
+      - name: cray-uas-mgr-auth
+        image: {{ cray_stack_registry_source }}/cray/cray-uas-mgr:{{ cray_uas_mgr_image_version }}
+        ports:
+        - containerPort: {{ cray_uas_mgr_port }}
+        volumeMounts:
+          - name: cray-uas-mgr-cfgmap
+            mountPath: /etc/uas
+      - name: register-api-gateway
+        image: {{ cray_stack_registry_source }}/cray/cray-api-gw-tools:{{ cray_api_gw_tools_version }}
+        env:
+        - name: API_GW_ADMIN_URL
+          value: {{ api_gw_admin_internal_url }}
+        - name: CA_CERT
+          value: /mnt/ca-vol/certificate_authority.crt
+        - name: SERVICE_NAME
+          value: cray-uas-mgr-auth
+        - name: UPSTREAM_URL
+          value: http://cray-uas-mgr-auth:8080/
+        - name: ROUTE_PATH
+          value: /apis/uas-mgr-auth
+        - name: HTTPS_REQUIRED
+          value: 'True'
+        - name: OAUTH_CONFIG_DIR
+          value: '/etc/admin-client-auth'
+        - name: AUTHENTICATION_REQUIRED
+          value: 'True'
+        volumeMounts:
+        - name: ca-vol
+          mountPath: /mnt/ca-vol
+        - name: admin-client-auth
+          mountPath: '/etc/admin-client-auth'
+          readOnly: true
