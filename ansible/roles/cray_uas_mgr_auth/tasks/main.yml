@@ -21,9 +21,8 @@
   run_once: true
 
 - name: Apply uas-mgr-auth Kubernetes spec
-  command: /usr/bin/kubectl apply -f cray-uas-mgr-auth.yaml
+  command: /usr/bin/kubectl apply -f /root/k8s/cray-uas-mgr-auth.yaml
   args:
-    chdir: /root/k8s
   run_once: true
 
 - name: Record that cray-uas-mgr-auth ran  # Workaround https://github.com/ansible/ansible/issues/31751
