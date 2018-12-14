@@ -39,15 +39,11 @@
   run_once: True
 
 - name: Apply uas-mgr Kubernetes spec
-  command: /usr/bin/kubectl apply -f cray-uas-mgr.yaml
-  args:
-    chdir: /root/k8s
+  command: /usr/bin/kubectl apply -f /root/k8s/cray-uas-mgr.yaml
   run_once: true
 
 - name: Apply uas-id Kubernetes spec
-  command: /usr/bin/kubectl apply -f cray-uas-id.yaml
-  args:
-    chdir: /root/k8s
+  command: /usr/bin/kubectl apply -f /root/k8s/cray-uas-id.yaml
   run_once: true
 
 - name: Record that cray-uas ran  # Workaround https://github.com/ansible/ansible/issues/31751

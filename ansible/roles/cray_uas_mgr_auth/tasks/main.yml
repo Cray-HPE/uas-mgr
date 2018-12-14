@@ -1,0 +1,30 @@
+# cray-uas-mgr-auth installation ansible play
+# Copyright 2018, Cray Inc. All Rights Reserved.
+---
+
+- name: Create cray-uas-mgr-auth Kubernetes spec
+  template:
+    src: cray-uas-mgr-auth.yaml.j2
+    dest: /root/k8s/cray-uas-mgr-auth.yaml
+  run_once: true
+
+- name: Copy cray-uas-mgr-auth-rbac.yaml to /root/k8s directory
+  copy:
+    src: cray-uas-mgr-auth-rbac.yaml
+    dest: /root/k8s/cray-uas-mgr-auth-rbac.yaml
+  run_once: true
+
+- name: Apply cray-uas-mgr-auth-rbac.yaml policies
+  command: kubectl apply -f /root/k8s/cray-uas-mgr-auth-rbac.yaml
+  register: kubectl_result
+  changed_when: kubectl_result.stdout.find('created') != -1 or kubectl_result.stdout.find('configured') != -1
+  run_once: true
+
+- name: Apply uas-mgr-auth Kubernetes spec
+  command: /usr/bin/kubectl apply -f /root/k8s/cray-uas-mgr-auth.yaml
+  args:
+  run_once: true
+
+- name: Record that cray-uas-mgr-auth ran  # Workaround https://github.com/ansible/ansible/issues/31751
+  set_fact:
+    cray_uas_mgr_auth_ran: True
