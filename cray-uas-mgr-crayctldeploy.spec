@@ -4,7 +4,7 @@
 #
 %define ansible_dir /opt/cray/crayctl/ansible_framework
 
-Name: cray-uas-mgr-deployment
+Name: cray-uas-mgr-crayctldeploy
 License: Cray Software License Agreement
 Summary: User Access Service Manager Deployment
 Version: 0.2.0
@@ -18,8 +18,8 @@ This package provides an ansible role and playbook for deploying the User Access
 Service Manager and User Access Service ID to a Cray Shasta system.
 
 Requires: cray-crayctl
-Requires: sms-deployment
-Requires: kubernetes-deployment
+Requires: sms-crayctldeploy
+Requires: kubernetes-crayctldeploy
 
 %files
 %dir /opt/cray/crayctl
