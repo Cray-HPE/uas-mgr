@@ -1,0 +1,16 @@
+---
+uas_ips:
+  - 10.100.240.14
+
+volume_mounts:
+  - name: scratch
+    mount_path: /scratch
+    host_path: /scratch
+  - name: lus
+    mount_path: /lus/snx11023
+    host_path: /lus/snx11023
+
+uas_images:
+  default_image: "dtr.dev.cray.com:443/cray/cray-uas-img:latest"
+  images:
+    - "dtr.dev.cray.com:443/cray/cray-uas-img:latest"
