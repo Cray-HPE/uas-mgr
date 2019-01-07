@@ -13,28 +13,81 @@ data:
     #
     ---
     # UAS Instance IP/hostname.
-    # This section defines the external IP/hostname that UAS instance services
+    # This section defines the external IP/hostname that UAS instance access
     # will use.
     uas_ips:
 {% if gateways is defined %}
+{% if gateways.user_gw is defined %}
 {% for item in gateways.user_gw %}
-      - {{ item | default(None, true) }}
+      - {{ item }}
 {% endfor %}
+{% endif %}
+{% endif %}
+
+    # UAS Service IP/hostname.
+    # This section defines the external IP/hostname that UAS instance services
+    # will use.
+    uas_svc_ips:
+{% if gateways is defined %}
+{% if gateways.user_svc_ips is defined %}
+{% for item in gateways.user_svc_ips %}
+      - {{ item }}
+{% endfor %}
+{% endif %}
+{% endif %}
+
+    # UAS Ports
+    # This section defines the ports that the UAS instance services will expose
+    # for user access.
+    uas_ports:
+{% if uas_mgr is defined %}
+{% if uas_mgr.uas_ports is defined %}
+{% for item in uas_mgr.uas_ports %}
+      - {{ item }}
+{% endfor %}
+{% else %}
+      - 30123
+{% endif %}
+{% endif %}
+
+    # UAS Service Ports
+    # This section defines the ports that the UAS instance will expose for shasta
+    # services such as WLM and Debugger use. Needs to match port range given
+    # for the service being supported, for example, slurm.
+    uas_svc_ports:
+{% if uas_mgr is defined %}
+{% if uas_mgr.uas_svc_ports is defined %}
+{% for item in uas_mgr.uas_svc_ports %}
+      - {{ item }}
+{% endfor %}
+{% endif %}
 {% endif %}
 
     # Volume mounts.
-    # This section defines which filesystems will be volume mounted from the
-    # host to the UAS instance.
+    # This section defines which filesystems, configmaps, and secrets will be volume
+    # mounted to the UAS instance.
     #   name: name of the mount
     #   mount_path: absolute path where the UAS instance should mount this volume.
-    #   host_path: absolute path on the host system of the volume to mount.
-    #
+    #   For filesystems, set the following:
+    #       host_path: absolute path on the host system of the volume to mount.
+    #   For configmaps, set the following:
+    #       config_map: the name of the configmap to mount
+    #   For secrets, set the following:
+    #       secret_name: name of the secret to mount
     volume_mounts:
 {% if uas_mgr is defined %}
 {% for item in uas_mgr.volume_mounts %}
-      - name: {{ item.name | default(None, true) }}
-        mount_path: {{ item.mount_path | default(None, true) }}
-        host_path: {{ item.host_path | default(None, true) }}
+      - name: {{ item.name }}
+        mount_path: {{ item.mount_path }}
+{% if item.host_path is defined %}
+        host_path: {{ item.host_path }}
+{% endif %}
+{% if item.config_map is defined %}
+        config_map: {{ item.config_map }}
+{% endif %}
+{% if item.secret_name is defined %}
+        secret_name: {{ item.secret_name }}
+{% endif %}
 {% endfor %}
 {% endif %}
 
@@ -52,7 +105,7 @@ data:
       default_image: "{{ uas_mgr.uas_images.default_image | default(None, true) }}"
       images:
 {% for item in uas_mgr.uas_images.images %}
-        - "{{ item | default(None, true) }}"
+        - "{{ item }}"
 {% endfor %}
 {% endif %}
 kind: ConfigMap

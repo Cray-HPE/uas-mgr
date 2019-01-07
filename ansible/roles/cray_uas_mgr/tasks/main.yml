@@ -26,6 +26,10 @@
   changed_when: kubectl_result.stdout.find('created') != -1 or kubectl_result.stdout.find('configured') != -1
   run_once: true
 
+- name: Include uas_mgr.yml
+  include_vars: uas_mgr.yml
+  run_once: true
+
 - name: Create cray-uas-mgr Kubernetes configmap spec
   template:
     src: configmap-cray-uas-mgr.yaml.j2
