@@ -97,16 +97,6 @@ class UanManager(object):
         )
         return service
 
-    def create_service(self, service_name, namespace):
-        # Create the service
-        resp = None
-        try:
-            resp = self.api.create_namespaced_service(body=service_name,
-                                                      namespace=namespace)
-        except ApiException as e:
-            abort(e.status, "Failed in create_service")
-        return resp
-
     def delete_service(self, service_name, namespace):
         # Delete the service
         resp = None
@@ -131,11 +121,14 @@ class UanManager(object):
             env=[client.V1EnvVar(
                      name='EPROXY_KUBECONFIG',
                      value='/etc/kube/config'),
+                client.V1EnvVar(
+                    name='UAS_NAME',
+                    value=deployment_name),
                  client.V1EnvVar(
-                     name='UAN_PASSWD',
+                     name='UAS_PASSWD',
                      value=self.get_user_account_info(username, namespace)),
                  client.V1EnvVar(
-                     name='UAN_PUBKEY',
+                     name='UAS_PUBKEY',
                      value=usersshpubkey.read().decode())],
             ports=[client.V1ContainerPort(container_port=30123)],
             volume_mounts = self.uas_cfg.gen_volume_mounts())
