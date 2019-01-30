@@ -1,0 +1,24 @@
+---
+uas_mgr:
+  uas_images:
+    # Must also appear in 'images' below
+    default_image: "{{ cray_stack_registry_source }}/cray/cray-uas-img:{{ cray_uas_img_image_version }}"
+    images:
+      - "{{ cray_stack_registry_source }}/cray/cray-uas-img:{{ cray_uas_img_image_version }}"
+
+  volume_mounts:
+    - name: lustre
+      mount_path: /lus
+      host_path: /lus
+    - name: slurm-config
+      mount_path: /etc/slurm
+      config_map: "{{ slurm_configmap }}"
+    - name: munge-key
+      mount_path: /root/slurm_config/munge
+      secret_name: "{{ munge_secret }}"
+
+  uas_ports:
+    - 30123
+
+  uas_svc_ports:
+    - "\"{{ srun_port_range_start }}:{{ srun_port_range_end }}\""

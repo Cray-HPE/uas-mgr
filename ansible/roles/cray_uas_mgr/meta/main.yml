@@ -6,3 +6,4 @@ dependencies:
   - kong
   - configmap_ca_certificate
   - cray_node_discovery
+  - slurm

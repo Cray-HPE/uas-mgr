@@ -1,7 +1,7 @@
 ---
 # cray-uas-mgr.yml - ansible playbook for cray_uas_mgr
 # Copyright 2018 Cray Inc. All Rights Reserved.
-- hosts: sms
+- hosts: managers
   roles:
     - role: cray_uas_mgr
     - role: cray_uas_mgr_auth

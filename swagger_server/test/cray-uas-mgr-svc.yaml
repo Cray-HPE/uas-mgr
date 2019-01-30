@@ -5,6 +5,13 @@ uas_ips:
 uas_ports:
   - 30123
 
+uas_svc_ips:
+  - 10.100.240.24
+
+uas_svc_ports:
+  - 1026
+  - "30500:30506"
+
 volume_mounts:
   - name: scratch
     mount_path: /scratch
@@ -12,6 +19,12 @@ volume_mounts:
   - name: lus
     mount_path: /lus/snx11023
     host_path: /lus/snx11023
+  - name: slurm-config
+    mount_path: /etc/slurm
+    config_map: slurm-map
+  - name: munge-key
+    mount_path: /root/slurm_config/munge
+    secret-name: munge-secret
 
 uas_images:
   default_image: "dtr.dev.cray.com:443/cray/cray-uas-img:latest"

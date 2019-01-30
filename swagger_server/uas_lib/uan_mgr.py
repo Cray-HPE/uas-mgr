@@ -6,6 +6,7 @@
 #
 
 import logging
+import uuid
 
 from flask import abort
 from kubernetes import config, client
@@ -68,34 +69,62 @@ class UanManager(object):
             abort(404, 'user not found. (%s)' % username)
         return uas_id
 
-    def create_service_object(self, deployment_name):
+    def create_service_object(self, service_name, service_type, deployment_name):
         """
         Create a service object for the deployment of the UAN.
 
-        :param deployment_name:
-        :type deployment_name: str
+        :param service_name:
+        :type service_name: str
+        :param service_type:
+        :type service_type: str
         :return: service object
         """
-        if self.uas_cfg.get_external_ips():
-            spec = client.V1ServiceSpec(
-                selector={'app': deployment_name},
-                type="NodePort",
-                external_i_ps=self.uas_cfg.get_external_ips(),
-                ports=[client.V1ServicePort(name=deployment_name,
-                                            port=30123,
-                                            protocol="TCP")]
-            )
-        else:
+        if not self.uas_cfg.get_external_ips("NodePort"):
             # external gateway IP is not set.  This is an error.
             abort(404, "UAS misconfigured (uas_ips not set). Please contact "
                        "your system administrator.")
+
+        external_ips = self.uas_cfg.get_external_ips(service_type)
+        ports = self.uas_cfg.gen_port_list(service_type, service=True)
+        if external_ips:
+            spec = client.V1ServiceSpec(
+                selector={'app': deployment_name},
+                type=service_type,
+                external_i_ps=external_ips,
+                ports=ports
+            )
+        else:
+            spec = client.V1ServiceSpec(
+                selector={'app': deployment_name},
+                type=service_type,
+                external_i_ps=external_ips,
+                ports=ports
+            )
         service = client.V1Service(
             api_version="v1",
             kind="Service",
-            metadata=client.V1ObjectMeta(name=deployment_name),
+            metadata=client.V1ObjectMeta(name=service_name,
+                                         labels={"uai_svc": deployment_name.split("-")[0]}),
             spec=spec
         )
         return service
+
+    def create_service(self, service_name, service_body, namespace):
+        # Create the service
+        resp = None
+        try:
+            resp = self.api.read_namespaced_service(name=service_name,
+                                                    namespace=namespace)
+        except ApiException as e:
+            if e.status != 404:
+                abort(e.status, "Failed to get service info while creating UAN")
+        if not resp:
+            try:
+                resp = self.api.create_namespaced_service(body=service_body,
+                                                          namespace=namespace)
+            except ApiException as e:
+                resp = None
+        return resp
 
     def delete_service(self, service_name, namespace):
         # Delete the service
@@ -119,19 +148,16 @@ class UanManager(object):
             name=deployment_name,
             image=imagename,
             env=[client.V1EnvVar(
-                     name='EPROXY_KUBECONFIG',
-                     value='/etc/kube/config'),
-                client.V1EnvVar(
                     name='UAS_NAME',
-                    value=deployment_name),
+                    value=deployment_name + "np"),
                  client.V1EnvVar(
                      name='UAS_PASSWD',
                      value=self.get_user_account_info(username, namespace)),
                  client.V1EnvVar(
                      name='UAS_PUBKEY',
                      value=usersshpubkey.read().decode())],
-            ports=[client.V1ContainerPort(container_port=30123)],
-            volume_mounts = self.uas_cfg.gen_volume_mounts())
+            ports=self.uas_cfg.gen_port_list(service=False),
+            volume_mounts=self.uas_cfg.gen_volume_mounts())
         # Create a volumes template
         volumes = self.uas_cfg.gen_volumes()
 
@@ -231,10 +257,10 @@ class UanManager(object):
                             if s.state.waiting:
                                 uan.uan_status = 'Waiting'
                                 uan.uan_msg = s.state.waiting.reason
-                uan.uan_ip = self.uas_cfg.get_external_ips()[0]
+                uan.uan_ip = self.uas_cfg.get_external_ips("NodePort")[0]
                 srv_resp = None
                 try:
-                    srv_resp = self.api.read_namespaced_service(name=deployment_name,
+                    srv_resp = self.api.read_namespaced_service(name=deployment_name + "np",
                                                                 namespace=namespace)
                 except ApiException as e:
                     if e.status != 404:
@@ -273,19 +299,26 @@ class UanManager(object):
             abort(400, "Invalid image (%s). Valid images: %s. Default: %s"
                   % (imagename, self.uas_cfg.get_images(),
                      self.uas_cfg.get_default_image()))
-        deployment_image = imagename
-        for i in [':', '/', '.']:
-            if i in deployment_image:
-                deployment_image = deployment_image.replace(i, '-')
-        # Kubernetes will truncate the deployment_name at 59 characters
-        # when they add the hash for creating a pod name.  So we will
-        # truncate our deployment name to 59 characters here.
-        raw_dname = username + '-' + deployment_image
-        deployment_name = (raw_dname[:58]) if len(raw_dname) > 58 else raw_dname
+        deployment_id = uuid.uuid4().hex[:8]
+        deployment_name = username + '-' + str(deployment_id)
         deployment = self.create_deployment_object(username, deployment_name,
                                                    imagename, usersshpubkey,
                                                    namespace)
-        service = self.create_service_object(deployment_name)
+        # Create a NodePort service on the uas_access_port
+        node_port_svc_name = deployment_name + "np"
+        node_port_svc = self.create_service_object(node_port_svc_name, "NodePort", deployment_name)
+        # Create a ClusterIP service on additional ports for other services to
+        # access.
+        cfg = self.uas_cfg.get_config()
+        cluster_ip_svc_name = None
+        cluster_ip_svc = None
+        if cfg:
+            try:
+                if cfg['uas_svc_ports']:
+                    cluster_ip_svc_name = deployment_name + "cip"
+                    cluster_ip_svc = self.create_service_object(cluster_ip_svc_name, "ClusterIP", deployment_name)
+            except KeyError:
+                cluster_ip_svc = None
         deploy_resp = None
         try:
             deploy_resp = self.extensions_v1beta1.read_namespaced_deployment(deployment_name, namespace)
@@ -294,16 +327,15 @@ class UanManager(object):
                 abort(e.status, "Failed to create deployment")
         if not deploy_resp:
             deploy_resp = self.create_deployment(deployment, namespace)
-        srv_resp = None
-        try:
-            srv_resp = self.api.read_namespaced_service(name=deployment_name,
-                                                        namespace=namespace)
-        except ApiException as e:
-            if e.status != 404:
-                abort(e.status, "Failed to get service info while creating UAN")
-        if not srv_resp:
-            srv_resp = self.api.create_namespaced_service(body=service,
-                                                          namespace=namespace)
+        # Start the NodePort service
+        svc_resp = self.create_service(node_port_svc_name, node_port_svc, namespace)
+        if not svc_resp:
+            abort(404, "Failed to create node port service {}".format(node_port_svc_name))
+        # Start the ClusterIP service
+        if cluster_ip_svc:
+            svc_resp = self.create_service(cluster_ip_svc_name, cluster_ip_svc, namespace)
+            if not svc_resp:
+                abort(404, "Failed to create cluster IP service {}".format(cluster_ip_svc_name))
         uan_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
         while not uan_info.uan_ip:
             uan_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
@@ -327,6 +359,7 @@ class UanManager(object):
         resp_list = []
         for d in deployment_list:
             self.delete_deployment(d, namespace)
-            self.delete_service(d, namespace)
+            self.delete_service(d + "np", namespace)
+            self.delete_service(d + "cip", namespace)
             resp_list.append(d)
         return resp_list
