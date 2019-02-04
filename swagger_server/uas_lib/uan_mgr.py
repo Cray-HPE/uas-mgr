@@ -75,38 +75,41 @@ class UanManager(object):
 
         :param service_name:
         :type service_name: str
-        :param service_type:
+        :param service_type: One of "ssh" or "service"
         :type service_type: str
         :return: service object
         """
-        if not self.uas_cfg.get_external_ips("NodePort"):
-            # external gateway IP is not set.  This is an error.
-            abort(404, "UAS misconfigured (uas_ips not set). Please contact "
-                       "your system administrator.")
-
-        external_ips = self.uas_cfg.get_external_ips(service_type)
+        external_ips = None
         ports = self.uas_cfg.gen_port_list(service_type, service=True)
+        svc_type = self.uas_cfg.get_svc_type(service_type)
+        if not svc_type['valid']:
+            # Invalid svc_type given.
+            msg = ("Unsupported service type '{}' configured, "
+                   "contact sysadmin. Valid service types are "
+                   "NodePort, ClusterIP, and LoadBalancer.".format(svc_type['svc_type'])
+                   )
+            abort(400, msg)
+        if svc_type['svc_type'] != "LoadBalancer":
+            # Check for external IP setting
+            external_ips = self.uas_cfg.get_external_ips(svc_type['svc_type'])
         if external_ips:
-            spec = client.V1ServiceSpec(
-                selector={'app': deployment_name},
-                type=service_type,
-                external_i_ps=external_ips,
-                ports=ports
-            )
+            spec = client.V1ServiceSpec(selector={'app': deployment_name},
+                                        type=svc_type['svc_type'],
+                                        external_i_ps=external_ips,
+                                        ports=ports
+                                        )
         else:
-            spec = client.V1ServiceSpec(
-                selector={'app': deployment_name},
-                type=service_type,
-                external_i_ps=external_ips,
-                ports=ports
-            )
-        service = client.V1Service(
-            api_version="v1",
-            kind="Service",
-            metadata=client.V1ObjectMeta(name=service_name,
-                                         labels={"uai_svc": deployment_name.split("-")[0]}),
-            spec=spec
-        )
+            spec = client.V1ServiceSpec(selector={'app': deployment_name},
+                                        type=svc_type['svc_type'],
+                                        ports=ports
+                                        )
+        service = client.V1Service(api_version="v1",
+                                   kind="Service",
+                                   metadata=client.V1ObjectMeta(
+                                        name=service_name,
+                                        labels={"uai_svc": deployment_name.split("-")[0]}),
+                                   spec=spec
+                                   )
         return service
 
     def create_service(self, service_name, service_body, namespace):
@@ -149,7 +152,7 @@ class UanManager(object):
             image=imagename,
             env=[client.V1EnvVar(
                     name='UAS_NAME',
-                    value=deployment_name + "np"),
+                    value=deployment_name + "-ssh"),
                  client.V1EnvVar(
                      name='UAS_PASSWD',
                      value=self.get_user_account_info(username, namespace)),
@@ -197,18 +200,43 @@ class UanManager(object):
             abort(e.status, "Failed in create_deployment")
         return resp
 
-    def update_deployment(self, deployment, deployment_name, imagename, namespace):
-        # Update container image
-        deployment.spec.template.spec.containers[0].image = imagename
-        # Update the deployment
+    def update_deployment(self, deployment, deployment_name, namespace):
+        """
+        This function updates the deployment of the UAI. It is done to include
+        the external IP set in the LoadBalancer service for communicating with
+        other Shasta services such as SLURM.
+        :param deployment: The original UAI deployment object
+        :param deployment_name: The UAI deployment name
+        :param namespace: The kubernetes namespace
+        :return: the response object from the deployment patching operation
+        """
         resp = None
-        try:
-            resp = self.extensions_v1beta1.patch_namespaced_deployment(
-                name=deployment_name,
-                namespace=namespace,
-                body=deployment)
-        except ApiException as e:
-            abort(e.status, "Failed in update deployment")
+        srv_resp = None
+        srv_ext_ip = None
+        for i in range(1, 30):
+            try:
+                srv_resp = self.api.read_namespaced_service(name=deployment_name + "-service",
+                                                            namespace=namespace)
+            except ApiException as e:
+                if e.status != 404:
+                    svc_name = deployment_name + '-service'
+                    abort(404, "Failed to get service info for update {}".format(svc_name))
+            if srv_resp:
+                if srv_resp.spec.external_i_ps:
+                    srv_ext_ip = srv_resp.spec.external_i_ps[0]
+        if srv_ext_ip:
+            deployment.spec.template.spec.containers[0].env.append(
+                client.V1EnvVar(name='UAS_SVC_IP', value=srv_ext_ip)
+            )
+            # Update the deployment
+            try:
+                resp = self.extensions_v1beta1.patch_namespaced_deployment(
+                    name=deployment_name,
+                    namespace=namespace,
+                    body=deployment)
+            except ApiException as e:
+                msg = "Failed to update deployment {}".format(deployment_name)
+                abort(e.status, msg)
         return resp
 
     def delete_deployment(self, deployment_name, namespace):
@@ -257,16 +285,22 @@ class UanManager(object):
                             if s.state.waiting:
                                 uan.uan_status = 'Waiting'
                                 uan.uan_msg = s.state.waiting.reason
-                uan.uan_ip = self.uas_cfg.get_external_ips("NodePort")[0]
                 srv_resp = None
                 try:
-                    srv_resp = self.api.read_namespaced_service(name=deployment_name + "np",
+                    srv_resp = self.api.read_namespaced_service(name=deployment_name + "-ssh",
                                                                 namespace=namespace)
                 except ApiException as e:
                     if e.status != 404:
-                        abort(e.status, "Failed to get service info")
+                        abort(e.status, "Failed to get service info for %s" % (deployment_name + "-ssh"))
                 if srv_resp:
-                    uan.uan_port = srv_resp.spec.ports[0].node_port
+                    if srv_resp.spec.external_i_ps:
+                        uan.uan_ip = srv_resp.spec.external_i_ps[0]
+                    else:
+                        uan.uan_ip = "Unknown"
+                    if srv_resp.spec.ports:
+                        uan.uan_port = srv_resp.spec.ports[0].node_port
+                    else:
+                        uan.uan_port = "Unknown"
                 uan = self.gen_connection_string(uan)
         return uan
 
@@ -304,21 +338,21 @@ class UanManager(object):
         deployment = self.create_deployment_object(username, deployment_name,
                                                    imagename, usersshpubkey,
                                                    namespace)
-        # Create a NodePort service on the uas_access_port
-        node_port_svc_name = deployment_name + "np"
-        node_port_svc = self.create_service_object(node_port_svc_name, "NodePort", deployment_name)
-        # Create a ClusterIP service on additional ports for other services to
-        # access.
+        # Create a LoadBalancer service for the uas_ssh_port
+        uas_ssh_svc_name = deployment_name + '-ssh'
+        uas_ssh_svc = self.create_service_object(uas_ssh_svc_name, "ssh", deployment_name)
+        # Create a LoadBalancer service on additional ports for other services to
+        # use.
         cfg = self.uas_cfg.get_config()
-        cluster_ip_svc_name = None
-        cluster_ip_svc = None
+        uas_service_svc_name = None
+        uas_service_svc = None
         if cfg:
             try:
                 if cfg['uas_svc_ports']:
-                    cluster_ip_svc_name = deployment_name + "cip"
-                    cluster_ip_svc = self.create_service_object(cluster_ip_svc_name, "ClusterIP", deployment_name)
+                    uas_service_svc_name = deployment_name + "-service"
+                    uas_service_svc = self.create_service_object(uas_service_svc_name, "service", deployment_name)
             except KeyError:
-                cluster_ip_svc = None
+                uas_service_svc = None
         deploy_resp = None
         try:
             deploy_resp = self.extensions_v1beta1.read_namespaced_deployment(deployment_name, namespace)
@@ -327,15 +361,17 @@ class UanManager(object):
                 abort(e.status, "Failed to create deployment")
         if not deploy_resp:
             deploy_resp = self.create_deployment(deployment, namespace)
-        # Start the NodePort service
-        svc_resp = self.create_service(node_port_svc_name, node_port_svc, namespace)
+        # Start the uas_ssh_svc service
+        svc_resp = self.create_service(uas_ssh_svc_name, uas_ssh_svc, namespace)
         if not svc_resp:
-            abort(404, "Failed to create node port service {}".format(node_port_svc_name))
-        # Start the ClusterIP service
-        if cluster_ip_svc:
-            svc_resp = self.create_service(cluster_ip_svc_name, cluster_ip_svc, namespace)
+            abort(404, "Failed to create service: %s" % uas_ssh_svc_name)
+        # Start the uas_service_svc service
+        if uas_service_svc:
+            svc_resp = self.create_service(uas_service_svc_name, uas_service_svc, namespace)
             if not svc_resp:
-                abort(404, "Failed to create cluster IP service {}".format(cluster_ip_svc_name))
+                abort(404, "Failed to create service: %s" % uas_service_svc_name)
+        # Update the deployment with the service external IP
+        self.update_deployment(deployment, deployment_name, namespace)
         uan_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
         while not uan_info.uan_ip:
             uan_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
@@ -359,7 +395,7 @@ class UanManager(object):
         resp_list = []
         for d in deployment_list:
             self.delete_deployment(d, namespace)
-            self.delete_service(d + "np", namespace)
-            self.delete_service(d + "cip", namespace)
+            self.delete_service(d + "-ssh", namespace)
+            self.delete_service(d + "-service", namespace)
             resp_list.append(d)
         return resp_list

@@ -63,6 +63,20 @@ data:
 {% endif %}
 {% endif %}
 
+    # UAS Service Types
+    # This section defines the service types that the UAS instance will use for
+    # user ssh and UAI service I/O.
+    # uas_ssh_type: defines the service type for user ssh access to the UAI.
+    # uas_svc_type: defines the service type for UAI service I/O connections.
+{% if uas_mgr is defined %}
+{% if uas_mgr.uas_ssh_type is defined %}
+    uas_ssh_type: "{{ uas_mgr.uas_ssh_type }}"
+{% endif %}
+{% if uas_mgr.uas_svc_type is defined %}
+    uas_svc_type: "{{ uas_mgr.uas_svc_type }}"
+{% endif %}
+{% endif %}
+
     # Volume mounts.
     # This section defines which filesystems, configmaps, and secrets will be volume
     # mounted to the UAS instance.
