@@ -3,7 +3,7 @@ swagger: "2.0"
 info:
   description: "User Access Service. This service is responsible for the management\
     \ of User Access Node lifecycles."
-  version: "0.4.0"
+  version: "0.5.0"
   title: "Cray User Access Service"
 basePath: "/apis/uas-mgr/v1"
 paths:

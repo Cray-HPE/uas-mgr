@@ -139,7 +139,7 @@ class UasCfg(object):
         port_list = []
         if not cfg:
             return port_list
-        if service_type == "ClusterIP":
+        if service_type == "service":
             try:
                 cfg_port_list = cfg['uas_svc_ports']
             except KeyError:
@@ -162,4 +162,23 @@ class UasCfg(object):
                 if port > 1024:
                     port_list.append(self.gen_port_entry(port, service))
         return port_list
+
+    def get_svc_type(self, service_type=None):
+        cfg = self.get_config()
+        svc_type = None
+        if not cfg:
+            # Return defaults if no configuration exists
+            if service_type == "service":
+                return "ClusterIP"
+            if service_type == "ssh":
+                return "NodePort"
+        if service_type == "service":
+            svc_type = cfg.get('uas_svc_type', 'ClusterIP')
+        if service_type == "ssh":
+            svc_type = cfg.get('uas_ssh_type', 'NodePort')
+        if svc_type in ['NodePort', 'ClusterIP', 'LoadBalancer']:
+            return svc_type
+        else:
+            # Invalid svc_type given
+            return None
 
