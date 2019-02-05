@@ -4,7 +4,7 @@ basePath: /apis/uas-mgr/v1
 info:
   description: "User Access Service. This service is responsible for the management\
     \ of User Access Node lifecycles."
-  version: "0.2.0"
+  version: "0.3.0"
   title: "Cray User Access Service"
 paths:
   /:
