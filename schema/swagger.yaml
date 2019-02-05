@@ -254,7 +254,6 @@ paths:
         description: "Image to use for UAN"
         required: false
         type: "string"
-        default: "uan-default-image"
       responses:
         201:
           description: "UAN created"
