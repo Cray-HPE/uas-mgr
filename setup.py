@@ -2,9 +2,9 @@
 
 import sys
 from setuptools import setup, find_packages
+from swagger_server import version
 
-NAME = "swagger_server"
-VERSION = "1.0.0"
+NAME = "cray-uas-mgr"
 
 # To install the library, run the following
 #
@@ -17,7 +17,7 @@ REQUIRES = ["connexion"]
 
 setup(
     name=NAME,
-    version=VERSION,
+    version=version,
     description="Cray User Access Service",
     author_email="",
     url="",

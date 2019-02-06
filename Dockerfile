@@ -20,7 +20,7 @@ ENTRYPOINT pytest --cov swagger_server
 #########################
 ### Application
 #########################
-FROM base as application 
+FROM base as application
 
 EXPOSE 8080
 ENTRYPOINT ["python3"]
