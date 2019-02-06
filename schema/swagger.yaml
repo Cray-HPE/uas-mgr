@@ -3,7 +3,7 @@ swagger: "2.0"
 info:
   description: "User Access Service. This service is responsible for the management\
     \ of User Access Node lifecycles."
-  version: "0.2.0"
+  version: "0.3.0"
   title: "Cray User Access Service"
 paths:
   /:
@@ -254,7 +254,6 @@ paths:
         description: "Image to use for UAN"
         required: false
         type: "string"
-        default: "uan-default-image"
       responses:
         201:
           description: "UAN created"
