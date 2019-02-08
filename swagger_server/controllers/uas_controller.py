@@ -3,7 +3,7 @@ import six
 
 from flask import render_template
 from swagger_server.models.uan import UAN  # noqa: E501
-from swagger_server import util
+from swagger_server import util, version
 from swagger_server.uas_lib.uan_mgr import UanManager
 from swagger_server.uas_lib.uas_dispatcher import DispatchManager
 from swagger_server.uas_lib.uas_cfg import UasCfg
@@ -65,6 +65,21 @@ def get_uans_for_username(username):  # noqa: E501
     """
     uan_resp = dm.uan_mgr.list_uans_for_user(username)
     return uan_resp
+
+
+def get_uas_mgr_info():  # noqa: E501
+    """List uas-mgr service info
+
+    List uas-mgr service info # noqa: E501
+
+    :rtype: object
+    """
+    uas_mgr_info = {
+        'service_name': 'cray-uas-mgr',
+        'version': version
+    }
+    return uas_mgr_info
+
 
 def uas_delete_handler(uan_list):  # noqa: E501
     """Handle UAS delete form

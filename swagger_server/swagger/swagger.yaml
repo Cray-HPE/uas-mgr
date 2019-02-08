@@ -1,11 +1,11 @@
 ---
 swagger: "2.0"
-basePath: /apis/uas-mgr/v1
 info:
   description: "User Access Service. This service is responsible for the management\
     \ of User Access Node lifecycles."
-  version: "0.3.0"
+  version: "0.4.0"
   title: "Cray User Access Service"
+basePath: "/apis/uas-mgr/v1"
 paths:
   /:
     get:
@@ -176,12 +176,10 @@ paths:
           description: "UAN created"
           schema:
             type: "object"
-            properties: {}
         404:
           description: "Not able to provide UAN"
           schema:
             type: "object"
-            properties: {}
       x-swagger-router-controller: "swagger_server.controllers.uas_controller"
     delete:
       tags:
@@ -207,6 +205,28 @@ paths:
           description: "UANs deleted"
         404:
           description: "Failed to delete UAN with {uan_id}"
+      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+  /uas_mgr_info:
+    get:
+      tags:
+      - "UAS"
+      summary: "List uas-mgr service info"
+      description: "List uas-mgr service info"
+      operationId: "get_uas_mgr_info"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "UAS-MGR Info"
+          schema:
+            type: "object"
+        404:
+          description: "UAS-MGR Info not found"
+          schema:
+            type: "object"
       x-swagger-router-controller: "swagger_server.controllers.uas_controller"
 definitions:
   Versions:
