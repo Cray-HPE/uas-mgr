@@ -98,7 +98,7 @@ class TestUasCfg(unittest.TestCase):
         svc_type = self.uas_cfg_empty.get_svc_type(service_type="ssh")
         self.assertEqual(svc_type, "NodePort")
         svc_type = self.uas_cfg.get_svc_type(service_type="service")
-        self.assertEqual(svc_type, "ClientIP")
+        self.assertEqual(svc_type, "ClusterIP")
         svc_type = self.uas_cfg_empty.get_svc_type(service_type="service")
         self.assertEqual(svc_type, "ClusterIP")
         svc_type = self.uas_cfg_svc.get_svc_type(service_type="ssh")
