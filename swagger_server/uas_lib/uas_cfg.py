@@ -172,14 +172,15 @@ class UasCfg(object):
                 svc_type['svc_type'] = 'ClusterIP'
             if service_type == "ssh":
                 svc_type['svc_type'] = 'NodePort'
-        if service_type == "service":
-            svc_type['svc_type'] = cfg.get('uas_svc_type', 'ClusterIP')
-        if service_type == "ssh":
-            svc_type['svc_type'] = cfg.get('uas_ssh_type', 'NodePort')
+        else:
+            if service_type == "service":
+                svc_type['svc_type'] = cfg.get('uas_svc_type', 'ClusterIP')
+            if service_type == "ssh":
+                svc_type['svc_type'] = cfg.get('uas_ssh_type', 'NodePort')
         if svc_type['svc_type'] in ['NodePort', 'ClusterIP', 'LoadBalancer']:
             svc_type['valid'] = True
         else:
-            # Invalid svc_type given
-            svc_type['valid'] = False
+                # Invalid svc_type given
+                svc_type['valid'] = False
         return svc_type
 
