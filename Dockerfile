@@ -17,6 +17,8 @@ FROM base as testing
 
 COPY test-requirements.txt /usr/src/app/
 RUN pip3 install --no-cache-dir -r test-requirements.txt
+RUN mkdir -p /var/run/secrets/kubernetes.io/
+COPY serviceaccount/ /var/run/secrets/kubernetes.io/serviceaccount/
 ENTRYPOINT pytest --cov swagger_server
 
 #########################
