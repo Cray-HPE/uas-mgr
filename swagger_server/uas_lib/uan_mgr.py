@@ -82,21 +82,25 @@ class UanManager(object):
         external_ips = None
         ports = self.uas_cfg.gen_port_list(service_type, service=True)
         svc_type = self.uas_cfg.get_svc_type(service_type)
-        if not svc_type:
+        if not svc_type['valid']:
             # Invalid svc_type given.
-            abort(400, "Unsupported service type configured, contact sysadmin.")
-        if svc_type != "LoadBalancer":
+            msg = ("Unsupported service type '{}' configured, "
+                   "contact sysadmin. Valid service types are "
+                   "NodePort, ClusterIP, and LoadBalancer.".format(svc_type['svc_type'])
+                   )
+            abort(400, msg)
+        if svc_type['svc_type'] != "LoadBalancer":
             # Check for external IP setting
-            external_ips = self.uas_cfg.get_external_ips(svc_type)
+            external_ips = self.uas_cfg.get_external_ips(svc_type['svc_type'])
         if external_ips:
             spec = client.V1ServiceSpec(selector={'app': deployment_name},
-                                        type=svc_type,
+                                        type=svc_type['svc_type'],
                                         external_i_ps=external_ips,
                                         ports=ports
                                         )
         else:
             spec = client.V1ServiceSpec(selector={'app': deployment_name},
-                                        type=svc_type,
+                                        type=svc_type['svc_type'],
                                         ports=ports
                                         )
         service = client.V1Service(api_version="v1",
@@ -197,6 +201,15 @@ class UanManager(object):
         return resp
 
     def update_deployment(self, deployment, deployment_name, namespace):
+        """
+        This function updates the deployment of the UAI. It is done to include
+        the external IP set in the LoadBalancer service for communicating with
+        other Shasta services such as SLURM.
+        :param deployment: The original UAI deployment object
+        :param deployment_name: The UAI deployment name
+        :param namespace: The kubernetes namespace
+        :return: the response object from the deployment patching operation
+        """
         resp = None
         srv_resp = None
         srv_ext_ip = None

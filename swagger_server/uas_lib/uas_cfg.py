@@ -165,20 +165,21 @@ class UasCfg(object):
 
     def get_svc_type(self, service_type=None):
         cfg = self.get_config()
-        svc_type = None
+        svc_type = {'svc_type': None, 'valid': False}
         if not cfg:
             # Return defaults if no configuration exists
             if service_type == "service":
-                return "ClusterIP"
+                svc_type['svc_type'] = 'ClusterIP'
             if service_type == "ssh":
-                return "NodePort"
+                svc_type['svc_type'] = 'NodePort'
         if service_type == "service":
-            svc_type = cfg.get('uas_svc_type', 'ClusterIP')
+            svc_type['svc_type'] = cfg.get('uas_svc_type', 'ClusterIP')
         if service_type == "ssh":
-            svc_type = cfg.get('uas_ssh_type', 'NodePort')
-        if svc_type in ['NodePort', 'ClusterIP', 'LoadBalancer']:
-            return svc_type
+            svc_type['svc_type'] = cfg.get('uas_ssh_type', 'NodePort')
+        if svc_type['svc_type'] in ['NodePort', 'ClusterIP', 'LoadBalancer']:
+            svc_type['valid'] = True
         else:
             # Invalid svc_type given
-            return None
+            svc_type['valid'] = False
+        return svc_type
 
