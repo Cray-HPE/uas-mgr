@@ -25,3 +25,6 @@ uas_mgr:
 
   uas_ssh_type: "NodePort"
   uas_svc_type: "ClusterIP"
+
+  uas_ssh_lb_pool: "uas-ssh-ips"
+  uas_svc_lb_pool: "uas-svc-ips"
