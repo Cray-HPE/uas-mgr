@@ -34,8 +34,10 @@ class TestUasCfg(unittest.TestCase):
         self.assertEqual(False, self.uas_cfg.validate_image('not-an-image'))
 
     def test_get_external_ips(self):
-        self.assertEqual(['10.100.240.14'], self.uas_cfg.get_external_ips("NodePort"))
-        self.assertEqual(['10.100.240.24'], self.uas_cfg_svc.get_external_ips("ClusterIP"))
+        self.assertEqual(['10.100.240.14'],
+                         self.uas_cfg.get_external_ips("NodePort"))
+        self.assertEqual(['10.100.240.24'],
+                         self.uas_cfg_svc.get_external_ips("ClusterIP"))
         self.assertEqual(None, self.uas_cfg.get_external_ips("FooBar"))
 
     def test_gen_volume_mounts(self):
@@ -70,25 +72,39 @@ class TestUasCfg(unittest.TestCase):
 
     def test_gen_port_list(self):
         try:
-            self.uas_cfg.gen_port_list(service_type="NodePort", service=False)
+            self.uas_cfg.gen_port_list(service_type="ssh", service=False)
         except ExceptionType:
-            self.fail("gen_port_list() for container NodePort raised ExceptionType")
+            self.fail("gen_port_list() for container ssh raised ExceptionType")
         try:
-            self.uas_cfg.gen_port_list(service_type="NodePort", service=True)
+            self.uas_cfg.gen_port_list(service_type="ssh", service=True)
         except ExceptionType:
-            self.fail("gen_port_list() for service NodePort raised ExceptionType")
+            self.fail("gen_port_list() for service ssh raised ExceptionType")
         try:
-            self.uas_cfg.gen_port_list(service_type="ClientIP", service=False)
+            self.uas_cfg.gen_port_list(service_type="service", service=False)
         except ExceptionType:
-            self.fail("gen_port_list() for container ClientIP raised ExceptionType")
+            self.fail("gen_port_list() for container service raised ExceptionType")
         try:
-            self.uas_cfg.gen_port_list(service_type="ClientIP", service=True)
+            self.uas_cfg.gen_port_list(service_type="service", service=True)
         except ExceptionType:
-            self.fail("gen_port_list() for service ClientIP raised ExceptionType")
+            self.fail("gen_port_list() for service raised ExceptionType")
         try:
             self.uas_cfg.gen_port_list()
         except ExceptionType:
             self.fail("gen_port_list() raised ExceptionType")
+
+    def test_get_service_type(self):
+        svc_type = self.uas_cfg.get_svc_type(service_type="ssh")
+        self.assertEqual(svc_type['svc_type'], "NodePort")
+        svc_type = self.uas_cfg_empty.get_svc_type(service_type="ssh")
+        self.assertEqual(svc_type['svc_type'], "NodePort")
+        svc_type = self.uas_cfg.get_svc_type(service_type="service")
+        self.assertEqual(svc_type['svc_type'], "ClusterIP")
+        svc_type = self.uas_cfg_empty.get_svc_type(service_type="service")
+        self.assertEqual(svc_type['svc_type'], "ClusterIP")
+        svc_type = self.uas_cfg_svc.get_svc_type(service_type="ssh")
+        self.assertEqual(svc_type['svc_type'], "LoadBalancer")
+        svc_type = self.uas_cfg_svc.get_svc_type(service_type="service")
+        self.assertEqual(svc_type['svc_type'], "LoadBalancer")
 
 if __name__ == '__main__':
     unittest.main()

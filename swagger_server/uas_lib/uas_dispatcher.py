@@ -43,11 +43,6 @@ class DispatchManager(object):
                         self.uas_cfg.get_default_image()))
             return render_template('uas_error_response.html',
                                     error_msg=err_msg)
-        if not self.uas_cfg.get_external_ips("NodePort"):
-            err_msg = ('UAS misconfigured (uas_ips not set). Please contact '
-                       'your system administrator.')
-            return render_template('uas_error_response.html',
-                                   error_msg=err_msg)
 
         uan = self.uan_mgr.create_uan(username, usersshpubkey, uan_image)
         return render_template('uan_create_response.html',
