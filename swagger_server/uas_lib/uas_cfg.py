@@ -180,7 +180,7 @@ class UasCfg(object):
         if svc_type['svc_type'] in ['NodePort', 'ClusterIP', 'LoadBalancer']:
             svc_type['valid'] = True
         else:
-                # Invalid svc_type given
-                svc_type['valid'] = False
+            # Invalid svc_type given
+            svc_type['valid'] = False
         return svc_type
 
