@@ -77,6 +77,20 @@ data:
 {% endif %}
 {% endif %}
 
+    # UAS Service Load Balancer Pools
+    # This section defines the service load balancer IP pools that the UAS
+    # instance will use for user ssh and UAI service I/O.
+    # uas_ssh_lb_pool: defines the service load balancer IP pool for user ssh access to the UAI.
+    # uas_svc_lb_pool: defines the service load balancer IP for UAI service I/O connections.
+{% if uas_mgr is defined %}
+{% if uas_mgr.uas_ssh_lb_pool is defined %}
+    uas_ssh_lb_pool: "{{ uas_mgr.uas_ssh_lb_pool }}"
+{% endif %}
+{% if uas_mgr.uas_svc_lb_pool is defined %}
+    uas_svc_lb_pool: "{{ uas_mgr.uas_svc_lb_pool }}"
+{% endif %}
+{% endif %}
+
     # Volume mounts.
     # This section defines which filesystems, configmaps, and secrets will be volume
     # mounted to the UAS instance.

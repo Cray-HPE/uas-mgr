@@ -79,8 +79,16 @@ class UanManager(object):
         :type service_type: str
         :return: service object
         """
+        metadata = client.V1ObjectMeta(
+            name=service_name,
+            labels={"uai_svc": deployment_name.split("-")[0]},
+        )
         external_ips = None
         ports = self.uas_cfg.gen_port_list(service_type, service=True)
+        # svc_type is a dict with the following fields:
+        #   'svc_type': (NodePort, ClusterIP, or LoadBalancer)
+        #   'ip_pool': (None, or a specific pool)  Valid only for LoadBalancer.
+        #   'valid': (True or False) is svc_type is valid or not
         svc_type = self.uas_cfg.get_svc_type(service_type)
         if not svc_type['valid']:
             # Invalid svc_type given.
@@ -90,7 +98,7 @@ class UanManager(object):
                    )
             abort(400, msg)
         if svc_type['svc_type'] != "LoadBalancer":
-            # Check for external IP setting
+            # Check for external IP setting if not a LoadBalancer service type
             external_ips = self.uas_cfg.get_external_ips(svc_type['svc_type'])
         if external_ips:
             spec = client.V1ServiceSpec(selector={'app': deployment_name},
@@ -99,15 +107,21 @@ class UanManager(object):
                                         ports=ports
                                         )
         else:
+            # Check if LoadBalancer and whether an IP pool is set
+            if svc_type['svc_type'] == "LoadBalancer" and svc_type['ip_pool']:
+                # A specific IP pool is given, create new metadata with annotations
+                metadata = client.V1ObjectMeta(
+                    name=service_name,
+                    labels={"uai_svc": deployment_name.split("-")[0]},
+                    annotations={"metallb.universe.tf/address-pool": svc_type['ip_pool']}
+                )
             spec = client.V1ServiceSpec(selector={'app': deployment_name},
                                         type=svc_type['svc_type'],
                                         ports=ports
                                         )
         service = client.V1Service(api_version="v1",
                                    kind="Service",
-                                   metadata=client.V1ObjectMeta(
-                                        name=service_name,
-                                        labels={"uai_svc": deployment_name.split("-")[0]}),
+                                   metadata=metadata,
                                    spec=spec
                                    )
         return service

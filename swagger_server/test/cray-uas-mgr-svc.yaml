@@ -15,6 +15,9 @@ uas_svc_ports:
 uas_ssh_type: "LoadBalancer"
 uas_svc_type: "LoadBalancer"
 
+uas_ssh_lb_pool: "ssh_ip_pool"
+uas_svc_lb_pool: "svc_ip_pool"
+
 volume_mounts:
   - name: scratch
     mount_path: /scratch
