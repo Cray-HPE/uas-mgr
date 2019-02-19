@@ -1,8 +1,8 @@
-import connexion
-import six
+#
+# Copyright 2018, Cray Inc.  All Rights Reserved.
+#
 
 from swagger_server.models.versions import Versions  # noqa: E501
-from swagger_server import util
 
 
 def root_get():  # noqa: E501

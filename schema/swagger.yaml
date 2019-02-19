@@ -3,7 +3,7 @@ swagger: "2.0"
 info:
   description: "User Access Service. This service is responsible for the management\
     \ of User Access Node lifecycles."
-  version: "0.4.0"
+  version: "0.6.0"
   title: "Cray User Access Service"
 basePath: "/apis/uas-mgr/v1"
 paths:
@@ -25,100 +25,6 @@ paths:
           schema:
             $ref: "#/definitions/Versions"
       x-swagger-router-controller: "swagger_server.controllers.versions_controller"
-  /uas_access:
-    get:
-      tags:
-      - "UAS"
-      - "cli_ignore"
-      summary: "UAS home page"
-      description: "Request UAS home page"
-      operationId: "uas_request_home"
-      produces:
-      - "text/html"
-      parameters:
-      - name: "uas_request"
-        in: "query"
-        description: "User request"
-        required: false
-        type: "string"
-      - name: "uan_list"
-        in: "query"
-        description: "List of UANs to delete"
-        required: false
-        type: "array"
-        items:
-          type: "string"
-        collectionFormat: "multi"
-      responses:
-        200:
-          description: "UAS Access"
-        401:
-          description: "UAS Unauthorized"
-      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
-    post:
-      tags:
-      - "UAS"
-      - "cli_ignore"
-      summary: "Handle UAS request forms"
-      description: "Handle form data from the UAS home page"
-      operationId: "uas_request_handler"
-      consumes:
-      - "multipart/form-data"
-      produces:
-      - "text/html"
-      parameters:
-      - name: "username"
-        in: "formData"
-        description: "Users name"
-        required: false
-        type: "string"
-      - name: "usersshpubkey"
-        in: "formData"
-        description: "Public ssh key for the user"
-        required: false
-        type: "file"
-      - name: "uas_request"
-        in: "formData"
-        description: "User request"
-        required: false
-        type: "string"
-      - name: "uan_image"
-        in: "formData"
-        description: "User requested UAN image"
-        required: false
-        type: "string"
-      responses:
-        200:
-          description: "UAS operation successful"
-        401:
-          description: "UAS operation denied"
-      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
-    delete:
-      tags:
-      - "UAS"
-      - "cli_ignore"
-      summary: "Handle UAS delete form"
-      description: "Handle form data from UAS delete page"
-      operationId: "uas_delete_handler"
-      consumes:
-      - "application/x-www-form-urlencoded"
-      produces:
-      - "text/html"
-      parameters:
-      - name: "uan_list"
-        in: "query"
-        description: "List of UANs to delete"
-        required: true
-        type: "array"
-        items:
-          type: "string"
-        collectionFormat: "multi"
-      responses:
-        200:
-          description: "UAS operation successful"
-        401:
-          description: "UAS operation denied"
-      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
   /uas/{username}:
     get:
       tags:
