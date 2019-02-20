@@ -1,5 +1,5 @@
 #
-# Copyright 2018, Cray Inc.  All Rights Reserved.
+# Copyright 2019, Cray Inc.  All Rights Reserved.
 #
 
 from swagger_server.models.versions import Versions  # noqa: E501
