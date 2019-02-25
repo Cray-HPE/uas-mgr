@@ -106,11 +106,11 @@ class TestUasCfg(unittest.TestCase):
         self.assertEqual(svc_type['ip_pool'], None)
         self.assertEqual(svc_type['svc_type'], "ClusterIP")
         svc_type = self.uas_cfg_svc.get_svc_type(service_type="ssh")
-        self.assertEqual(svc_type['ip_pool'], "ssh_ip_pool")
+        self.assertEqual(svc_type['ip_pool'], "customer")
         self.assertEqual(svc_type['svc_type'], "LoadBalancer")
         svc_type = self.uas_cfg_svc.get_svc_type(service_type="service")
         self.assertEqual(svc_type['svc_type'], "LoadBalancer")
-        self.assertEqual(svc_type['ip_pool'], "svc_ip_pool")
+        self.assertEqual(svc_type['ip_pool'], "node-management")
 
 if __name__ == '__main__':
     unittest.main()
