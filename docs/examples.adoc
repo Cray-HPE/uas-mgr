@@ -1,8 +1,0 @@
-== Perform Basic Operations
-Use the WhatsMyName Services  to perform the following tasks. 
-
-=== Create 
-
-=== Modify
-
-=== View 
