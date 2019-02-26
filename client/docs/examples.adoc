@@ -1,0 +1,149 @@
+== Examples
+The Cray UAS Manager Service (UAS) API allows users to create, delete, and
+list information about the User Access Instances (UAI) that are running on
+a Shasta system.  The user can also get the current version info of the UAS
+service.
+
+In the examples below, '$GWN' is the hostname or IP address of the Shasta
+system Gateway node and the user name is "exampleuser".
+
+=== Create
+To create a UAI using the UAS, the user must supply the user name to create
+the UAI for, the ssh public key to user for authenticating the users access
+to the UAI and an optional UAI image name.  If the image name is not supplied,
+the system default UAI image will be used.
+
+.Create a UAI
+[source, bash]
+----
+$ curl -k -i -X POST "https://$GWN/apis/uas-mgr/v1/uas?username=<username>&imagename=<image_name>" -F  "usersshpubkey=@<path_to_id_rsa.pub_key>"
+----
+
+.output
+[source]
+----
+HTTP/1.1 100 Continue
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 297
+Connection: keep-alive
+Server: Werkzeug/0.14.1 Python/3.7.2
+Date: Tue, 26 Feb 2019 17:14:05 GMT
+X-Kong-Upstream-Latency: 1367
+X-Kong-Proxy-Latency: 0
+Via: kong/0.14.1
+
+{
+  "uan_connect_string": "ssh exampleuser@172.30.52.69 -p 16325 -i ~/.ssh/id_rsa",
+  "uan_img": "sms.local:5000/cray/cray-uas-img:latest",
+  "uan_ip": "172.30.52.69",
+  "uan_msg": "ContainerCreating",
+  "uan_name": "exampleuser-2803b6e4",
+  "uan_port": 16325,
+  "uan_status": "Waiting",
+  "username": "exampleuser"
+}
+----
+
+=== Delete
+To delete a UAI using the UAS, the user must supply a list of UAIs to delete.
+The UAI name is the value of the 'uan_name' element when listing available
+UAIs.
+
+.Delete a UAI
+[source, bash]
+----
+$ curl -k -i -X DELETE "https://$GWN/uas-mgr/apis/v1/uas?uan_list=<uan_name>
+----
+
+.output
+[source]
+----
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 22
+Connection: keep-alive
+Server: Werkzeug/0.14.1 Python/3.7.2
+Date: Tue, 26 Feb 2019 17:21:14 GMT
+X-Kong-Upstream-Latency: 644
+X-Kong-Proxy-Latency: 1
+Via: kong/0.14.1
+
+[
+  "exampleuser-2803b6e4"
+]
+----
+
+=== View 
+To list available UAI using the UAS, the user must supply the user name for
+the UAIs.  This example shows the exampleuser has two UAIs running.
+
+.List available UAIs for a given user
+[source, bash]
+----
+$ curl -k -i -X GET "https://$GWN/uas-mgr/apis/v1/uas/<username>
+----
+
+.output
+[source]
+----
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 581
+Connection: keep-alive
+Server: Werkzeug/0.14.1 Python/3.7.2
+Date: Tue, 26 Feb 2019 17:18:57 GMT
+X-Kong-Upstream-Latency: 366
+X-Kong-Proxy-Latency: 3
+Via: kong/0.14.1
+
+[
+  {
+    "uan_connect_string": "ssh exampleuser@172.30.52.69 -p 16325 -i ~/.ssh/id_rsa",
+    "uan_img": "sms.local:5000/cray/cray-uas-img:latest",
+    "uan_ip": "172.30.52.69",
+    "uan_name": "exampleuser-2803b6e4",
+    "uan_port": 16325,
+    "uan_status": "Running: Ready",
+    "username": "exampleuser"
+  },
+  {
+    "uan_connect_string": "ssh exampleuser@172.30.52.69 -p 32117 -i ~/.ssh/id_rsa",
+    "uan_img": "sms.local:5000/cray/cray-uas-img:latest",
+    "uan_ip": "172.30.52.69",
+    "uan_name": "exampleuser-9e829eff",
+    "uan_port": 32117,
+    "uan_status": "Running: Ready",
+    "username": "exampleuser"
+  }
+]
+----
+
+=== Get UAS version
+The uas_mgr_info endpoint provides UAS version information.
+
+.Get UAS version info
+[source, bash]
+----
+$ curl -k -i -X GET "https://$GWN/uas-mgr/apis/v1/uas_mgr_info
+----
+
+.output
+[source]
+----
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 59
+Connection: keep-alive
+Server: Werkzeug/0.14.1 Python/3.7.2
+Date: Tue, 26 Feb 2019 17:27:43 GMT
+X-Kong-Upstream-Latency: 6
+X-Kong-Proxy-Latency: 2
+Via: kong/0.14.1
+
+{
+  "service_name": "cray-uas-mgr",
+  "version": "0.6.0"
+}
+----

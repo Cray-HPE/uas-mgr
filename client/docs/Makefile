@@ -1,7 +1,6 @@
-SDIR:=$(strip $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))/../api)
+SDIR:=$(strip $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))/../../api)
 ODIR:=$(strip $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
 DIR:=$(strip $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
-
 
 all: checkout build
 
@@ -14,4 +13,4 @@ build:
 	docker run -v $(DIR):/docs -v $(ODIR):/build create-pdf  --doctype book /docs/index.adoc -D /build
 
 clean:
-	rm *.pdf *.html overview.adoc security.adoc definitions.adoc paths.adoc 
+	rm *.pdf *.html overview.adoc security.adoc definitions.adoc paths.adoc
