@@ -1,12 +1,8 @@
 ---
-uas_ips:
-  - 10.100.240.14
+uas_ip: 10.100.240.14
 
 uas_ports:
   - 30123
-
-uas_svc_ips:
-  - 10.100.240.24
 
 uas_svc_ports:
   - 1026

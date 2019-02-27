@@ -1,0 +1,7 @@
+---
+- hosts: managers
+  gather_facts: no
+  vars_files:
+    - "customer_var.yml"
+  roles:
+    - cray_uas_mgr_localize

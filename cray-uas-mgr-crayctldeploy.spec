@@ -7,7 +7,7 @@
 Name: cray-uas-mgr-crayctldeploy
 License: Cray Software License Agreement
 Summary: User Access Service Manager Deployment
-Version: 0.7.0
+Version: 0.8.0
 Release: 1
 Source: %{name}-%{version}.tar.bz2
 Vendor: Cray Inc.
@@ -24,6 +24,7 @@ Requires: kubernetes-crayctldeploy
 %files
 %dir /opt/cray/crayctl
 %{ansible_dir}
+%dir %{ansible_dir}/customer_runbooks
 
 %prep
 %setup -q
@@ -34,7 +35,9 @@ Requires: kubernetes-crayctldeploy
 
 # Install ansible files
 install -m 755 -d %{buildroot}%{ansible_dir}
+install -m 755 -d %{buildroot}%{ansible_dir}/customer_runbooks
 cp -R ansible/roles %{buildroot}%{ansible_dir}/
 cp -R ansible/main %{buildroot}%{ansible_dir}/
+cp -R ansible/roles/cray_uas_mgr_localize/files/uas-mgr.yml %{buildroot}%{ansible_dir}/customer_runbooks/
 
 %changelog

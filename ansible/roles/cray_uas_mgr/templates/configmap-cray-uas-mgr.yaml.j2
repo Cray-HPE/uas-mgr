@@ -15,26 +15,7 @@ data:
     # UAS Instance IP/hostname.
     # This section defines the external IP/hostname that UAS instance access
     # will use.
-    uas_ips:
-{% if gateways is defined %}
-{% if gateways.user_gw is defined %}
-{% for item in gateways.user_gw %}
-      - {{ item }}
-{% endfor %}
-{% endif %}
-{% endif %}
-
-    # UAS Service IP/hostname.
-    # This section defines the external IP/hostname that UAS instance services
-    # will use.
-    uas_svc_ips:
-{% if gateways is defined %}
-{% if gateways.user_svc_ips is defined %}
-{% for item in gateways.user_svc_ips %}
-      - {{ item }}
-{% endfor %}
-{% endif %}
-{% endif %}
+    # uas_ip: UAS Instance IP
 
     # UAS Ports
     # This section defines the ports that the UAS instance services will expose
