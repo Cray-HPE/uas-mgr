@@ -11,4 +11,12 @@ cray_uas_mgr_port: "8080"
 cray_uas_mgr_configmap: "cray-uas-mgr-cfgmap"
 
 # User Access Image configuration
-cray_uas_img_image_version: "latest"
+cray_uas_centos75_version: "latest"
+cray_uas_sles12sp3_version: "latest"
+cray_uas_sles15_version: "latest"
+
+# Slurm configuration
+slurm_configmap: "slurm-map"
+munge_secret: "munge-secret"
+srun_port_range_start: "30500"
+srun_port_range_end: "30505"
