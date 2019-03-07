@@ -135,7 +135,6 @@ paths:
             type: "object"
       x-swagger-router-controller: "swagger_server.controllers.uas_controller"
   /mgr-info:
-  /uas-mgr-info:
     get:
       tags:
       - "UAS"
