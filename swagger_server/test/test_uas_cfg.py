@@ -33,12 +33,9 @@ class TestUasCfg(unittest.TestCase):
     def test_validate_image_false(self):
         self.assertEqual(False, self.uas_cfg.validate_image('not-an-image'))
 
-    def test_get_external_ips(self):
-        self.assertEqual(['10.100.240.14'],
-                         self.uas_cfg.get_external_ips("NodePort"))
-        self.assertEqual(['10.100.240.24'],
-                         self.uas_cfg_svc.get_external_ips("ClusterIP"))
-        self.assertEqual(None, self.uas_cfg.get_external_ips("FooBar"))
+    def test_get_external_ip(self):
+        self.assertEqual('10.100.240.14',
+                         self.uas_cfg.get_external_ip())
 
     def test_gen_volume_mounts(self):
         try:

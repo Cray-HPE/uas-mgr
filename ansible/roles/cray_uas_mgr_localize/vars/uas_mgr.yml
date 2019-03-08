@@ -1,0 +1,3 @@
+---
+uas_mgr:
+  uas_ip: "{{ gwn_ipv4 }}"

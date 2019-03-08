@@ -83,7 +83,7 @@ class UanManager(object):
             name=service_name,
             labels={"uai_svc": deployment_name.split("-")[0]},
         )
-        external_ips = None
+        external_ip = None
         ports = self.uas_cfg.gen_port_list(service_type, service=True)
         # svc_type is a dict with the following fields:
         #   'svc_type': (NodePort, ClusterIP, or LoadBalancer)
@@ -97,13 +97,13 @@ class UanManager(object):
                    "NodePort, ClusterIP, and LoadBalancer.".format(svc_type['svc_type'])
                    )
             abort(400, msg)
-        if svc_type['svc_type'] != "LoadBalancer":
-            # Check for external IP setting if not a LoadBalancer service type
-            external_ips = self.uas_cfg.get_external_ips(svc_type['svc_type'])
-        if external_ips:
+        if svc_type['svc_type'] == "NodePort":
+            # Check for external IP setting if NodePort service type
+            external_ip = self.uas_cfg.get_external_ip()
+        if external_ip:
             spec = client.V1ServiceSpec(selector={'app': deployment_name},
                                         type=svc_type['svc_type'],
-                                        external_i_ps=external_ips,
+                                        external_i_ps=[external_ip],
                                         ports=ports
                                         )
         else:

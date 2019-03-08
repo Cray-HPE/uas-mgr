@@ -59,12 +59,9 @@ class UasCfg(object):
         else:
             return False
 
-    def get_external_ips(self, service_type):
+    def get_external_ip(self):
         """
-        This function returns external ips for either the "NodePort" or
-        ClusterIP service types.
-        :param service_type: Either "NodePort" or "ClusterIP"
-        :type service_type: str
+        This function returns external ip for "NodePort" services
         :return: external IP address
         :rtype str
         """
@@ -73,10 +70,7 @@ class UasCfg(object):
         if not cfg:
             return ext_ip
         try:
-            if service_type == "NodePort":
-                ext_ip = cfg['uas_ips']
-            if service_type == "ClusterIP":
-                ext_ip = cfg['uas_svc_ips']
+            ext_ip = cfg['uas_ip']
         except KeyError:
             ext_ip = None
         return ext_ip

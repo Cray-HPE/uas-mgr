@@ -1,0 +1,20 @@
+# cray-uas-mgr localization ansible play
+# Copyright 2019, Cray Inc. All Rights Reserved.
+---
+- name: Include uas_mgr.yml
+  include_vars: uas_mgr.yml
+  run_once: true
+
+- name: insert/update configmap using a local file
+  lineinfile:
+    regexp: '^ {4}uas_ip:'
+    line: '    uas_ip: {{ gwn_ipv4 }}'
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
+    insertafter: "# uas_ip: UAS Instance IP"
+  run_once: True
+
+- name: Apply the cray-uas-mgr configmap yaml
+  command: kubectl apply -f /root/k8s/configmap-cray-uas-mgr.yaml
+  register: kubectl_result
+  changed_when: kubectl_result.stdout.find('created') != -1 or kubectl_result.stdout.find('configured') != -1
+  run_once: True
