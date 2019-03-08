@@ -1,0 +1,6 @@
+.tox/
+cray_uas_mgr.egg-info/
+swagger_server/__pycache__/
+swagger_server/controllers/__pycache__/
+swagger_server/models/__pycache__/
+swagger_server/uas_lib/__pycache__/
