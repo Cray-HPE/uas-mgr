@@ -1,4 +1,4 @@
-# Copyright 2018, Cray Inc. All Rights Reserved.
+# Copyright 2019, Cray Inc. All Rights Reserved.
 ---
 # cray-uas-mgr configuration
 #
@@ -12,8 +12,3 @@ cray_uas_mgr_configmap: "cray-uas-mgr-cfgmap"
 
 # User Access Image configuration
 cray_uas_img_image_version: "latest"
-
-# Default gwn_ipv4 to an empty string, if not defined.
-# This allows the system to installed and localization to set the real value in
-# a subsequent step.
-gwn_ipv4:
