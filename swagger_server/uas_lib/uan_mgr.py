@@ -81,7 +81,7 @@ class UanManager(object):
         """
         metadata = client.V1ObjectMeta(
             name=service_name,
-            labels={"uai_svc": deployment_name.split("-")[0]},
+            labels=self.gen_labels(deployment_name),
         )
         external_ip = None
         ports = self.uas_cfg.gen_port_list(service_type, service=True)
@@ -112,7 +112,7 @@ class UanManager(object):
                 # A specific IP pool is given, create new metadata with annotations
                 metadata = client.V1ObjectMeta(
                     name=service_name,
-                    labels={"uai_svc": deployment_name.split("-")[0]},
+                    labels=self.gen_labels(deployment_name),
                     annotations={"metallb.universe.tf/address-pool": svc_type['ip_pool']}
                 )
             spec = client.V1ServiceSpec(selector={'app': deployment_name},
@@ -187,7 +187,7 @@ class UanManager(object):
 
         # Create and configure a spec section
         template = client.V1PodTemplateSpec(
-            metadata=client.V1ObjectMeta(labels={"app": deployment_name}),
+            metadata=client.V1ObjectMeta(labels=self.gen_labels(deployment_name)),
             spec=client.V1PodSpec(containers=[container],
                                   affinity=affinity,
                                   volumes=volumes))
@@ -199,7 +199,8 @@ class UanManager(object):
         deployment = client.ExtensionsV1beta1Deployment(
             api_version="extensions/v1beta1",
             kind="Deployment",
-            metadata=client.V1ObjectMeta(name=deployment_name),
+            metadata=client.V1ObjectMeta(name=deployment_name,
+                                         labels=self.gen_labels(deployment_name)),
             spec=spec)
         return deployment
 
@@ -335,6 +336,9 @@ class UanManager(object):
                                    uan.uan_ip,
                                    uan.uan_port))
         return uan
+
+    def gen_labels(self, deployment_name):
+        return {"app": deployment_name, "uas": "managed"}
 
     def create_uan(self, username, usersshpubkey, imagename, namespace='default'):
         if not username:
