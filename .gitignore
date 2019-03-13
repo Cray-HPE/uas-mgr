@@ -1,0 +1,3 @@
+.tox/
+cray_uas_mgr.egg-info/
+**/__pycache__
