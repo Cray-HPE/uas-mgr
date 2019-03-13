@@ -40,6 +40,7 @@
   when: item is defined
   with_items:
     - "{{ uas_default_img }}"
+  run_once: True
 
 - name: Ensure default UAS image is in image list
   lineinfile:
