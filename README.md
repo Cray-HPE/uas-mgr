@@ -30,7 +30,7 @@ git clone https://<username>@stash.us.cray.com/scm/uan/uan-mgr.git
 cd uan-mgr
 ```
 
-## Usage
+## Local Usage
 To run the service locally, please execute the following from the
 *uan-mgr* directory:
 
@@ -42,14 +42,10 @@ python3 -m swagger_server
 and open your browser to here:
 
 ```
-http://localhost:8080/v1/uas_access
+http://localhost:8080/v1/mgr-info
 ```
 
-Your Swagger definition lives here:
-
-```
-http://localhost:8080/swagger.json
-```
+## Running the Integration Tests
 
 To launch the integration tests, use tox:
 ```
