@@ -47,7 +47,8 @@
     line: '        - "{{ item }}"'
     dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
     insertafter: "images:"
-  loop: "{{ uas_default_img }}"
+  with_items:
+    - "{{ uas_default_img }}"
   when: item is defined
   run_once: True
 
