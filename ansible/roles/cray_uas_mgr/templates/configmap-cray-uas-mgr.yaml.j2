@@ -24,7 +24,7 @@ data:
 {% if uas_mgr is defined %}
 {% if uas_mgr.uas_ports is defined %}
 {% for item in uas_mgr.uas_ports %}
-      - {{ item }}
+      - {{ item }} # DO NOT DELETE!
 {% endfor %}
 {% else %}
       - 30123
