@@ -84,3 +84,21 @@ def get_uas_mgr_info():  # noqa: E501
         'version': version
     }
     return uas_mgr_info
+
+def get_all_uais():  # noqa: E501
+    """List all UAIs
+    :rtype: List[UAN]
+    """
+    username = "all_uais"
+    uan_mgr = UanManager()
+    uan_resp = uan_mgr.list_uans_for_user(username)
+    return uan_resp
+
+def delete_all_uais():  # noqa: E501
+    """Delete all UAIs
+    :rtype: UAN
+    """
+    uan_list = []
+    uan_mgr = UanManager()
+    uan_resp = uan_mgr.delete_uans(uan_list)
+    return uan_resp

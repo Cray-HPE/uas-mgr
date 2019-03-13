@@ -3,7 +3,7 @@ swagger: "2.0"
 info:
   description: "User Access Service. This service is responsible for the management\
     \ of User Access Node lifecycles."
-  version: "0.7.0"
+  version: "0.8.0"
   title: "Cray User Access Service"
 basePath: "/apis/uas-mgr/v1"
 paths:
@@ -106,6 +106,7 @@ paths:
         items:
           type: "string"
         collectionFormat: "csv"
+        description: "comma separated list of UAN names"
       responses:
         200:
           description: "UANs deleted"
@@ -155,6 +156,45 @@ paths:
           description: "UAS-MGR Info not found"
           schema:
             type: "object"
+      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+  /uais:
+    get:
+      tags:
+      - "UAS"
+      summary: "List all UAIs on the system"
+      description: "List all UAIs on the system"
+      operationId: "get_all_uais"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "UAS Instance List"
+          schema:
+            type: "object"
+        404:
+          description: "No UAS Instances found"
+          schema:
+            type: "object"
+      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+    delete:
+      tags:
+      - "UAS"
+      summary: "Delete all UAIs on the system"
+      description: "Delete all UAIs on the system"
+      operationId: "delete_all_uais"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "All UAS Instances Deleted"
+        404:
+          description: "No UAS Instances found"
       x-swagger-router-controller: "swagger_server.controllers.uas_controller"
 definitions:
   Versions:
