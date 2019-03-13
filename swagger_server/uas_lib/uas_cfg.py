@@ -27,7 +27,7 @@ class UasCfg(object):
     def get_config(self):
         try:
             with open(self.uas_cfg) as uascfg:
-                return yaml.load(uascfg)
+                return yaml.load(uascfg, Loader=yaml.FullLoader)
         except (TypeError, IOError):
             abort(404, "configmap %s not found" % self.uas_cfg)
 
