@@ -36,7 +36,7 @@
   lineinfile:
     regexp: '^ {6}default_image'
     line: '      default_image: "{{ item }}"'
-    dest: "/Users/keopp/scratch/cray-uas-mgr-test/configmap-cray-uas-mgr.ya    ml"
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
   when: item is defined
   with_items:
     - "{{ uas_default_img }}"
