@@ -147,7 +147,7 @@ class UasCfg(object):
                     if isinstance(port, str):
                         raise ValueError("uas_ports does not support ranges")
             except KeyError:
-                cfg_port_list = [UAS_CFG_DEFAULT_PORT]
+                cfg_port_list = self.get_default_port()
 
         for port in cfg_port_list:
             # check if a port range was given
@@ -189,18 +189,27 @@ class UasCfg(object):
         return svc_type
 
     def get_default_port(self):
+        """
+        getter for the default UAS port
+        :return: UAS default port
+        :rtype int
+        """
         cfg = self.get_config()
         if not cfg:
             return None
-
         return UAS_CFG_DEFAULT_PORT
 
     def create_readiness_probe(self):
+        """
+        Creates a k8s readiness check object for use during container launch
+        :return: k8s V1Probe
+        :rtype object
+        """
         cfg = self.get_config()
         try:
             cfg_port_list = cfg['uas_ports']
         except KeyError:
-            cfg_port_list = [UAS_CFG_DEFAULT_PORT]
+            cfg_port_list = self.get_default_port()
         # XXX - pick first port, switch when the uas_ports type is changed
         socket = client.V1TCPSocketAction(port=cfg_port_list[0])
         return client.V1Probe(initial_delay_seconds=2,
