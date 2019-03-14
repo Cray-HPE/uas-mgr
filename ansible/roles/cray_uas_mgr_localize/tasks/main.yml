@@ -5,12 +5,166 @@
   include_vars: uas_mgr.yml
   run_once: true
 
-- name: insert/update configmap using a local file
+- name: Localizing UAS IP
   lineinfile:
     regexp: '^ {4}uas_ip:'
     line: '    uas_ip: {{ gwn_ipv4 }}'
     dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
     insertafter: "# uas_ip: UAS Instance IP"
+  run_once: True
+
+- name: Removing unwanted UAS service ports
+  lineinfile:
+    line: '      - "{{ item }}"'
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
+    state: absent
+  loop: "{{ delete_uas_svc_ports }}"
+  when: item is defined
+  run_once: True
+
+- name: Adding new UAS service ports
+  lineinfile:
+    regexp: '      - "{{ item }}"'
+    line: '      - "{{ item }}"'
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
+    insertafter: "uas_svc_ports:"
+  loop: "{{ add_uas_svc_ports }}"
+  when: item is defined
+  run_once: True
+
+- name: Setting default UAS image
+  lineinfile:
+    regexp: '^ {6}default_image'
+    line: '      default_image: "{{ item }}"'
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
+  when: item is defined
+  with_items:
+    - "{{ uas_default_img }}"
+  run_once: True
+
+- name: Ensure default UAS image is in image list
+  lineinfile:
+    regexp: '^ {8}- "{{ item }}"'
+    line: '        - "{{ item }}"'
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
+    insertafter: "images:"
+  with_items:
+    - "{{ uas_default_img }}"
+  when: item is defined
+  run_once: True
+
+- name: Removing unwanted UAS images
+  lineinfile:
+    line: '        - "{{ item }}"'
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
+    state: absent
+  loop: "{{ delete_uas_imgs }}"
+  when: item is defined
+  run_once: True
+
+- name: Adding UAS images
+  lineinfile:
+    regexp: '^ {8}- "{{ item }}"'
+    line: '        - "{{ item }}"'
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
+    insertafter: "images:"
+  loop: "{{ add_uas_imgs }}"
+  when: item is defined
+  run_once: True
+
+- name: Removing unwanted UAS volume mounts (remove mount name)
+  lineinfile:
+    line: '      - name: {{ item.name }}'
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
+    state: absent
+  loop: "{{ delete_uas_volume_mounts }}"
+  when: item is defined and item.name is defined
+  run_once: True
+
+- name: Removing unwanted UAS volume mounts (remove mount_path)
+  lineinfile:
+    line: '        mount_path: {{ item.mount_path }}'
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
+    state: absent
+  loop: "{{ delete_uas_volume_mounts }}"
+  when: item is defined and item.mount_path is defined
+  run_once: True
+
+- name: Removing unwanted UAS volume mounts (remove host_path)
+  lineinfile:
+    line: '        host_path: {{ item.host_path }}'
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
+    state: absent
+  loop: "{{ delete_uas_volume_mounts }}"
+  when: item is defined and item.host_path is defined
+  run_once: True
+
+- name: Removing unwanted UAS volume mounts (remove config_map)
+  lineinfile:
+    line: '        config_map: {{ item.config_map }}'
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
+    state: absent
+  loop: "{{ delete_uas_volume_mounts }}"
+  when: item is defined and item.config_map is defined
+  run_once: True
+
+- name: Removing unwanted UAS volume mounts (remove secret_name)
+  lineinfile:
+    line: '        secret_name: {{ item.secret_name }}'
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
+    state: absent
+  loop: "{{ delete_uas_volume_mounts }}"
+  when: item is defined and item.secret_name is defined
+  run_once: True
+
+- name: Adding UAS volume mounts (add mount name)
+  lineinfile:
+    regexp: '^ {6}- name: {{ item.name }}'
+    line: '      - name: {{ item.name }}'
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
+    insertafter: "volume_mounts:"
+  loop: "{{ add_uas_volume_mounts }}"
+  when: item is defined and item.name is defined
+  run_once: True
+
+- name: Adding UAS volume mounts (add mount_path)
+  lineinfile:
+    regexp: '^ {8}mount_path: {{ item.mount_path }}'
+    line: '        mount_path: {{ item.mount_path }}'
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
+    insertafter: "- name: {{ item.name }}"
+  loop: "{{ add_uas_volume_mounts }}"
+  when: item is defined and item.mount_path is defined
+  run_once: True
+
+- name: Adding UAS volume mounts (add host_path)
+  lineinfile:
+    regexp: '^ {8}host_path: {{ item.host_path }}'
+    line: '        host_path: {{ item.host_path }}'
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
+    insertafter: "mount_path: {{ item.mount_path }}"
+  loop: "{{ add_uas_volume_mounts }}"
+  when: item is defined and item.host_path is defined
+  run_once: True
+
+- name: Adding UAS volume mounts (add configmap)
+  lineinfile:
+    regexp: '^ {8}config_map: {{ item.config_map }}'
+    line: '        config_map: {{ item.config_map }}'
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
+    insertafter: "mount_path: {{ item.mount_path }}"
+  loop: "{{ add_uas_volume_mounts }}"
+  when: item is defined and item.config_map is defined
+  run_once: True
+
+- name: Adding UAS volume mounts (add secret_name)
+  lineinfile:
+    regexp: '^ {8}secret_name: {{ item.secret_name }}'
+    line: '        secret_name: {{ item.secret_name }}'
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
+    insertafter: "mount_path: {{ item.mount_path }}"
+  loop: "{{ add_uas_volume_mounts }}"
+  when: item is defined and item.secret_name is defined
   run_once: True
 
 - name: Apply the cray-uas-mgr configmap yaml
