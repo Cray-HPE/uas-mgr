@@ -291,7 +291,9 @@ class UanManager(object):
                             if s.state.running:
                                 for c in pod.status.conditions:
                                     if c.type == 'Ready':
-                                        if c.status == 'True':
+                                        if pod.metadata.deletion_timestamp:
+                                            uan.uan_status = 'Terminating'
+                                        elif c.status == 'True':
                                             uan.uan_status = 'Running: Ready'
                                         else:
                                             uan.uan_status = 'Running: Not Ready'
