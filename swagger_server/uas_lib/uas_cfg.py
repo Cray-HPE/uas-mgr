@@ -194,9 +194,6 @@ class UasCfg(object):
         :return: UAS default port
         :rtype int
         """
-        cfg = self.get_config()
-        if not cfg:
-            return None
         return UAS_CFG_DEFAULT_PORT
 
     def create_readiness_probe(self):
