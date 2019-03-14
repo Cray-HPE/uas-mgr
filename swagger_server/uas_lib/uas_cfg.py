@@ -13,6 +13,7 @@ from flask import abort
 from kubernetes import client
 
 UAS_CFG_LOGGER = logging.getLogger('uas_cfg')
+UAS_CFG_DEFAULT_PORT = 30123
 
 
 class UasCfg(object):
@@ -141,8 +142,13 @@ class UasCfg(object):
         else:
             try:
                 cfg_port_list = cfg['uas_ports']
+                for port in cfg_port_list:
+                    # check if a port range was given
+                    if isinstance(port, str):
+                        raise ValueError("uas_ports does not support ranges")
             except KeyError:
-                cfg_port_list = [30123]
+                cfg_port_list = self.get_default_port()
+
         for port in cfg_port_list:
             # check if a port range was given
             if isinstance(port, str):
@@ -182,3 +188,27 @@ class UasCfg(object):
             svc_type['valid'] = False
         return svc_type
 
+    def get_default_port(self):
+        """
+        getter for the default UAS port
+        :return: UAS default port
+        :rtype int
+        """
+        return UAS_CFG_DEFAULT_PORT
+
+    def create_readiness_probe(self):
+        """
+        Creates a k8s readiness check object for use during container launch
+        :return: k8s V1Probe
+        :rtype object
+        """
+        cfg = self.get_config()
+        try:
+            cfg_port_list = cfg['uas_ports']
+        except KeyError:
+            cfg_port_list = self.get_default_port()
+        # XXX - pick first port, switch when the uas_ports type is changed
+        socket = client.V1TCPSocketAction(port=cfg_port_list[0])
+        return client.V1Probe(initial_delay_seconds=2,
+                              period_seconds=3,
+                              tcp_socket=socket)

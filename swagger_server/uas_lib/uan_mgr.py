@@ -174,7 +174,8 @@ class UanManager(object):
                      name='UAS_PUBKEY',
                      value=usersshpubkey.read().decode())],
             ports=self.uas_cfg.gen_port_list(service=False),
-            volume_mounts=self.uas_cfg.gen_volume_mounts())
+            volume_mounts=self.uas_cfg.gen_volume_mounts(),
+            readiness_probe=self.uas_cfg.create_readiness_probe())
         # Create a volumes template
         volumes = self.uas_cfg.gen_volumes()
 
