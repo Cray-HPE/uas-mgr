@@ -3,7 +3,7 @@ swagger: "2.0"
 info:
   description: "User Access Service. This service is responsible for the management\
     \ of User Access Node lifecycles."
-  version: "0.8.0"
+  version: "0.9.0"
   title: "Cray User Access Service"
 basePath: "/apis/uas-mgr/v1"
 paths:
@@ -197,49 +197,6 @@ paths:
           description: "No UAS Instances found"
       x-swagger-router-controller: "swagger_server.controllers.uas_controller"
 definitions:
-  Versions:
-    type: "object"
-    required:
-    - "versions"
-    properties:
-      versions:
-        type: "array"
-        items:
-          $ref: "#/definitions/Versions_versions"
-    example:
-      versions:
-      - patch: 0
-        major: 1
-        minor: 0
-        id: "v1/"
-      - patch: 0
-        major: 1
-        minor: 0
-        id: "v1/"
-  Versions_versions:
-    required:
-    - "id"
-    - "major"
-    - "minor"
-    - "patch"
-    properties:
-      id:
-        type: "string"
-        example: "v1/"
-      major:
-        type: "integer"
-        example: 1
-      minor:
-        type: "integer"
-        example: 0
-      patch:
-        type: "integer"
-        example: 0
-    example:
-      patch: 0
-      major: 1
-      minor: 0
-      id: "v1/"
   UAN:
     type: "object"
     properties:
