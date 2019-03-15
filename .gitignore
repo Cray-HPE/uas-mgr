@@ -1,3 +1,4 @@
 .tox/
 cray_uas_mgr.egg-info/
 **/__pycache__
+.vscode/
