@@ -399,6 +399,15 @@ class UanManager(object):
         return uan_info
 
     def list_uans_for_user(self, username, namespace='default'):
+        """
+        Lists the UAIs for the given username.
+        If username is None, it will list all UAIs.
+
+        :param username: username of UAIs to list. If None, list all UAIs.
+        :type username: str
+        :return: List of UAI information.
+        :rtype: list
+        """
         resp = None
         uan_list = []
         try:
@@ -408,7 +417,7 @@ class UanManager(object):
             if e.status != 404:
                 abort(e.status, "Failed to get deployment list")
         for deployment in resp.items:
-            if username == 'all_uais':
+            if not username:
                 if "uas" in deployment.metadata.labels:
                     if deployment.metadata.labels['uas'] == "managed":
                         uan_list.append(self.get_pod_info(deployment.metadata.name))
@@ -418,10 +427,19 @@ class UanManager(object):
         return uan_list
 
     def delete_uans(self, deployment_list, namespace='default'):
+        """
+        Deletes the UAIs named in deployment_list.
+        If deployment_list is empty, it will delete all UAIs.
+
+        :param deployment_list: List of UAI names to delete. If empty, delete all UAIs.
+        :type deployment_list: list
+        :return: List of UAIs deleted.
+        :rtype: list
+        """
         resp_list = []
         uan_list = []
         if len(deployment_list) == 0:
-            uan_list = self.list_uans_for_user("all_uais")
+            uan_list = self.list_uans_for_user(None)
             for uan in uan_list:
                 deployment_list.append(uan.uan_name)
         for d in deployment_list:
