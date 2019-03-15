@@ -41,6 +41,8 @@ def delete_uan_by_name(uan_list):  # noqa: E501
 
     :rtype: UAN
     """
+    if len(uan_list) == 0:
+        return "Must provide a list of UAI names to delete."
     uan_mgr = UanManager()
     uan_resp = uan_mgr.delete_uans(uan_list)
     return uan_resp
@@ -55,6 +57,8 @@ def get_uans_for_username(username):  # noqa: E501
 
     :rtype: List[UAN]
     """
+    if not username:
+        return "Must provide username to list UAIs for user."
     uan_mgr = UanManager()
     uan_resp = uan_mgr.list_uans_for_user(username)
     return uan_resp
@@ -84,3 +88,21 @@ def get_uas_mgr_info():  # noqa: E501
         'version': version
     }
     return uas_mgr_info
+
+def get_all_uais():  # noqa: E501
+    """List all UAIs
+    :rtype: List[UAN]
+    """
+    username = None
+    uan_mgr = UanManager()
+    uan_resp = uan_mgr.list_uans_for_user(username)
+    return uan_resp
+
+def delete_all_uais():  # noqa: E501
+    """Delete all UAIs
+    :rtype: UAN
+    """
+    uan_list = []
+    uan_mgr = UanManager()
+    uan_resp = uan_mgr.delete_uans(uan_list)
+    return uan_resp

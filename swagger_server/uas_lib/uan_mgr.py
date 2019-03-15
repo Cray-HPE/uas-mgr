@@ -273,7 +273,7 @@ class UanManager(object):
     def get_pod_info(self, deployment_name, namespace='default'):
         pod_resp = None
         uan = UAN()
-        uan.username = deployment_name.split('-')[0]
+        uan.username = deployment_name.split('-')[1]
         try:
             pod_resp = self.api.list_namespaced_pod(namespace=namespace,
                                                     include_uninitialized=True)
@@ -355,7 +355,7 @@ class UanManager(object):
                   % (imagename, self.uas_cfg.get_images(),
                      self.uas_cfg.get_default_image()))
         deployment_id = uuid.uuid4().hex[:8]
-        deployment_name = username + '-' + str(deployment_id)
+        deployment_name = 'uai-' + username + '-' + str(deployment_id)
         deployment = self.create_deployment_object(username, deployment_name,
                                                    imagename, usersshpubkey,
                                                    namespace)
@@ -399,6 +399,15 @@ class UanManager(object):
         return uan_info
 
     def list_uans_for_user(self, username, namespace='default'):
+        """
+        Lists the UAIs for the given username.
+        If username is None, it will list all UAIs.
+
+        :param username: username of UAIs to list. If None, list all UAIs.
+        :type username: str
+        :return: List of UAI information.
+        :rtype: list
+        """
         resp = None
         uan_list = []
         try:
@@ -408,12 +417,31 @@ class UanManager(object):
             if e.status != 404:
                 abort(e.status, "Failed to get deployment list")
         for deployment in resp.items:
-            if deployment.metadata.name.startswith(username + "-"):
-                uan_list.append(self.get_pod_info(deployment.metadata.name))
+            if not username:
+                if "uas" in deployment.metadata.labels:
+                    if deployment.metadata.labels['uas'] == "managed":
+                        uan_list.append(self.get_pod_info(deployment.metadata.name))
+            else:
+                if deployment.metadata.name.startswith("uai-" + username + "-"):
+                    uan_list.append(self.get_pod_info(deployment.metadata.name))
         return uan_list
 
     def delete_uans(self, deployment_list, namespace='default'):
+        """
+        Deletes the UAIs named in deployment_list.
+        If deployment_list is empty, it will delete all UAIs.
+
+        :param deployment_list: List of UAI names to delete. If empty, delete all UAIs.
+        :type deployment_list: list
+        :return: List of UAIs deleted.
+        :rtype: list
+        """
         resp_list = []
+        uan_list = []
+        if len(deployment_list) == 0:
+            uan_list = self.list_uans_for_user(None)
+            for uan in uan_list:
+                deployment_list.append(uan.uan_name)
         for d in deployment_list:
             self.delete_deployment(d, namespace)
             self.delete_service(d + "-ssh", namespace)
