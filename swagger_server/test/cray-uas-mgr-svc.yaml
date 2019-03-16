@@ -6,7 +6,7 @@ uas_ports:
 
 uas_svc_ports:
   - 1026
-  - "30500:30506"
+  - "30500:30503"
 
 uas_ssh_type: "LoadBalancer"
 uas_svc_type: "LoadBalancer"
@@ -26,7 +26,7 @@ volume_mounts:
     config_map: slurm-map
   - name: munge-key
     mount_path: /root/slurm_config/munge
-    secret-name: munge-secret
+    secret_name: munge-secret
 
 uas_images:
   default_image: "dtr.dev.cray.com:443/cray/cray-uas-img:latest"
