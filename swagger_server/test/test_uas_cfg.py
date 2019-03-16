@@ -3,6 +3,7 @@
 import unittest
 
 from swagger_server.uas_lib.uas_cfg import UasCfg
+from kubernetes import client
 
 class TestUasCfg(unittest.TestCase):
 
@@ -29,96 +30,94 @@ class TestUasCfg(unittest.TestCase):
         self.assertEqual(image, None)
 
     def test_validate_image_true(self):
-        self.assertEqual(True, self.uas_cfg.validate_image('dtr.dev.cray.com:443/cray/cray-uas-img:latest'))
+        self.assertTrue(self.uas_cfg.validate_image('dtr.dev.cray.com:443/cray/cray-uas-img:latest'))
 
     def test_validate_image_false(self):
-        self.assertEqual(False, self.uas_cfg.validate_image('not-an-image'))
+        self.assertFalse(self.uas_cfg.validate_image('not-an-image'))
 
     def test_get_external_ip(self):
         self.assertEqual('10.100.240.14',
                          self.uas_cfg.get_external_ip())
+        self.assertEqual(self.uas_cfg_empty.get_external_ip(), None)
 
     def test_gen_volume_mounts(self):
-        try:
-            self.uas_cfg_svc.gen_volume_mounts()
-        except ExceptionType:
-            self.fail("gen_volume_mounts() raised ExceptionType")
-        try:
-            self.uas_cfg_empty.gen_volume_mounts()
-        except ExceptionType:
-            self.fail("gen_volume_mounts() raised ExceptionType on empty comfig")
+        self.assertEqual(4, len(self.uas_cfg_svc.gen_volume_mounts()))
+        self.assertEqual([], self.uas_cfg_empty.gen_volume_mounts())
 
     def test_get_volumes(self):
-        try:
-            self.uas_cfg_svc.gen_volumes()
-        except ExceptionType:
-            self.fail("gen_volumes() raised ExceptionType")
-        try:
-            self.uas_cfg_empty.gen_volumes()
-        except ExceptionType:
-            self.fail("gen_volumes() raised ExceptionType on empty config")
+        self.assertEqual(4, len(self.uas_cfg_svc.gen_volumes()))
+        self.assertEqual([], self.uas_cfg_empty.gen_volumes())
 
     def test_gen_port_entry(self):
-        try:
-            self.uas_cfg.gen_port_entry(self.uas_cfg.get_default_port(), False)
-        except ExceptionType:
-            self.fail("gen_port_entry() for default container port raised ExceptionType")
-        try:
-            self.uas_cfg.gen_port_entry(12345, False)
-        except ExceptionType:
-            self.fail("gen_port_entry() for arbitrary container port raised ExceptionType")
-        try:
-            self.uas_cfg.gen_port_entry(12345, True)
-        except ExceptionType:
-            self.fail("gen_port_entry() for arbitrary service port raised ExceptionType")
+        dcp = self.uas_cfg.gen_port_entry(self.uas_cfg.get_default_port(), False)
+        self.assertEqual(dcp.container_port, self.uas_cfg.get_default_port())
+        self.assertIsInstance(dcp, client.V1ContainerPort)
+
+        cp = self.uas_cfg.gen_port_entry(12345, False)
+        self.assertEqual(cp.container_port, 12345)
+        self.assertIsInstance(cp, client.V1ContainerPort)
+
+        sp = self.uas_cfg.gen_port_entry(12345, True)
+        self.assertEqual(sp.port, 12345)
+        self.assertEqual(sp.name, "port12345")
+        self.assertEqual(sp.protocol, "TCP")
+        self.assertIsInstance(sp, client.V1ServicePort)
 
     def test_uas_cfg_gen_port_list(self):
-        try:
-            self.uas_cfg.gen_port_list(service_type="ssh", service=False)
-        except ExceptionType:
-            self.fail("gen_port_list() for container ssh raised ExceptionType")
-        try:
-            self.uas_cfg.gen_port_list(service_type="ssh", service=True)
-        except ExceptionType:
-            self.fail("gen_port_list() for service ssh raised ExceptionType")
-        try:
-            self.uas_cfg.gen_port_list(service_type="service", service=False)
-        except ExceptionType:
-            self.fail("gen_port_list() for container service raised ExceptionType")
-        try:
-            self.uas_cfg.gen_port_list(service_type="service", service=True)
-        except ExceptionType:
-            self.fail("gen_port_list() for service raised ExceptionType")
-        try:
-            self.uas_cfg.gen_port_list()
-        except ExceptionType:
-            self.fail("gen_port_list() raised ExceptionType")
+        port_list = self.uas_cfg.gen_port_list(service_type="ssh", service=False)
+        self.assertEqual(1, len(port_list))
+        self.assertEqual(30123, port_list[0].container_port)
+
+        port_list = self.uas_cfg.gen_port_list(service_type="ssh", service=True)
+        self.assertEqual(1, len(port_list))
+        self.assertEqual(30123, port_list[0].port)
+
+        port_list = self.uas_cfg.gen_port_list(service_type="service", service=False)
+        self.assertEqual([], port_list)
+
+        port_list = self.uas_cfg.gen_port_list(service_type="service", service=True)
+        self.assertEqual([], port_list)
+
+        self.assertEqual(1, len(self.uas_cfg.gen_port_list()))
 
     def test_uas_cfg_svc_gen_port_list(self):
-        try:
-            self.uas_cfg_svc.gen_port_list(service_type="ssh", service=False)
-        except ExceptionType:
-            self.fail("gen_port_list() for container ssh raised ExceptionType")
-        try:
-            self.uas_cfg_svc.gen_port_list(service_type="ssh", service=True)
-        except ExceptionType:
-            self.fail("gen_port_list() for service ssh raised ExceptionType")
-        try:
-            self.uas_cfg_svc.gen_port_list(service_type="service", service=False)
-        except ExceptionType:
-            self.fail("gen_port_list() for container service raised ExceptionType")
-        try:
-            self.uas_cfg_svc.gen_port_list(service_type="service", service=True)
-        except ExceptionType:
-            self.fail("gen_port_list() for service raised ExceptionType")
-        try:
-            self.uas_cfg_svc.gen_port_list()
-        except ExceptionType:
-            self.fail("gen_port_list() raised ExceptionType")
+        # a slightly different way of testing from above
+        port_list = self.uas_cfg_svc.gen_port_list(service_type="ssh", service=False)
+        self.assertEqual(1, len(port_list))
+        for pl in port_list:
+            self.assertIsInstance(pl, client.V1ContainerPort)
+            self.assertEqual(30123, pl.container_port)
+        port_list = self.uas_cfg_svc.gen_port_list(service_type="ssh", service=True)
+        self.assertEqual(1, len(port_list))
+        for pl in port_list:
+            self.assertEqual(30123, pl.port)
+            self.assertIsInstance(pl, client.V1ServicePort)
+
+        port_list = self.uas_cfg_svc.gen_port_list(service_type="service", service=False)
+        self.assertEqual(5, len(port_list))
+        for pl in port_list:
+            self.assertIsInstance(pl, client.V1ContainerPort)
+        port_list = self.uas_cfg_svc.gen_port_list(service_type="service", service=True)
+        self.assertEqual(5, len(port_list))
+        for pl in port_list:
+            self.assertIsInstance(pl, client.V1ServicePort)
+
+        # equivalent to service_type=None, service=False
+        port_list = self.uas_cfg_svc.gen_port_list()
+        self.assertEqual(1, len(port_list))
+        for pl in port_list:
+            self.assertIsInstance(pl, client.V1ContainerPort)
+            self.assertEqual(30123, pl.container_port)
 
     def test_uas_ports_range_gen_port_list(self):
         with self.assertRaises(ValueError):
-            self.uas_cfg_port_range.gen_port_list(service_type="ssh", service=False)
+            self.uas_cfg_port_range.gen_port_list(service_type="ssh",
+                                                  service=False)
+
+    def test_create_readiness_probe(self):
+        probe = self.uas_cfg.create_readiness_probe()
+        self.assertIsInstance(probe, client.V1Probe)
+        self.assertIsInstance(probe.tcp_socket, client.V1TCPSocketAction)
 
     def test_get_service_type(self):
         svc_type = self.uas_cfg.get_svc_type(service_type="ssh")
@@ -139,6 +138,7 @@ class TestUasCfg(unittest.TestCase):
         svc_type = self.uas_cfg_svc.get_svc_type(service_type="service")
         self.assertEqual(svc_type['svc_type'], "LoadBalancer")
         self.assertEqual(svc_type['ip_pool'], "node-management")
+
 
 if __name__ == '__main__':
     unittest.main()
