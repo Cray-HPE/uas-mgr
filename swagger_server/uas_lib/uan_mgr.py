@@ -14,7 +14,7 @@ from kubernetes.client import Configuration
 from kubernetes.client.apis import core_v1_api
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
-from swagger_server.models.uan import UAN
+from swagger_server.models import UAN
 from swagger_server.uas_lib.uas_cfg import UasCfg
 
 
@@ -83,7 +83,6 @@ class UanManager(object):
             name=service_name,
             labels=self.gen_labels(deployment_name),
         )
-        external_ip = None
         ports = self.uas_cfg.gen_port_list(service_type, service=True)
         # svc_type is a dict with the following fields:
         #   'svc_type': (NodePort, ClusterIP, or LoadBalancer)
@@ -97,28 +96,18 @@ class UanManager(object):
                    "NodePort, ClusterIP, and LoadBalancer.".format(svc_type['svc_type'])
                    )
             abort(400, msg)
-        if svc_type['svc_type'] == "NodePort":
-            # Check for external IP setting if NodePort service type
-            external_ip = self.uas_cfg.get_external_ip()
-        if external_ip:
-            spec = client.V1ServiceSpec(selector={'app': deployment_name},
-                                        type=svc_type['svc_type'],
-                                        external_i_ps=[external_ip],
-                                        ports=ports
-                                        )
-        else:
-            # Check if LoadBalancer and whether an IP pool is set
-            if svc_type['svc_type'] == "LoadBalancer" and svc_type['ip_pool']:
-                # A specific IP pool is given, create new metadata with annotations
-                metadata = client.V1ObjectMeta(
-                    name=service_name,
-                    labels=self.gen_labels(deployment_name),
-                    annotations={"metallb.universe.tf/address-pool": svc_type['ip_pool']}
-                )
-            spec = client.V1ServiceSpec(selector={'app': deployment_name},
-                                        type=svc_type['svc_type'],
-                                        ports=ports
-                                        )
+        # Check if LoadBalancer and whether an IP pool is set
+        if svc_type['svc_type'] == "LoadBalancer" and svc_type['ip_pool']:
+            # A specific IP pool is given, create new metadata with annotations
+            metadata = client.V1ObjectMeta(
+                name=service_name,
+                labels=self.gen_labels(deployment_name),
+                annotations={"metallb.universe.tf/address-pool": svc_type['ip_pool']}
+            )
+        spec = client.V1ServiceSpec(selector={'app': deployment_name},
+                                    type=svc_type['svc_type'],
+                                    ports=ports
+                                    )
         service = client.V1Service(api_version="v1",
                                    kind="Service",
                                    metadata=metadata,
@@ -311,10 +300,7 @@ class UanManager(object):
                     if e.status != 404:
                         abort(e.status, "Failed to get service info for %s" % (deployment_name + "-ssh"))
                 if srv_resp:
-                    if srv_resp.spec.external_i_ps:
-                        uan.uan_ip = srv_resp.spec.external_i_ps[0]
-                    else:
-                        uan.uan_ip = "Unknown"
+                    uan.uan_ip = self.uas_cfg.get_external_ip()
                     if srv_resp.spec.ports:
                         uan.uan_port = srv_resp.spec.ports[0].node_port
                     else:

@@ -62,7 +62,7 @@ class UasCfg(object):
 
     def get_external_ip(self):
         """
-        This function returns external ip for "NodePort" services
+        This function returns external ip for UAI ssh access
         :return: external IP address
         :rtype str
         """
