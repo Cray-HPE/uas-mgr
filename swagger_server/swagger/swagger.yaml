@@ -3,7 +3,7 @@ swagger: "2.0"
 info:
   description: "User Access Service. This service is responsible for the management\
     \ of User Access Node lifecycles."
-  version: "0.9.0"
+  version: "0.8.0"
   title: "Cray User Access Service"
 basePath: "/apis/uas-mgr/v1"
 paths:
@@ -22,8 +22,6 @@ paths:
       responses:
         200:
           description: "Version response"
-          schema:
-            $ref: "#/definitions/Versions"
       x-swagger-router-controller: "swagger_server.controllers.versions_controller"
   /uas/{username}:
     get:
