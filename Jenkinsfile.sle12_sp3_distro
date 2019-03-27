@@ -2,4 +2,5 @@
 sle12sp3Distro {
     specfile = "cray-uas-mgr-crayctldeploy.spec"
     timeout = 5
+    slackNotification = ["", "", false, false, true, false]
 }
