@@ -371,11 +371,15 @@ class UanManager(object):
         # Start the uas_ssh_svc service
         svc_resp = self.create_service(uas_ssh_svc_name, uas_ssh_svc, namespace)
         if not svc_resp:
+            # Clean up the deployment
+            self.delete_uans([deployment_name], namespace)
             abort(404, "Failed to create service: %s" % uas_ssh_svc_name)
         # Start the uas_service_svc service
         if uas_service_svc:
             svc_resp = self.create_service(uas_service_svc_name, uas_service_svc, namespace)
             if not svc_resp:
+                # Cleanup deployment and uas_ssh_svc_name
+                self.delete_uans([deployment_name], namespace)
                 abort(404, "Failed to create service: %s" % uas_service_svc_name)
         # Update the deployment with the service external IP
         self.update_deployment(deployment, deployment_name, namespace)
