@@ -4,6 +4,7 @@ import unittest
 import os
 
 from swagger_server.uas_lib.uan_mgr import UanManager
+from swagger_server.models.uan import UAN
 
 class TestUasMgr(unittest.TestCase):
 
@@ -19,6 +20,17 @@ class TestUasMgr(unittest.TestCase):
         labels = self.uas_mgr.gen_labels(self.deployment_name)
         self.assertEqual(labels, {"app": self.deployment_name, "uas": "managed"})
         return
+
+    def test_gen_connection_string(self):
+        uan = UAN()
+        uan.username = "testuser"
+        uan.uan_port = 12345
+        uan.uan_ip = "1.2.3.4"
+        self.uas_mgr.gen_connection_string(uan)
+
+        self.assertEqual("ssh testuser@1.2.3.4 -p 12345 -i ~/.ssh/id_rsa",
+                         uan.uan_connect_string)
+
 
 if __name__ == '__main__':
     unittest.main()

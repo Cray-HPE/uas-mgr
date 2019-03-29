@@ -22,8 +22,6 @@ paths:
       responses:
         200:
           description: "Version response"
-          schema:
-            $ref: "#/definitions/Versions"
       x-swagger-router-controller: "swagger_server.controllers.versions_controller"
   /uas/{username}:
     get:
@@ -197,49 +195,6 @@ paths:
           description: "No UAS Instances found"
       x-swagger-router-controller: "swagger_server.controllers.uas_controller"
 definitions:
-  Versions:
-    type: "object"
-    required:
-    - "versions"
-    properties:
-      versions:
-        type: "array"
-        items:
-          $ref: "#/definitions/Versions_versions"
-    example:
-      versions:
-      - patch: 0
-        major: 1
-        minor: 0
-        id: "v1/"
-      - patch: 0
-        major: 1
-        minor: 0
-        id: "v1/"
-  Versions_versions:
-    required:
-    - "id"
-    - "major"
-    - "minor"
-    - "patch"
-    properties:
-      id:
-        type: "string"
-        example: "v1/"
-      major:
-        type: "integer"
-        example: 1
-      minor:
-        type: "integer"
-        example: 0
-      patch:
-        type: "integer"
-        example: 0
-    example:
-      patch: 0
-      major: 1
-      minor: 0
-      id: "v1/"
   UAN:
     type: "object"
     properties:
