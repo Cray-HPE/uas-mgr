@@ -27,6 +27,10 @@ volume_mounts:
   - name: munge-key
     mount_path: /root/slurm_config/munge
     secret_name: munge-secret
+  - name: time
+    mount_path: /etc/localtime
+    host_path: /etc/localtime
+    type: FileOrCreate
 
 uas_images:
   default_image: "dtr.dev.cray.com:443/cray/cray-uas-img:latest"
