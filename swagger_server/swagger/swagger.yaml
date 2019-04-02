@@ -180,6 +180,7 @@ paths:
     delete:
       tags:
       - "UAS"
+      - "cli_danger$This will delete all running UAIs, Are you sure?"
       summary: "Delete all UAIs on the system"
       description: "Delete all UAIs on the system"
       operationId: "delete_all_uais"
