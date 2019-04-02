@@ -1,9 +1,3 @@
 ---
 uas_mgr:
   uas_ip: "{{ gwn_ipv4 }}"
-
-  volume_mounts:
-    - name: timezone
-      mount_path: /etc/localtime
-      host_path: /etc/localtime
-      type: FileOrCreate
