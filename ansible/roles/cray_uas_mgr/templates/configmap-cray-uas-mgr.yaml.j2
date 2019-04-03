@@ -92,6 +92,9 @@ data:
 {% if item.host_path is defined %}
         host_path: {{ item.host_path }}
 {% endif %}
+{% if item.type is defined %}
+        type: {{ item.type }}
+{% endif %}
 {% if item.config_map is defined %}
         config_map: {{ item.config_map }}
 {% endif %}
