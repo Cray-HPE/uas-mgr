@@ -19,7 +19,7 @@ metadata:
   labels:
     app: cray-uas-mgr
 spec:
-  replicas: 1
+  replicas: 2
   template:
     metadata:
       labels:
@@ -27,12 +27,17 @@ spec:
         api-gateway: upstream
     spec:
       affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: uas
-                operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 50
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - cray-uas-mgr
+              topologyKey: kubernetes.io/hostname
       serviceAccountName: cray-uas-mgr
       volumes:
       - name: ca-vol
