@@ -1,227 +1,228 @@
----
-swagger: "2.0"
+openapi: "3.0.2"
 info:
-  description: "User Access Service. This service is responsible for the management\
-    \ of User Access Node lifecycles."
-  version: "0.8.0"
   title: "Cray User Access Service"
-basePath: "/apis/uas-mgr/v1"
+  description: "Cray User Access Service. This service is responsible for the management of User Access Instance lifecycles."
+  version: "0.9.0"
+  
+servers: 
+  - url: "/apis/uas-mgr/v1"
+
 paths:
+
   /:
+  
     get:
+      description: "Returns supported UAS API versions"
+      operationId: "root_get"
       tags:
       - "Versions"
       - "cli_ignore"
-      summary: "List supported UAS API versions"
-      description: "Returns supported UAS API versions"
-      operationId: "root_get"
-      produces:
-      - "application/json"
-      - "text/html"
-      parameters: []
       responses:
         200:
           description: "Version response"
-      x-swagger-router-controller: "swagger_server.controllers.versions_controller"
+      x-openapi-router-controller: "swagger_server.controllers.versions_controller"
+      
   /uas/{username}:
+  
     get:
+      description: "List all available UAIs for username"
+      operationId: "get_uans_for_username"
       tags:
       - "UAS"
-      summary: "List all UANs for username"
-      description: "List all available UANs for username"
-      operationId: "get_uans_for_username"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
       parameters:
       - name: "username"
         in: "path"
         required: true
-        type: "string"
+        schema:
+          type: "string"
       responses:
         200:
-          description: "List all UANs for username"
-          schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/UAN"
-      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+          description: "List all UAIs for username"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                 $ref: "#/components/schemas/UAN"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+      
   /uas:
+  
     post:
-      tags:
-      - "UAS"
-      summary: "Create a new UAN for username"
       description: "Create a new UAN for the username"
       operationId: "create_uan"
-      consumes:
-      - "application/json"
-      - "multipart/form-data"
-      produces:
-      - "application/json"
+      tags:
+      - "UAS"
       parameters:
       - name: "username"
         in: "query"
         description: "Create UAN for username"
         required: true
-        type: "string"
-      - name: "usersshpubkey"
-        in: "formData"
-        description: "Public ssh key for the user"
-        required: false
-        type: "file"
+        schema: 
+          type: "string"
       - name: "imagename"
         in: "query"
         description: "Image to use for UAN"
         required: false
-        type: "string"
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: "object"
+              properties:
+                usersshpubkey:
+                  description: "Public ssh key for the user"
+                  type: "string"
+                  format: "binary"
       responses:
         201:
           description: "UAN created"
-          schema:
-            type: "object"
+          content:
+            application/json:
+              schema:
+                type: "object"
         404:
           description: "Not able to provide UAN"
-          schema:
-            type: "object"
-      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+          content:
+            application/json:
+              schema:
+                type: "object"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+      
     delete:
+      description: "Delete UAN with uan_name. Takes a list of UAN names and deletes the associated UAN instances."
+      operationId: "delete_uan_by_name"
       tags:
       - "UAS"
-      summary: "Delete UAN with uan_name"
-      description: "Delete UAN with uan_name. Takes a list of UAN names and deletes\
-        \ the associated UAN instances."
-      operationId: "delete_uan_by_name"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
       parameters:
       - name: "uan_list"
+        description: "comma separated list of UAN names"
         in: "query"
         required: true
-        type: "array"
-        items:
-          type: "string"
-        collectionFormat: "csv"
-        description: "comma separated list of UAN names"
+        style: form
+        explode: false
+        schema:
+          type: "array"
+          items:
+            type: "string"
       responses:
         200:
           description: "UANs deleted"
         404:
           description: "Failed to delete UAN with {uan_id}"
-      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+      
   /images:
+  
     get:
-      tags:
-      - "UAS"
-      summary: "List available UAS images"
       description: "List available UAS images"
       operationId: "get_uas_images"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      parameters: []
+      tags:
+      - "UAS"
       responses:
         200:
           description: "UAS Image List"
-          schema:
-            type: "object"
+          content:
+            application/json:
+              schema:
+                type: "object"
         404:
           description: "UAS Images not found"
-          schema:
-            type: "object"
-      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+          content:
+            application/json:
+             schema:
+                type: "object"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
   /mgr-info:
+  
     get:
-      tags:
-      - "UAS"
-      summary: "List uas-mgr service info"
       description: "List uas-mgr service info"
       operationId: "get_uas_mgr_info"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      parameters: []
+      tags:
+      - "UAS"
       responses:
         200:
           description: "UAS-MGR Info"
-          schema:
-            type: "object"
+          content:
+            application/json:
+              schema:
+                type: "object"
         404:
           description: "UAS-MGR Info not found"
-          schema:
-            type: "object"
-      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+          content:
+            application/json:
+              schema:
+                type: "object"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+      
   /uais:
+  
     get:
-      tags:
-      - "UAS"
-      summary: "List all UAIs on the system"
       description: "List all UAIs on the system"
       operationId: "get_all_uais"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      parameters: []
+      tags:
+      - "UAS"
       responses:
         200:
           description: "UAS Instance List"
-          schema:
-            type: "object"
+          content:
+            application/json:
+              schema:
+                type: "object"
         404:
           description: "No UAS Instances found"
-          schema:
-            type: "object"
-      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
+          content:
+            application/json:
+              schema:
+                type: "object"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+      
     delete:
       tags:
       - "UAS"
       - "cli_danger$This will delete all running UAIs, Are you sure?"
-      summary: "Delete all UAIs on the system"
       description: "Delete all UAIs on the system"
       operationId: "delete_all_uais"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      parameters: []
+      tags:
+      - "UAS"
       responses:
         200:
           description: "All UAS Instances Deleted"
         404:
           description: "No UAS Instances found"
-      x-swagger-router-controller: "swagger_server.controllers.uas_controller"
-definitions:
-  UAN:
-    type: "object"
-    properties:
-      uan_name:
-        type: "string"
-      username:
-        type: "string"
-      usersshpubkey:
-        type: "string"
-      uan_img:
-        type: "string"
-      uan_ip:
-        type: "string"
-      uan_status:
-        type: "string"
-      uan_msg:
-        type: "string"
-      uan_port:
-        type: "string"
-      uan_connect_string:
-        type: "string"
-    example:
-      uan_id: "user-uan-uan_image"
-      username: "user_name"
-      usersshpubkey: "/Users/user/.ssh/id_rsa.pub"
-      uan_img: "uan_img"
-      uan_ip: "10.248.0.23"
-      uan_status: "Running"
-      uan_reason: "Deploying"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+components:
+  schemas:
+    UAN:
+      type: "object"
+      properties:
+        uan_name:
+          type: "string"
+        username:
+          type: "string"
+        usersshpubkey:
+          type: "string"
+        uan_img:
+          type: "string"
+        uan_ip:
+          type: "string"
+        uan_status:
+          type: "string"
+        uan_msg:
+          type: "string"
+        uan_port:
+          type: "string"
+        uan_connect_string:
+          type: "string"
+      example:
+        uan_id: "user-uan-uan_image"
+        username: "user_name"
+        usersshpubkey: "/Users/user/.ssh/id_rsa.pub"
+        uan_img: "uan_img"
+        uan_ip: "10.248.0.23"
+        uan_status: "Running"
+        uan_reason: "Deploying"
