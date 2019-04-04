@@ -41,11 +41,19 @@ class TestUasCfg(unittest.TestCase):
         self.assertEqual(self.uas_cfg_empty.get_external_ip(), None)
 
     def test_gen_volume_mounts(self):
-        self.assertEqual(4, len(self.uas_cfg_svc.gen_volume_mounts()))
+        self.assertEqual(5, len(self.uas_cfg_svc.gen_volume_mounts()))
         self.assertEqual([], self.uas_cfg_empty.gen_volume_mounts())
 
     def test_get_volumes(self):
-        self.assertEqual(4, len(self.uas_cfg_svc.gen_volumes()))
+        vs = self.uas_cfg_svc.gen_volumes()
+        for v in vs:
+            if hasattr(v, 'host_path'):
+                if v.host_path:
+                    if v.name == 'time':
+                        self.assertEqual('FileOrCreate', v.host_path.type)
+                    else:
+                        self.assertEqual('DirectoryOrCreate', v.host_path.type)
+        self.assertEqual(5, len(vs))
         self.assertEqual([], self.uas_cfg_empty.gen_volumes())
 
     def test_gen_port_entry(self):
@@ -138,6 +146,13 @@ class TestUasCfg(unittest.TestCase):
         svc_type = self.uas_cfg_svc.get_svc_type(service_type="service")
         self.assertEqual(svc_type['svc_type'], "LoadBalancer")
         self.assertEqual(svc_type['ip_pool'], "node-management")
+
+    def test_is_valid_host_path_mount_type(self):
+        self.assertTrue(self.uas_cfg.is_valid_host_path_mount_type('FileOrCreate'))
+        self.assertTrue(self.uas_cfg.is_valid_host_path_mount_type('DirectoryOrCreate'))
+        self.assertFalse(self.uas_cfg.is_valid_host_path_mount_type('Wrong'))
+        self.assertFalse(self.uas_cfg.is_valid_host_path_mount_type(''))
+        self.assertFalse(self.uas_cfg.is_valid_host_path_mount_type(None))
 
 
 if __name__ == '__main__':

@@ -79,6 +79,7 @@ data:
     #   mount_path: absolute path where the UAS instance should mount this volume.
     #   For filesystems, set the following:
     #       host_path: absolute path on the host system of the volume to mount.
+    #       type: host_path mount type. Default: DirectoryOrCreate (optional)
     #   For configmaps, set the following:
     #       config_map: the name of the configmap to mount
     #   For secrets, set the following:
@@ -90,6 +91,9 @@ data:
         mount_path: {{ item.mount_path }}
 {% if item.host_path is defined %}
         host_path: {{ item.host_path }}
+{% endif %}
+{% if item.type is defined %}
+        type: {{ item.type }}
 {% endif %}
 {% if item.config_map is defined %}
         config_map: {{ item.config_map }}

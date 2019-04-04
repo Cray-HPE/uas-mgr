@@ -103,10 +103,19 @@ class UasCfg(object):
         for vol in volume_mounts:
             if vol:
                 if vol.get('host_path', None):
+                    # support for an optional type attribute for host_path mounts
+                    # if this attribute is unset we assume original behavior
+                    # which is DirectoryOrCreate
+                    mount_type = vol.get('type', 'DirectoryOrCreate')
+                    if not self.is_valid_host_path_mount_type(mount_type):
+                        raise ValueError("%s mount_type is not supported - \
+                                         please refer to the Kubernetes docs \
+                                         for a list of supported host_path \
+                                         mount types")
                     volume_list.append(client.V1Volume(name=vol['name'],
                                         host_path=client.V1HostPathVolumeSource(
                                         path=vol['host_path'],
-                                        type='DirectoryOrCreate'
+                                        type=mount_type
                                         )))
                 if vol.get('config_map', None):
                     volume_list.append(client.V1Volume(name=vol['name'],
@@ -212,3 +221,11 @@ class UasCfg(object):
         return client.V1Probe(initial_delay_seconds=2,
                               period_seconds=3,
                               tcp_socket=socket)
+
+    def is_valid_host_path_mount_type(self, mount_type):
+        """
+        checks whether the mount_type is a valid one or not
+        :return: returns True if the passed in mount type
+        :rtype bool
+        """
+        return mount_type in ("DirectoryOrCreate", "Directory", "FileOrCreate", "File", "Socket", "CharDevice", "BlockDevice")

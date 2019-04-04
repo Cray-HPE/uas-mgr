@@ -99,6 +99,15 @@
   when: item is defined and item.host_path is defined
   run_once: True
 
+- name: Removing unwanted UAS volume mounts (remove type)
+  lineinfile:
+    line: '        type: {{ item.type }}'
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
+    state: absent
+  loop: "{{ delete_uas_volume_mounts }}"
+  when: item is defined and item.type is defined
+  run_once: True
+
 - name: Removing unwanted UAS volume mounts (remove config_map)
   lineinfile:
     line: '        config_map: {{ item.config_map }}'
@@ -145,6 +154,16 @@
     insertafter: "mount_path: {{ item.mount_path }}"
   loop: "{{ add_uas_volume_mounts }}"
   when: item is defined and item.host_path is defined
+  run_once: True
+
+- name: Adding UAS volume mounts (add type)
+  lineinfile:
+    regexp: '^ {8}type: {{ item.type }}'
+    line: '        type: {{ item.type }}'
+    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
+    insertafter: "host_path: {{ item.host_path }}"
+  loop: "{{ add_uas_volume_mounts }}"
+  when: item is defined and item.type is defined
   run_once: True
 
 - name: Adding UAS volume mounts (add configmap)

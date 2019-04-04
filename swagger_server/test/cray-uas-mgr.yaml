@@ -11,6 +11,10 @@ volume_mounts:
   - name: lus
     mount_path: /lus/snx11023
     host_path: /lus/snx11023
+  - name: time
+    mount_path: /etc/localtime
+    host_path: /etc/localtime
+    type: FileOrCreate
 
 uas_images:
   default_image: "dtr.dev.cray.com:443/cray/cray-uas-img:latest"
