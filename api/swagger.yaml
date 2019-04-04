@@ -15,6 +15,7 @@ paths:
       description: "Returns supported UAS API versions"
       operationId: "root_get"
       tags:
+      - "UAS"
       - "Versions"
       - "cli_ignore"
       responses:
