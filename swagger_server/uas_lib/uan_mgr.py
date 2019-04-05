@@ -66,7 +66,7 @@ class UanManager(object):
                         namespace, command=exec_command, stdout=True,
                         stdin=False, tty=False)
         if not uas_id:
-            abort(404, 'user not found. (%s)' % username)
+            abort(400, 'user not found. (%s)' % username)
         return uas_id.rstrip()
 
     def create_service_object(self, service_name, service_type, deployment_name):
