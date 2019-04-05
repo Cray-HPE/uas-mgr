@@ -12,11 +12,12 @@ paths:
   /:
   
     get:
+      summary: "Returns supported UAS API versions"
       description: "Returns supported UAS API versions"
       operationId: "root_get"
       tags:
+      - "versions"
       - "UAS"
-      - "Versions"
       - "cli_ignore"
       responses:
         200:
@@ -26,9 +27,11 @@ paths:
   /uas/{username}:
   
     get:
+      summary: "List all available UAIs for username"
       description: "List all available UAIs for username"
       operationId: "get_uans_for_username"
       tags:
+      - "uas/{username}"
       - "UAS"
       parameters:
       - name: "username"
@@ -50,9 +53,11 @@ paths:
   /uas:
   
     post:
+      summary: "Create a new UAN for the username"
       description: "Create a new UAN for the username"
       operationId: "create_uan"
       tags:
+      - "uas"
       - "UAS"
       parameters:
       - name: "username"
@@ -93,9 +98,11 @@ paths:
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
       
     delete:
+      summary: "Delete UAN with uan_name. Takes a list of UAN names and deletes the associated UAN instances."
       description: "Delete UAN with uan_name. Takes a list of UAN names and deletes the associated UAN instances."
       operationId: "delete_uan_by_name"
       tags:
+      - "uas"
       - "UAS"
       parameters:
       - name: "uan_list"
@@ -118,9 +125,11 @@ paths:
   /images:
   
     get:
+      summary: "List available UAS images"
       description: "List available UAS images"
       operationId: "get_uas_images"
       tags:
+      - "images"
       - "UAS"
       responses:
         200:
@@ -140,9 +149,11 @@ paths:
   /mgr-info:
   
     get:
+      summary: "List uas-mgr service info"
       description: "List uas-mgr service info"
       operationId: "get_uas_mgr_info"
       tags:
+      - "mgr-info"
       - "UAS"
       responses:
         200:
@@ -162,9 +173,11 @@ paths:
   /uais:
   
     get:
+      summary: "List all UAIs on the system"
       description: "List all UAIs on the system"
       operationId: "get_all_uais"
       tags:
+      - "uais"
       - "UAS"
       responses:
         200:
@@ -182,13 +195,13 @@ paths:
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
       
     delete:
-      tags:
-      - "UAS"
-      - "cli_danger$This will delete all running UAIs, Are you sure?"
+      summary: "Delete all UAIs on the system"
       description: "Delete all UAIs on the system"
       operationId: "delete_all_uais"
       tags:
+      - "uais"
       - "UAS"
+      - "cli_danger$This will delete all running UAIs, Are you sure?"
       responses:
         200:
           description: "All UAS Instances Deleted"
