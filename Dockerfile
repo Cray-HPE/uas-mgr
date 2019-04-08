@@ -6,7 +6,7 @@ FROM python:3 as base
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 COPY setup.py requirements.txt /usr/src/app/
-COPY swagger_server/ /usr/src/app/swagger_server/
+COPY api/ swagger_server/ /usr/src/app/swagger_server/
 
 RUN pip3 install --no-cache-dir -r requirements.txt
 
