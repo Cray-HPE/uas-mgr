@@ -1,5 +1,13 @@
 # cray-uas-mgr installation ansible play
-# Copyright 2018, Cray Inc. All Rights Reserved.
+<<<<<<< HEAD
+<<<<<<< HEAD
+# Copyright 2018-2019, Cray Inc. All Rights Reserved.
+=======
+# Copyright 2019, Cray Inc. All Rights Reserved.
+>>>>>>> 50b9313... CASMUSER-1216: Implement macvlan for UAIs
+=======
+# Copyright 2018-2019, Cray Inc. All Rights Reserved.
+>>>>>>> 85c3e8e... CASMUSER-1216: Address comments in review
 ---
 
 - name: Create cray-uas-mgr Kubernetes spec
@@ -25,6 +33,29 @@
   register: kubectl_result
   changed_when: kubectl_result.stdout.find('created') != -1 or kubectl_result.stdout.find('configured') != -1
   run_once: true
+
+- name: Copy cray-uas-macvlan.yml to /root/k8s directory
+  copy:
+    src: cray-uas-macvlan.yml
+    dest: /root/k8s/cray-uas-macvlan.yml
+  run_once: true
+
+- name: Apply cray-uas-macvlan.yml net-attach-def
+  command: kubectl apply -f /root/k8s/cray-uas-macvlan.yml
+  register: kubectl_result
+  changed_when: kubectl_result.stdout.find('created') != -1 or kubectl_result.stdout.find('configured') != -1
+  run_once: true
+
+- name: Copy macvlan bridge setup script to sms03-nmn
+  copy:
+    src: macvlan-bridge-setup.sh
+    dest: /root/macvlan-bridge-setup.sh
+    mode: 0544
+  when: inventory_hostname == 'sms03-nmn'
+
+- name: Setup macvlan bridge on sms03-nmn
+  shell: /root/macvlan-bridge-setup.sh
+  when: inventory_hostname == 'sms03-nmn'
 
 - name: Include uas_mgr.yml
   include_vars: uas_mgr.yml

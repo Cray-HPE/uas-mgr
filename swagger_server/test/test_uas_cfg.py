@@ -101,15 +101,6 @@ class TestUasCfg(unittest.TestCase):
             self.assertEqual(30123, pl.port)
             self.assertIsInstance(pl, client.V1ServicePort)
 
-        port_list = self.uas_cfg_svc.gen_port_list(service_type="service", service=False)
-        self.assertEqual(5, len(port_list))
-        for pl in port_list:
-            self.assertIsInstance(pl, client.V1ContainerPort)
-        port_list = self.uas_cfg_svc.gen_port_list(service_type="service", service=True)
-        self.assertEqual(5, len(port_list))
-        for pl in port_list:
-            self.assertIsInstance(pl, client.V1ServicePort)
-
         # equivalent to service_type=None, service=False
         port_list = self.uas_cfg_svc.gen_port_list()
         self.assertEqual(1, len(port_list))
@@ -134,18 +125,9 @@ class TestUasCfg(unittest.TestCase):
         svc_type = self.uas_cfg_empty.get_svc_type(service_type="ssh")
         self.assertEqual(svc_type['svc_type'], "NodePort")
         self.assertEqual(svc_type['ip_pool'], None)
-        svc_type = self.uas_cfg.get_svc_type(service_type="service")
-        self.assertEqual(svc_type['svc_type'], "ClusterIP")
-        self.assertEqual(svc_type['ip_pool'], None)
-        svc_type = self.uas_cfg_empty.get_svc_type(service_type="service")
-        self.assertEqual(svc_type['ip_pool'], None)
-        self.assertEqual(svc_type['svc_type'], "ClusterIP")
         svc_type = self.uas_cfg_svc.get_svc_type(service_type="ssh")
         self.assertEqual(svc_type['ip_pool'], "customer")
         self.assertEqual(svc_type['svc_type'], "LoadBalancer")
-        svc_type = self.uas_cfg_svc.get_svc_type(service_type="service")
-        self.assertEqual(svc_type['svc_type'], "LoadBalancer")
-        self.assertEqual(svc_type['ip_pool'], "node-management")
 
     def test_is_valid_host_path_mount_type(self):
         self.assertTrue(self.uas_cfg.is_valid_host_path_mount_type('FileOrCreate'))

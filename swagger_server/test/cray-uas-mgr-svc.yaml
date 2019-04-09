@@ -4,15 +4,9 @@ uas_ip: 10.100.240.14
 uas_ports:
   - 30123
 
-uas_svc_ports:
-  - 1026
-  - "30500:30503"
-
 uas_ssh_type: "LoadBalancer"
-uas_svc_type: "LoadBalancer"
 
 uas_ssh_lb_pool: "customer"
-uas_svc_lb_pool: "node-management"
 
 volume_mounts:
   - name: scratch

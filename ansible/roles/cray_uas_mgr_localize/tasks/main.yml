@@ -13,25 +13,6 @@
     insertafter: "# uas_ip: UAS Instance IP"
   run_once: True
 
-- name: Removing unwanted UAS service ports
-  lineinfile:
-    line: '      - "{{ item }}"'
-    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
-    state: absent
-  loop: "{{ delete_uas_svc_ports }}"
-  when: item is defined
-  run_once: True
-
-- name: Adding new UAS service ports
-  lineinfile:
-    regexp: '      - "{{ item }}"'
-    line: '      - "{{ item }}"'
-    dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
-    insertafter: "uas_svc_ports:"
-  loop: "{{ add_uas_svc_ports }}"
-  when: item is defined
-  run_once: True
-
 - name: Setting default UAS image
   lineinfile:
     regexp: '^ {6}default_image'
