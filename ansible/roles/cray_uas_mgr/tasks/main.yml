@@ -50,6 +50,11 @@
   command: /usr/bin/kubectl apply -f /root/k8s/cray-uas-id.yaml
   run_once: true
 
+- name: Wait for cray-uas-mgr to be Available
+  command: /usr/bin/kubectl wait --for=condition=Available deploy/cray-uas-mgr
+  run_once: true
+  ignore_errors: yes              # If this times out, don't break the whole install
+
 - name: Record that cray-uas ran  # Workaround https://github.com/ansible/ansible/issues/31751
   set_fact:
     cray_uas_mgr_ran: True
