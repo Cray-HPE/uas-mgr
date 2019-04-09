@@ -26,11 +26,6 @@ uas_mgr:
   uas_ports:
     - 30123
 
-  uas_svc_ports:
-    - "\"{{ srun_port_range_start }}:{{ srun_port_range_end }}\""
-
   uas_ssh_type: "NodePort"
-  uas_svc_type: "LoadBalancer"
 
   uas_ssh_lb_pool: "customer"
-  uas_svc_lb_pool: "node-management"

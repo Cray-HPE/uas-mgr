@@ -1,4 +1,4 @@
-# Copyright 2018, Cray Inc. All Rights Reserved.
+# Copyright 2018-2019, Cray Inc. All Rights Reserved.
 ---
 # cray-uas-mgr configuration
 #
@@ -17,5 +17,3 @@ cray_uas_sles15_version: "latest"
 # Slurm configuration
 slurm_configmap: "slurm-map"
 munge_secret: "munge-secret"
-srun_port_range_start: "30500"
-srun_port_range_end: "30599"

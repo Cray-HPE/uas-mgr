@@ -215,7 +215,8 @@ class UaiManager(object):
 
         # Create and configure a spec section
         template = client.V1PodTemplateSpec(
-            metadata=client.V1ObjectMeta(labels=self.gen_labels(deployment_name)),
+            metadata=client.V1ObjectMeta(labels=self.gen_labels(deployment_name),
+                                         annotations={'k8s.v1.cni.cncf.io/networks': 'macvlan-uas-conf'}),
             spec=client.V1PodSpec(containers=[container],
                                   affinity=affinity,
                                   volumes=volumes))
@@ -246,45 +247,6 @@ class UaiManager(object):
                                  % (deployment.metadata.name, e.reason))
             abort(e.status, "Failed to create deployment %s: %s"
                   % (deployment.metadata.name, e.reason))
-        return resp
-
-    def update_deployment(self, deployment, deployment_name, namespace):
-        """
-        This function updates the deployment of the UAI. It is done to include
-        the external IP set in the LoadBalancer service for communicating with
-        other Shasta services such as SLURM.
-        :param deployment: The original UAI deployment object
-        :param deployment_name: The UAI deployment name
-        :param namespace: The kubernetes namespace
-        :return: the response object from the deployment patching operation
-        """
-        resp = None
-        srv_resp = None
-        srv_ext_ip = None
-        for i in range(1, 30):
-            try:
-                srv_resp = self.api.read_namespaced_service(name=deployment_name + "-service",
-                                                            namespace=namespace)
-            except ApiException as e:
-                if e.status != 404:
-                    svc_name = deployment_name + '-service'
-                    abort(404, "Failed to get service info for update {}".format(svc_name))
-            if srv_resp:
-                if srv_resp.spec.external_i_ps:
-                    srv_ext_ip = srv_resp.spec.external_i_ps[0]
-        if srv_ext_ip:
-            deployment.spec.template.spec.containers[0].env.append(
-                client.V1EnvVar(name='UAS_SVC_IP', value=srv_ext_ip)
-            )
-            # Update the deployment
-            try:
-                resp = self.extensions_v1beta1.patch_namespaced_deployment(
-                    name=deployment_name,
-                    namespace=namespace,
-                    body=deployment)
-            except ApiException as e:
-                msg = "Failed to update deployment {}".format(deployment_name)
-                abort(e.status, msg)
         return resp
 
     def delete_deployment(self, deployment_name, namespace):
@@ -417,18 +379,6 @@ class UaiManager(object):
         # Create a LoadBalancer service for the uas_ssh_port
         uas_ssh_svc_name = deployment_name + '-ssh'
         uas_ssh_svc = self.create_service_object(uas_ssh_svc_name, "ssh", deployment_name)
-        # Create a LoadBalancer service on additional ports for other services to
-        # use.
-        cfg = self.uas_cfg.get_config()
-        uas_service_svc_name = None
-        uas_service_svc = None
-        if cfg:
-            try:
-                if cfg['uas_svc_ports']:
-                    uas_service_svc_name = deployment_name + "-service"
-                    uas_service_svc = self.create_service_object(uas_service_svc_name, "service", deployment_name)
-            except KeyError:
-                uas_service_svc = None
         deploy_resp = None
 
         try:
@@ -455,21 +405,10 @@ class UaiManager(object):
             self.delete_uais([deployment_name], namespace)
             abort(404, "Failed to create service: %s" % uas_ssh_svc_name)
 
-        # XXX Don't log here, this code is going away with MACVLAN
-        # Start the uas_service_svc service
-        if uas_service_svc:
-            svc_resp = self.create_service(uas_service_svc_name, uas_service_svc, namespace)
-            if not svc_resp:
-                # Cleanup deployment and uas_ssh_svc_name
-                self.delete_uais([deployment_name], namespace)
-                abort(404, "Failed to create service: %s" % uas_service_svc_name)
-
-        # Update the deployment with the service external IP
-        self.update_deployment(deployment, deployment_name, namespace)
-        uai_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
-        while not uai_info.uai_ip:
-            uai_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
-        return uai_info
+        uan_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
+        while not uan_info.uai_ip:
+            uan_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
+        return uan_info
 
     def list_uais_for_user(self, username, namespace='default'):
         """
@@ -518,16 +457,21 @@ class UaiManager(object):
             uai_list = self.list_uais_for_user(None)
             for uai in uai_list:
                 deployment_list.append(uai.uai_name)
+<<<<<<< HEAD
         for d in [d.strip() for d in deployment_list]:
             # Do services first so that we don't orphan one if they abort
             service_resp = self.delete_service(d + "-ssh", namespace)
-            service_resp2 = self.delete_service(d + "-service", namespace)
             deploy_resp = self.delete_deployment(d, namespace)
 
-            if deploy_resp is None and service_resp is None and service_resp2\
-               is None:
+            if deploy_resp is None and service_resp is None:
                 message = "Failed to delete %s - Not found" % d
             else:
                 message = "Successfully deleted %s" % d
             resp_list.append(message)
+=======
+        for d in deployment_list:
+            self.delete_deployment(d, namespace)
+            self.delete_service(d + "-ssh", namespace)
+            resp_list.append(d)
+>>>>>>> 73e8a7d... CASMUSER-1216: remove unused code that was for MetalLB
         return resp_list
