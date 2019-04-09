@@ -57,6 +57,18 @@ spec:
         volumeMounts:
           - name: cray-uas-mgr-cfgmap
             mountPath: /etc/uas
+        readinessProbe:
+          httpGet:
+            path: /v1/mgr-info
+            port: {{ cray_uas_mgr_port }}
+          periodSeconds: 3
+          initialDelaySeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /v1/mgr-info
+            port: {{ cray_uas_mgr_port }}
+          periodSeconds: 3
+          initialDelaySeconds: 5
       - name: register-api-gateway
         image: {{ cray_stack_registry_source }}/cray/cray-api-gw-tools:{{ cray_api_gw_tools_version }}
         env:
