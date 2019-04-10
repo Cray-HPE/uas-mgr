@@ -1,7 +1,7 @@
 #########################
 ### Base
 #########################
-FROM python:3 as base
+FROM python:3-slim as base
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
