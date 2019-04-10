@@ -35,26 +35,26 @@ X-Kong-Proxy-Latency: 0
 Via: kong/0.14.1
 
 {
-  "uan_connect_string": "ssh exampleuser@172.30.52.69 -p 16325 -i ~/.ssh/id_rsa",
-  "uan_img": "sms.local:5000/cray/cray-uas-img:latest",
-  "uan_ip": "172.30.52.69",
-  "uan_msg": "ContainerCreating",
-  "uan_name": "exampleuser-2803b6e4",
-  "uan_port": 16325,
-  "uan_status": "Waiting",
+  "uai_connect_string": "ssh exampleuser@172.30.52.69 -p 16325 -i ~/.ssh/id_rsa",
+  "uai_img": "sms.local:5000/cray/cray-uas-img:latest",
+  "uai_ip": "172.30.52.69",
+  "uai_msg": "ContainerCreating",
+  "uai_name": "exampleuser-2803b6e4",
+  "uai_port": 16325,
+  "uai_status": "Waiting",
   "username": "exampleuser"
 }
 ----
 
 === Delete
 To delete a UAI using the UAS, the user must supply a list of UAIs to delete.
-The UAI name is the value of the 'uan_name' element when listing available
+The UAI name is the value of the 'uai_name' element when listing available
 UAIs.
 
 .Delete a UAI
 [source, bash]
 ----
-$ curl -k -i -X DELETE "https://$GWN/uas-mgr/apis/v1/uas?uan_list=<uan_name>
+$ curl -k -i -X DELETE "https://$GWN/uas-mgr/apis/v1/uas?uai_list=<uai_name>
 ----
 
 .output
@@ -75,7 +75,7 @@ Via: kong/0.14.1
 ]
 ----
 
-=== View 
+=== View
 To list available UAI using the UAS, the user must supply the user name for
 the UAIs.  This example shows the exampleuser has two UAIs running.
 
@@ -100,21 +100,21 @@ Via: kong/0.14.1
 
 [
   {
-    "uan_connect_string": "ssh exampleuser@172.30.52.69 -p 16325 -i ~/.ssh/id_rsa",
-    "uan_img": "sms.local:5000/cray/cray-uas-img:latest",
-    "uan_ip": "172.30.52.69",
-    "uan_name": "exampleuser-2803b6e4",
-    "uan_port": 16325,
-    "uan_status": "Running: Ready",
+    "uai_connect_string": "ssh exampleuser@172.30.52.69 -p 16325 -i ~/.ssh/id_rsa",
+    "uai_img": "sms.local:5000/cray/cray-uas-img:latest",
+    "uai_ip": "172.30.52.69",
+    "uai_name": "exampleuser-2803b6e4",
+    "uai_port": 16325,
+    "uai_status": "Running: Ready",
     "username": "exampleuser"
   },
   {
-    "uan_connect_string": "ssh exampleuser@172.30.52.69 -p 32117 -i ~/.ssh/id_rsa",
-    "uan_img": "sms.local:5000/cray/cray-uas-img:latest",
-    "uan_ip": "172.30.52.69",
-    "uan_name": "exampleuser-9e829eff",
-    "uan_port": 32117,
-    "uan_status": "Running: Ready",
+    "uai_connect_string": "ssh exampleuser@172.30.52.69 -p 32117 -i ~/.ssh/id_rsa",
+    "uai_img": "sms.local:5000/cray/cray-uas-img:latest",
+    "uai_ip": "172.30.52.69",
+    "uai_name": "exampleuser-9e829eff",
+    "uai_port": 32117,
+    "uai_status": "Running: Ready",
     "username": "exampleuser"
   }
 ]
