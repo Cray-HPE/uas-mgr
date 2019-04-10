@@ -5,7 +5,6 @@ uas_mgr:
     default_image: "{{ cray_stack_registry_source }}/cray/cray-uas-centos75:{{ cray_uas_centos75_version }}"
     images:
       - "{{ cray_stack_registry_source }}/cray/cray-uas-centos75:{{ cray_uas_centos75_version }}"
-      - "{{ cray_stack_registry_source }}/cray/cray-uas-sles12sp3:{{ cray_uas_sles12sp3_version }}"
       - "{{ cray_stack_registry_source }}/cray/cray-uas-sles15:{{ cray_uas_sles15_version }}"
 
   volume_mounts:
