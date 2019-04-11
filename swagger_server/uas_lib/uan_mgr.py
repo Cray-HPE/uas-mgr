@@ -49,11 +49,19 @@ class UanManager(object):
         # Find the pod name for the uas-id app.
         resp = self.api.list_namespaced_pod(namespace,
                                             label_selector='app=cray-uas-id')
+
         uas_id_pod = None
         for item in resp.items:
-            uas_id_pod = item.metadata.name
+            if item.status.container_statuses:
+                # CASMUSER-1266 - if the pod is not ready, we get an error
+                # when we try to exec into it. There's only 1 container
+                # so no need to iterate the conditions.
+                if item.status.container_statuses[0].ready:
+                    uas_id_pod = item.metadata.name
+
         if not uas_id_pod:
-            abort(404, 'UAS ID service not found.')
+            abort(503, 'uas-id service not available.')
+
         # Exec the command in uas_id_pod.
         exec_command = [
             'chroot',
@@ -62,9 +70,13 @@ class UanManager(object):
             'passwd',
             username
         ]
-        uas_id = stream(self.api.connect_get_namespaced_pod_exec, uas_id_pod,
-                        namespace, command=exec_command, stdout=True,
-                        stdin=False, tty=False)
+        try:
+            uas_id = stream(self.api.connect_get_namespaced_pod_exec,
+                            uas_id_pod, namespace, command=exec_command,
+                            stdout=True, stdin=False, tty=False)
+        except ApiException:
+            abort(500, 'error connecting to uas-id service')
+
         if not uas_id:
             abort(400, 'user not found. (%s)' % username)
         return uas_id.rstrip()
