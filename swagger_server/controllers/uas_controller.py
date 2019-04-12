@@ -10,15 +10,15 @@ from swagger_server.uas_lib.uas_cfg import UasCfg
 
 uas_cfg = UasCfg()
 
-def create_uai(username, usersshpubkey=None, imagename=None):  # noqa: E501
+def create_uai(username, publickey=None, imagename=None):  # noqa: E501
     """Create a new UAI for username
 
     Create a new UAI for the username # noqa: E501
 
     :param username: Create UAI for username
     :type username: str
-    :param usersshpubkey: Public ssh key for the user
-    :type usersshpubkey: werkzeug.datastructures.FileStorage
+    :param publickey: Public ssh key for the user
+    :type publickey: werkzeug.datastructures.FileStorage
     :param imagename: Image to use for UAI
     :type imagename: str
 
@@ -28,7 +28,7 @@ def create_uai(username, usersshpubkey=None, imagename=None):  # noqa: E501
     if not username:
         return "Must supply username for UAI creation."
 
-    uai_response = uai_mgr.create_uai(username, usersshpubkey, imagename)
+    uai_response = uai_mgr.create_uai(username, publickey, imagename)
     return uai_response
 
 def delete_uai_by_name(uai_list):  # noqa: E501

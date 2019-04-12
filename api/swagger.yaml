@@ -2,7 +2,7 @@ openapi: "3.0.2"
 info:
   title: "Cray User Access Service"
   description: "Cray User Access Service. This service is responsible for the management of User Access Instance lifecycles."
-  version: "0.9.0"
+  version: "0.10.0"
 
 servers:
   - url: "/apis/uas-mgr/v1"
@@ -78,7 +78,7 @@ paths:
             schema:
               type: "object"
               properties:
-                usersshpubkey:
+                publickey:
                   description: "Public ssh key for the user"
                   type: "string"
                   format: "binary"
@@ -218,7 +218,7 @@ components:
           type: "string"
         username:
           type: "string"
-        usersshpubkey:
+        publickey:
           type: "string"
         uai_img:
           type: "string"
@@ -235,7 +235,7 @@ components:
       example:
         uai_id: "user-uai-uai_image"
         username: "user_name"
-        usersshpubkey: "/Users/user/.ssh/id_rsa.pub"
+        publickey: "/Users/user/.ssh/id_rsa.pub"
         uai_img: "uai_img"
         uai_ip: "10.248.0.23"
         uai_status: "Running"

@@ -16,7 +16,7 @@ the system default UAI image will be used.
 .Create a UAI
 [source, bash]
 ----
-$ curl -k -i -X POST "https://$GWN/apis/uas-mgr/v1/uas?username=<username>&imagename=<image_name>" -F  "usersshpubkey=@<path_to_id_rsa.pub_key>"
+$ curl -k -i -X POST "https://$GWN/apis/uas-mgr/v1/uas?username=<username>&imagename=<image_name>" -F  "publickey=@<path_to_id_rsa.pub_key>"
 ----
 
 .output

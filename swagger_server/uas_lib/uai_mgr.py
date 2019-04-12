@@ -160,7 +160,7 @@ class UaiManager(object):
         return resp
 
     def create_deployment_object(self, username, deployment_name, imagename,
-                                 usersshpubkey, namespace):
+                                 publickey, namespace):
         # Configure Pod template container
         container = client.V1Container(
             name=deployment_name,
@@ -173,7 +173,7 @@ class UaiManager(object):
                      value=self.get_user_account_info(username, namespace)),
                  client.V1EnvVar(
                      name='UAS_PUBKEY',
-                     value=usersshpubkey.read().decode())],
+                     value=publickey.read().decode())],
             ports=self.uas_cfg.gen_port_list(service=False),
             volume_mounts=self.uas_cfg.gen_volume_mounts(),
             readiness_probe=self.uas_cfg.create_readiness_probe())
@@ -341,10 +341,10 @@ class UaiManager(object):
     def gen_labels(self, deployment_name):
         return {"app": deployment_name, "uas": "managed"}
 
-    def create_uai(self, username, usersshpubkey, imagename, namespace='default'):
+    def create_uai(self, username, publickey, imagename, namespace='default'):
         if not username:
             abort(400, "Missing username.")
-        if not usersshpubkey:
+        if not publickey:
             abort(400, "Missing ssh public key.")
         if not imagename:
             imagename = self.uas_cfg.get_default_image()
@@ -355,7 +355,7 @@ class UaiManager(object):
         deployment_id = uuid.uuid4().hex[:8]
         deployment_name = 'uai-' + username + '-' + str(deployment_id)
         deployment = self.create_deployment_object(username, deployment_name,
-                                                   imagename, usersshpubkey,
+                                                   imagename, publickey,
                                                    namespace)
         # Create a LoadBalancer service for the uas_ssh_port
         uas_ssh_svc_name = deployment_name + '-ssh'

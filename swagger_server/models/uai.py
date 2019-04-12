@@ -15,15 +15,15 @@ class UAI(Model):
     Do not edit the class manually.
     """
 
-    def __init__(self, uai_name: str=None, username: str=None, usersshpubkey: str=None, uai_img: str=None, uai_ip: str=None, uai_status: str=None, uai_msg: str=None, uai_port: str=None, uai_connect_string: str=None):  # noqa: E501
+    def __init__(self, uai_name: str=None, username: str=None, publickey: str=None, uai_img: str=None, uai_ip: str=None, uai_status: str=None, uai_msg: str=None, uai_port: str=None, uai_connect_string: str=None):  # noqa: E501
         """UAI - a model defined in Swagger
 
         :param uai_name: The uai_name of this UAI.  # noqa: E501
         :type uai_name: str
         :param username: The username of this UAI.  # noqa: E501
         :type username: str
-        :param usersshpubkey: The usersshpubkey of this UAI.  # noqa: E501
-        :type usersshpubkey: str
+        :param publickey: The publickey of this UAI.  # noqa: E501
+        :type publickey: str
         :param uai_img: The uai_img of this UAI.  # noqa: E501
         :type uai_img: str
         :param uai_ip: The uai_ip of this UAI.  # noqa: E501
@@ -40,7 +40,7 @@ class UAI(Model):
         self.swagger_types = {
             'uai_name': str,
             'username': str,
-            'usersshpubkey': str,
+            'publickey': str,
             'uai_img': str,
             'uai_ip': str,
             'uai_status': str,
@@ -52,7 +52,7 @@ class UAI(Model):
         self.attribute_map = {
             'uai_name': 'uai_name',
             'username': 'username',
-            'usersshpubkey': 'usersshpubkey',
+            'publickey': 'publickey',
             'uai_img': 'uai_img',
             'uai_ip': 'uai_ip',
             'uai_status': 'uai_status',
@@ -63,7 +63,7 @@ class UAI(Model):
 
         self._uai_name = uai_name
         self._username = username
-        self._usersshpubkey = usersshpubkey
+        self._publickey = publickey
         self._uai_img = uai_img
         self._uai_ip = uai_ip
         self._uai_status = uai_status
@@ -125,25 +125,25 @@ class UAI(Model):
         self._username = username
 
     @property
-    def usersshpubkey(self) -> str:
-        """Gets the usersshpubkey of this UAI.
+    def publickey(self) -> str:
+        """Gets the publickey of this UAI.
 
 
-        :return: The usersshpubkey of this UAI.
+        :return: The publickey of this UAI.
         :rtype: str
         """
-        return self._usersshpubkey
+        return self._publickey
 
-    @usersshpubkey.setter
-    def usersshpubkey(self, usersshpubkey: str):
-        """Sets the usersshpubkey of this UAI.
+    @publickey.setter
+    def publickey(self, publickey: str):
+        """Sets the publickey of this UAI.
 
 
-        :param usersshpubkey: The usersshpubkey of this UAI.
-        :type usersshpubkey: str
+        :param publickey: The publickey of this UAI.
+        :type publickey: str
         """
 
-        self._usersshpubkey = usersshpubkey
+        self._publickey = publickey
 
     @property
     def uai_img(self) -> str:
