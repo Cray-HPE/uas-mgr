@@ -14,14 +14,14 @@ from kubernetes.client import Configuration
 from kubernetes.client.apis import core_v1_api
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
-from swagger_server.models import UAN
+from swagger_server.models import UAI
 from swagger_server.uas_lib.uas_cfg import UasCfg
 
 
 UAS_MGR_LOGGER = logging.getLogger('uas_mgr')
 
 
-class UanManager(object):
+class UaiManager(object):
 
     def __init__(self):
         config.load_incluster_config()
@@ -83,7 +83,7 @@ class UanManager(object):
 
     def create_service_object(self, service_name, service_type, deployment_name):
         """
-        Create a service object for the deployment of the UAN.
+        Create a service object for the deployment of the UAI.
 
         :param service_name:
         :type service_name: str
@@ -135,7 +135,7 @@ class UanManager(object):
                                                     namespace=namespace)
         except ApiException as e:
             if e.status != 404:
-                abort(e.status, "Failed to get service info while creating UAN")
+                abort(e.status, "Failed to get service info while creating UAI")
         if not resp:
             try:
                 resp = self.api.create_namespaced_service(body=service_body,
@@ -160,7 +160,7 @@ class UanManager(object):
         return resp
 
     def create_deployment_object(self, username, deployment_name, imagename,
-                                 usersshpubkey, namespace):
+                                 publickey, namespace):
         # Configure Pod template container
         container = client.V1Container(
             name=deployment_name,
@@ -173,7 +173,7 @@ class UanManager(object):
                      value=self.get_user_account_info(username, namespace)),
                  client.V1EnvVar(
                      name='UAS_PUBKEY',
-                     value=usersshpubkey.read().decode())],
+                     value=publickey.read().decode())],
             ports=self.uas_cfg.gen_port_list(service=False),
             volume_mounts=self.uas_cfg.gen_volume_mounts(),
             readiness_probe=self.uas_cfg.create_readiness_probe())
@@ -273,8 +273,8 @@ class UanManager(object):
 
     def get_pod_info(self, deployment_name, namespace='default'):
         pod_resp = None
-        uan = UAN()
-        uan.username = deployment_name.split('-')[1]
+        uai = UAI()
+        uai.username = deployment_name.split('-')[1]
         try:
             pod_resp = self.api.list_namespaced_pod(namespace=namespace,
                                                     include_uninitialized=True)
@@ -282,10 +282,10 @@ class UanManager(object):
             abort(e.status, "Failed to get pod info")
         for pod in pod_resp.items:
             if pod.metadata.name.startswith(deployment_name):
-                uan.uan_name = deployment_name
+                uai.uai_name = deployment_name
                 for ctr in pod.spec.containers:
                     if ctr.name == deployment_name:
-                        uan.uan_img = ctr.image
+                        uai.uai_img = ctr.image
                 if pod.status.container_statuses:
                     for s in pod.status.container_statuses:
                         if s.name == deployment_name:
@@ -293,17 +293,17 @@ class UanManager(object):
                                 for c in pod.status.conditions:
                                     if c.type == 'Ready':
                                         if pod.metadata.deletion_timestamp:
-                                            uan.uan_status = 'Terminating'
+                                            uai.uai_status = 'Terminating'
                                         elif c.status == 'True':
-                                            uan.uan_status = 'Running: Ready'
+                                            uai.uai_status = 'Running: Ready'
                                         else:
-                                            uan.uan_status = 'Running: Not Ready'
-                                            uan.uan_msg = c.message
+                                            uai.uai_status = 'Running: Not Ready'
+                                            uai.uai_msg = c.message
                             if s.state.terminated:
-                                uan.uan_status = 'Terminated'
+                                uai.uai_status = 'Terminated'
                             if s.state.waiting:
-                                uan.uan_status = 'Waiting'
-                                uan.uan_msg = s.state.waiting.reason
+                                uai.uai_status = 'Waiting'
+                                uai.uai_msg = s.state.waiting.reason
                 srv_resp = None
                 try:
                     srv_resp = self.api.read_namespaced_service(name=deployment_name + "-ssh",
@@ -312,39 +312,39 @@ class UanManager(object):
                     if e.status != 404:
                         abort(e.status, "Failed to get service info for %s" % (deployment_name + "-ssh"))
                 if srv_resp:
-                    uan.uan_ip = self.uas_cfg.get_external_ip()
+                    uai.uai_ip = self.uas_cfg.get_external_ip()
                     if srv_resp.spec.ports:
-                        uan.uan_port = srv_resp.spec.ports[0].node_port
+                        uai.uai_port = srv_resp.spec.ports[0].node_port
                     else:
-                        uan.uan_port = "Unknown"
-                uan = self.gen_connection_string(uan)
-        return uan
+                        uai.uai_port = "Unknown"
+                uai = self.gen_connection_string(uai)
+        return uai
 
-    def gen_connection_string(self, uan):
+    def gen_connection_string(self, uai):
         """
-        This function generates the uan.uan_connect_string for creating a
-        ssh connection to the uan.
+        This function generates the uai.uai_connect_string for creating a
+        ssh connection to the uai.
 
         The string will look like:
-          ssh uan.username@uan.uan_ip -p uan.uan_port -i ~/.ssh/id_rsa
+          ssh uai.username@uai.uai_ip -p uai.uai_port -i ~/.ssh/id_rsa
 
-        :param uan:
-        :type uan: uan
-        :return: uan:
+        :param uai:
+        :type uai: uai
+        :return: uai:
         """
-        uan.uan_connect_string = ("ssh %s@%s -p %s -i ~/.ssh/id_rsa" %
-                                  (uan.username,
-                                   uan.uan_ip,
-                                   uan.uan_port))
-        return uan
+        uai.uai_connect_string = ("ssh %s@%s -p %s -i ~/.ssh/id_rsa" %
+                                  (uai.username,
+                                   uai.uai_ip,
+                                   uai.uai_port))
+        return uai
 
     def gen_labels(self, deployment_name):
         return {"app": deployment_name, "uas": "managed"}
 
-    def create_uan(self, username, usersshpubkey, imagename, namespace='default'):
+    def create_uai(self, username, publickey, imagename, namespace='default'):
         if not username:
             abort(400, "Missing username.")
-        if not usersshpubkey:
+        if not publickey:
             abort(400, "Missing ssh public key.")
         if not imagename:
             imagename = self.uas_cfg.get_default_image()
@@ -355,7 +355,7 @@ class UanManager(object):
         deployment_id = uuid.uuid4().hex[:8]
         deployment_name = 'uai-' + username + '-' + str(deployment_id)
         deployment = self.create_deployment_object(username, deployment_name,
-                                                   imagename, usersshpubkey,
+                                                   imagename, publickey,
                                                    namespace)
         # Create a LoadBalancer service for the uas_ssh_port
         uas_ssh_svc_name = deployment_name + '-ssh'
@@ -384,23 +384,23 @@ class UanManager(object):
         svc_resp = self.create_service(uas_ssh_svc_name, uas_ssh_svc, namespace)
         if not svc_resp:
             # Clean up the deployment
-            self.delete_uans([deployment_name], namespace)
+            self.delete_uais([deployment_name], namespace)
             abort(404, "Failed to create service: %s" % uas_ssh_svc_name)
         # Start the uas_service_svc service
         if uas_service_svc:
             svc_resp = self.create_service(uas_service_svc_name, uas_service_svc, namespace)
             if not svc_resp:
                 # Cleanup deployment and uas_ssh_svc_name
-                self.delete_uans([deployment_name], namespace)
+                self.delete_uais([deployment_name], namespace)
                 abort(404, "Failed to create service: %s" % uas_service_svc_name)
         # Update the deployment with the service external IP
         self.update_deployment(deployment, deployment_name, namespace)
-        uan_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
-        while not uan_info.uan_ip:
-            uan_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
-        return uan_info
+        uai_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
+        while not uai_info.uai_ip:
+            uai_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
+        return uai_info
 
-    def list_uans_for_user(self, username, namespace='default'):
+    def list_uais_for_user(self, username, namespace='default'):
         """
         Lists the UAIs for the given username.
         If username is None, it will list all UAIs.
@@ -411,7 +411,7 @@ class UanManager(object):
         :rtype: list
         """
         resp = None
-        uan_list = []
+        uai_list = []
         try:
             resp = self.extensions_v1beta1.list_namespaced_deployment(namespace=namespace,
                                                  include_uninitialized=True)
@@ -422,13 +422,13 @@ class UanManager(object):
             if not username:
                 if "uas" in deployment.metadata.labels:
                     if deployment.metadata.labels['uas'] == "managed":
-                        uan_list.append(self.get_pod_info(deployment.metadata.name))
+                        uai_list.append(self.get_pod_info(deployment.metadata.name))
             else:
                 if deployment.metadata.name.startswith("uai-" + username + "-"):
-                    uan_list.append(self.get_pod_info(deployment.metadata.name))
-        return uan_list
+                    uai_list.append(self.get_pod_info(deployment.metadata.name))
+        return uai_list
 
-    def delete_uans(self, deployment_list, namespace='default'):
+    def delete_uais(self, deployment_list, namespace='default'):
         """
         Deletes the UAIs named in deployment_list.
         If deployment_list is empty, it will delete all UAIs.
@@ -439,11 +439,11 @@ class UanManager(object):
         :rtype: list
         """
         resp_list = []
-        uan_list = []
+        uai_list = []
         if len(deployment_list) == 0:
-            uan_list = self.list_uans_for_user(None)
-            for uan in uan_list:
-                deployment_list.append(uan.uan_name)
+            uai_list = self.list_uais_for_user(None)
+            for uai in uai_list:
+                deployment_list.append(uai.uai_name)
         for d in deployment_list:
             self.delete_deployment(d, namespace)
             self.delete_service(d + "-ssh", namespace)

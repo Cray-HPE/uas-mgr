@@ -2,15 +2,15 @@ openapi: "3.0.2"
 info:
   title: "Cray User Access Service"
   description: "Cray User Access Service. This service is responsible for the management of User Access Instance lifecycles."
-  version: "0.9.0"
-  
-servers: 
+  version: "0.10.0"
+
+servers:
   - url: "/apis/uas-mgr/v1"
 
 paths:
 
   /:
-  
+
     get:
       summary: "Returns supported UAS API versions"
       description: "Returns supported UAS API versions"
@@ -23,13 +23,13 @@ paths:
         200:
           description: "Version response"
       x-openapi-router-controller: "swagger_server.controllers.versions_controller"
-      
+
   /uas/{username}:
-  
+
     get:
       summary: "List all available UAIs for username"
       description: "List all available UAIs for username"
-      operationId: "get_uans_for_username"
+      operationId: "get_uais_for_username"
       tags:
       - "uas/{username}"
       - "UAS"
@@ -47,28 +47,28 @@ paths:
               schema:
                 type: "array"
                 items:
-                 $ref: "#/components/schemas/UAN"
+                 $ref: "#/components/schemas/UAI"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
-      
+
   /uas:
-  
+
     post:
-      summary: "Create a new UAN for the username"
-      description: "Create a new UAN for the username"
-      operationId: "create_uan"
+      summary: "Create a new UAI for the username"
+      description: "Create a new UAI for the username"
+      operationId: "create_uai"
       tags:
       - "uas"
       - "UAS"
       parameters:
       - name: "username"
         in: "query"
-        description: "Create UAN for username"
+        description: "Create UAI for username"
         required: true
-        schema: 
+        schema:
           type: "string"
       - name: "imagename"
         in: "query"
-        description: "Image to use for UAN"
+        description: "Image to use for UAI"
         required: false
         schema:
           type: "string"
@@ -78,35 +78,35 @@ paths:
             schema:
               type: "object"
               properties:
-                usersshpubkey:
+                publickey:
                   description: "Public ssh key for the user"
                   type: "string"
                   format: "binary"
       responses:
         201:
-          description: "UAN created"
+          description: "UAI created"
           content:
             application/json:
               schema:
                 type: "object"
         404:
-          description: "Not able to provide UAN"
+          description: "Not able to provide UAI"
           content:
             application/json:
               schema:
                 type: "object"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
-      
+
     delete:
-      summary: "Delete UAN with uan_name. Takes a list of UAN names and deletes the associated UAN instances."
-      description: "Delete UAN with uan_name. Takes a list of UAN names and deletes the associated UAN instances."
-      operationId: "delete_uan_by_name"
+      summary: "Delete UAI with uai_name. Takes a list of UAI names and deletes the associated UAI instances."
+      description: "Delete UAI with uai_name. Takes a list of UAI names and deletes the associated UAI instances."
+      operationId: "delete_uai_by_name"
       tags:
       - "uas"
       - "UAS"
       parameters:
-      - name: "uan_list"
-        description: "comma separated list of UAN names"
+      - name: "uai_list"
+        description: "comma separated list of UAI names"
         in: "query"
         required: true
         style: form
@@ -117,13 +117,13 @@ paths:
             type: "string"
       responses:
         200:
-          description: "UANs deleted"
+          description: "UAIs deleted"
         404:
-          description: "Failed to delete UAN with {uan_id}"
+          description: "Failed to delete UAI with {uai_id}"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
-      
+
   /images:
-  
+
     get:
       summary: "List available UAS images"
       description: "List available UAS images"
@@ -147,7 +147,7 @@ paths:
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
   /mgr-info:
-  
+
     get:
       summary: "List uas-mgr service info"
       description: "List uas-mgr service info"
@@ -169,9 +169,9 @@ paths:
               schema:
                 type: "object"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
-      
+
   /uais:
-  
+
     get:
       summary: "List all UAIs on the system"
       description: "List all UAIs on the system"
@@ -193,7 +193,7 @@ paths:
               schema:
                 type: "object"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
-      
+
     delete:
       summary: "Delete all UAIs on the system"
       description: "Delete all UAIs on the system"
@@ -211,32 +211,32 @@ paths:
 
 components:
   schemas:
-    UAN:
+    UAI:
       type: "object"
       properties:
-        uan_name:
+        uai_name:
           type: "string"
         username:
           type: "string"
-        usersshpubkey:
+        publickey:
           type: "string"
-        uan_img:
+        uai_img:
           type: "string"
-        uan_ip:
+        uai_ip:
           type: "string"
-        uan_status:
+        uai_status:
           type: "string"
-        uan_msg:
+        uai_msg:
           type: "string"
-        uan_port:
+        uai_port:
           type: "string"
-        uan_connect_string:
+        uai_connect_string:
           type: "string"
       example:
-        uan_id: "user-uan-uan_image"
+        uai_id: "user-uai-uai_image"
         username: "user_name"
-        usersshpubkey: "/Users/user/.ssh/id_rsa.pub"
-        uan_img: "uan_img"
-        uan_ip: "10.248.0.23"
-        uan_status: "Running"
-        uan_reason: "Deploying"
+        publickey: "/Users/user/.ssh/id_rsa.pub"
+        uai_img: "uai_img"
+        uai_ip: "10.248.0.23"
+        uai_status: "Running"
+        uai_reason: "Deploying"
