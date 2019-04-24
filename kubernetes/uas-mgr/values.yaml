@@ -1,6 +1,31 @@
 # Please https://stash.us.cray.com/projects/CLOUD/repos/cray-charts/browse/stable/cray-service/values.yaml?at=refs%2Fheads%2Fmaster
 # for more info on values you can set/override
 
+uasConfig:
+  ip: "" # API gateway IP that can be set at install/upgrade time, likely some UAS work to move to a more service-discovery approach for what this value serves
+  ports:
+    - 30123
+  images:
+    # Must also appear in 'images' below
+    defaultImage: "cray/cray-uas-centos75:latest"
+    images:
+      - "cray/cray-uas-centos75:latest"
+      - "cray/cray-uas-sles15:latest"
+  volumeMounts:
+    - name: lustre
+      mount_path: /lus
+      host_path: /lus
+    - name: slurm-config
+      mount_path: /etc/slurm
+      config_map: slurm-map
+    - name: munge-key
+      mount_path: /root/slurm_config/munge
+      secret_name: munge-secret
+    - name: timezone
+      mount_path: /etc/localtime
+      host_path: /etc/localtime
+      type: FileOrCreate
+
 cray-service:
   type: Deployment
   nameOverride: uas-mgr
