@@ -37,7 +37,7 @@ function create_uai {
     fi
 }
 
-LF_VER_NID=$(ssh nid000001 ls -1 /opt/cray/libfabric/)
+LF_VER_NID=$(ssh nid000001-nmn ls -1 /opt/cray/libfabric/)
 if [ -z "${LF_VER_NID}" ]; then
     echo "Unable to check libfabric version on nid000001, skipping check"
     exit 123
@@ -45,7 +45,7 @@ fi
 
 create_uai
 
-LF_VER_UAI=$(ssh $UAI_connect ls -1 /opt/cray/libfabric/)
+LF_VER_UAI=$($UAI_connect ls -1 /opt/cray/libfabric/)
 if [ -z "${LF_VER_UAI}" ]; then
     echo "Unable to check libfabric version on UAI, skipping check"
     exit 123
