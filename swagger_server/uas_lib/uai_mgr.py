@@ -156,7 +156,10 @@ class UaiManager(object):
                         grace_period_seconds=5))
         except ApiException as e:
             if e.status != 404:
-                abort(e.status, "Failed in delete_service")
+                abort(e.status, "Failed to delete service %s: %s" %
+                      (service_name, e.reason))
+            # if we get 404 we don't want to abort because it's possible that
+            # other parts are still laying around (deployment for example)
         return resp
 
     def create_deployment_object(self, username, deployment_name, imagename,
@@ -268,7 +271,10 @@ class UaiManager(object):
                     grace_period_seconds=5))
         except ApiException as e:
             if e.status != 404:
-                abort(e.status, "Failed in delete_deployment")
+                abort(e.status, "Failed to delete deployment %s: %s" %
+                      (deployment_name, e.reason))
+            # if we get 404 we don't want to abort because it's possible that
+            # other parts are still laying around (services for example)
         return resp
 
     def get_pod_info(self, deployment_name, namespace='default'):
@@ -444,9 +450,16 @@ class UaiManager(object):
             uai_list = self.list_uais_for_user(None)
             for uai in uai_list:
                 deployment_list.append(uai.uai_name)
-        for d in deployment_list:
-            self.delete_deployment(d, namespace)
-            self.delete_service(d + "-ssh", namespace)
-            self.delete_service(d + "-service", namespace)
-            resp_list.append(d)
+        for d in [d.strip() for d in deployment_list]:
+            # Do services first so that we don't orphan one if they abort
+            service_resp = self.delete_service(d + "-ssh", namespace)
+            service_resp2 = self.delete_service(d + "-service", namespace)
+            deploy_resp = self.delete_deployment(d, namespace)
+
+            if deploy_resp is None and service_resp is None and service_resp2\
+               is None:
+                message = "Failed to delete %s - Not found" % d
+            else:
+                message = "Successfully deleted %s" % d
+            resp_list.append(message)
         return resp_list
