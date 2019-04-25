@@ -10,6 +10,7 @@ from swagger_server.uas_lib.uas_cfg import UasCfg
 
 uas_cfg = UasCfg()
 
+
 def create_uai(username, publickey=None, imagename=None):  # noqa: E501
     """Create a new UAI for username
 
@@ -31,6 +32,7 @@ def create_uai(username, publickey=None, imagename=None):  # noqa: E501
     uai_response = uai_mgr.create_uai(username, publickey, imagename)
     return uai_response
 
+
 def delete_uai_by_name(uai_list):  # noqa: E501
     """Delete UAIs in uai_list
 
@@ -46,6 +48,7 @@ def delete_uai_by_name(uai_list):  # noqa: E501
     uai_mgr = UaiManager()
     uai_resp = uai_mgr.delete_uais(uai_list)
     return uai_resp
+
 
 def get_uais_for_username(username):  # noqa: E501
     """List all UAIs for username
@@ -63,6 +66,7 @@ def get_uais_for_username(username):  # noqa: E501
     uai_resp = uai_mgr.list_uais_for_user(username)
     return uai_resp
 
+
 def get_uas_images():  # noqa: E501
     """List available UAS images
 
@@ -75,6 +79,7 @@ def get_uas_images():  # noqa: E501
         'image_list': uas_cfg.get_images()
     }
     return uas_img_info
+
 
 def get_uas_mgr_info():  # noqa: E501
     """List uas-mgr service info
@@ -89,6 +94,7 @@ def get_uas_mgr_info():  # noqa: E501
     }
     return uas_mgr_info
 
+
 def get_all_uais():  # noqa: E501
     """List all UAIs
     :rtype: List[UAI]
@@ -98,6 +104,7 @@ def get_all_uais():  # noqa: E501
     uai_resp = uai_mgr.list_uais_for_user(username)
     return uai_resp
 
+
 def delete_all_uais():  # noqa: E501
     """Delete all UAIs
     :rtype: UAI
@@ -106,3 +113,172 @@ def delete_all_uais():  # noqa: E501
     uai_mgr = UaiManager()
     uai_resp = uai_mgr.delete_uais(uai_list)
     return uai_resp
+
+
+def delete_uas_image(imagename):  # noqa: E501
+    """Delete UAS image
+
+    :param imagename:
+    :type imagename: str
+
+    :rtype: object
+    """
+    if not imagename:
+        return "Must provide imagename to delete."
+    uai_mgr = UaiManager()
+    return uai_mgr.delete_image(imagename)
+
+
+def create_uas_image(imagename, default):  # noqa: E501
+    """Create UAS image
+
+    :param imagename:
+    :type imagename: str
+
+    :param default:
+    :type default: bool
+
+    :rtype: object
+    """
+    if not imagename:
+        return "Must provide imagename to create."
+    if not default:
+        return "Must provide true/false for default image."
+    uai_mgr = UaiManager()
+    return uai_mgr.create_image(imagename, default)
+
+
+def update_uas_image(imagename, default):  # noqa: E501
+    """Update UAS image
+
+    :param imagename:
+    :type imagename: str
+
+    :param default:
+    :type default: bool
+
+    :rtype: object
+    """
+    if not imagename:
+        return "Must provide imagename to update."
+    if not default:
+        return "Must provide true/false for default image."
+    uai_mgr = UaiManager()
+    return uai_mgr.update_image(imagename, default)
+
+
+def get_uas_image(imagename):  # noqa: E501
+    """Get UAS image
+
+    :param imagename:
+    :type imagename: str
+
+    :rtype: object
+    """
+    if not imagename:
+        return "Must provide imagename to get."
+    uai_mgr = UaiManager()
+    return uai_mgr.get_image(imagename)
+
+
+def delete_uas_volume(volumename):  # noqa: E501
+    """Delete UAS volume
+
+    :param volumename:
+    :type volumename: str
+
+    :rtype: object
+    """
+    if not volumename:
+        return "Must provide volumename to delete."
+    uai_mgr = UaiManager()
+    return uai_mgr.delete_volume(volumename)
+
+
+def create_uas_volume(volumename, type, mount_path=None, host_path=None,
+                      secret_name=None, config_map=None):  # noqa: E501
+    """Create UAS volume
+
+    :param volumename:
+    :type volumename: str
+
+    :param type:
+    :type type: str
+
+    :param mount_path:
+    :type mount_path: str
+
+    :param host_path:
+    :type host_path: str
+
+    :param secret_name:
+    :type secret_name: str
+
+    :param config_map:
+    :type config_map: str
+
+    :rtype: object
+    """
+    if not volumename:
+        return "Must provide volumename to create."
+    if not type:
+        return "Must provide type to create."
+    uai_mgr = UaiManager()
+    return uai_mgr.create_volume(volumename, type, mount_path, host_path,
+                                 secret_name, config_map)
+
+
+def update_uas_volume(volumename, type, mount_path=None, host_path=None,
+                      secret_name=None, config_map=None):  # noqa: E501
+    """Update UAS volume
+
+    :param volumename:
+    :type volumename: str
+
+    :param type:
+    :type type: str
+
+    :param mount_path:
+    :type mount_path: str
+
+    :param host_path:
+    :type host_path: str
+
+    :param secret_name:
+    :type secret_name: str
+
+    :param config_map:
+    :type config_map: str
+
+    :rtype: object
+    """
+    if not volumename:
+        return "Must provide volumename to update."
+    if not type:
+        return "Must provide type to update."
+    uai_mgr = UaiManager()
+    return uai_mgr.update_volume(volumename, type, mount_path, host_path,
+                                 secret_name, config_map)
+
+
+def get_uas_volume(volumename):  # noqa: E501
+    """Get UAS volume
+
+    :param volumename:
+    :type volumename: str
+
+    :rtype: object
+    """
+    if not volumename:
+        return "Must provide volumename to get."
+    uai_mgr = UaiManager()
+    return uai_mgr.get_volume(volumename)
+
+
+def get_uas_volumes():  # noqa: E501
+    """Get all volumes
+
+    :rtype: object
+    """
+    uai_mgr = UaiManager()
+    return uai_mgr.get_volumes()

@@ -7,7 +7,6 @@ import swagger_server.controllers.uas_controller as uas_ctl
 from swagger_server import version
 from swagger_server.uas_lib.uas_cfg import UasCfg
 from swagger_server.uas_lib.uai_mgr import UaiManager
-from werkzeug.exceptions import BadRequest
 
 
 class TestUasController(unittest.TestCase):
@@ -40,6 +39,46 @@ class TestUasController(unittest.TestCase):
         self.assertEqual(info,
                          {'service_name': 'cray-uas-mgr',
                           'version': version})
+
+    def test_delete_uas_image(self):
+        resp = uas_ctl.delete_uas_image(None)
+        self.assertEqual(resp, "Must provide imagename to delete.")
+
+    def test_create_uas_image(self):
+        resp = uas_ctl.create_uas_image(None, None)
+        self.assertEqual(resp, "Must provide imagename to create.")
+        resp = uas_ctl.create_uas_image("fred", None)
+        self.assertEqual(resp, "Must provide true/false for default image.")
+
+    def test_update_uas_image(self):
+        resp = uas_ctl.update_uas_image(None, None)
+        self.assertEqual(resp, "Must provide imagename to update.")
+        resp = uas_ctl.update_uas_image("fred", None)
+        self.assertEqual(resp, "Must provide true/false for default image.")
+
+    def test_get_uas_image(self):
+        resp = uas_ctl.get_uas_image(None)
+        self.assertEqual(resp, "Must provide imagename to get.")
+
+    def test_delete_uas_volume(self):
+        resp = uas_ctl.delete_uas_volume(None)
+        self.assertEqual(resp, "Must provide volumename to delete.")
+
+    def test_create_uas_volume(self):
+        resp = uas_ctl.create_uas_volume(None, None)
+        self.assertEqual(resp, "Must provide volumename to create.")
+        resp = uas_ctl.create_uas_volume("fred", None)
+        self.assertEqual(resp, "Must provide type to create.")
+
+    def test_update_uas_volume(self):
+        resp = uas_ctl.update_uas_volume(None, None)
+        self.assertEqual(resp, "Must provide volumename to update.")
+        resp = uas_ctl.update_uas_volume("fred", None)
+        self.assertEqual(resp, "Must provide type to update.")
+
+    def test_get_uas_volume(self):
+        resp = uas_ctl.get_uas_volume(None)
+        self.assertEqual(resp, "Must provide volumename to get.")
 
 
 if __name__ == '__main__':

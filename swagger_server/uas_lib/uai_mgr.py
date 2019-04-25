@@ -402,3 +402,67 @@ class UaiManager(object):
                 message = "Successfully deleted %s" % d
             resp_list.append(message)
         return resp_list
+
+    def delete_image(self, imagename):
+        # Delete the image
+        resp = None
+        abort(501, "Not implemented")
+        return resp
+
+    def create_image(self, imagename, default):
+        # Create the image
+        resp = None
+        abort(501, "Not implemented")
+        return resp
+
+    def update_image(self, imagename, default):
+        # Update the image
+        resp = None
+        abort(501, "Not implemented")
+        return resp
+
+    def get_image(self, imagename):
+        # Get image info
+        resp = None
+        abort(501, "Not implemented")
+        return resp
+
+    def delete_volume(self, volumename):
+        # Delete the volume
+        resp = None
+        abort(501, "Not implemented")
+        return resp
+
+    def create_volume(self, volumename, type, mount_path=None, host_path=None,
+                      secret_name=None, config_map=None):
+        # Create the volume
+        if not self.uas_cfg.is_valid_host_path_mount_type(type):
+            abort(400, "Invalid type - please refer to the Kubernetes volume"
+                  " documentation for valid types")
+
+        resp = None
+        abort(501, "Not implemented")
+        return resp
+
+    def update_volume(self, volumename, type, mount_path=None, host_path=None,
+                      secret_name=None, config_map=None):
+        # Update the volume
+        if not self.uas_cfg.is_valid_host_path_mount_type(type):
+            abort(400, "Invalid type - please refer to the Kubernetes volume"
+                       " documentation for valid types")
+
+        resp = None
+        abort(501, "Not implemented")
+        return resp
+
+    def get_volume(self, volumename):
+        # Get info on a specific volume
+        resp = None
+        abort(501, "Not implemented")
+        return resp
+
+    def get_volumes(self):
+        # Get all volumes
+        resp = None
+        abort(501, "Not implemented")
+        return resp
