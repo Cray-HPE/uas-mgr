@@ -6,6 +6,7 @@
 #
 
 import logging
+import sys
 import uuid
 
 from flask import abort
@@ -19,6 +20,14 @@ from swagger_server.uas_lib.uas_cfg import UasCfg
 
 
 UAS_MGR_LOGGER = logging.getLogger('uas_mgr')
+UAS_MGR_LOGGER.setLevel(logging.INFO)
+
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s"
+                              " - %(message)s")
+handler.setFormatter(formatter)
+UAS_MGR_LOGGER.addHandler(handler)
 
 
 class UaiManager(object):
@@ -81,7 +90,8 @@ class UaiManager(object):
             abort(400, 'user not found. (%s)' % username)
         return uas_id.rstrip()
 
-    def create_service_object(self, service_name, service_type, deployment_name):
+    def create_service_object(self, service_name, service_type,
+                              deployment_name):
         """
         Create a service object for the deployment of the UAI.
 
@@ -131,16 +141,25 @@ class UaiManager(object):
         # Create the service
         resp = None
         try:
+            UAS_MGR_LOGGER.info("getting service %s in namespace %s" %
+                                (service_name, namespace))
             resp = self.api.read_namespaced_service(name=service_name,
                                                     namespace=namespace)
         except ApiException as e:
             if e.status != 404:
-                abort(e.status, "Failed to get service info while creating UAI")
+                UAS_MGR_LOGGER.error("Failed to get service info while "
+                                     "creating UAI: %s" % e.reason)
+                abort(e.status, "Failed to get service info while creating "
+                      "UAI: %s" % e.reason)
         if not resp:
             try:
+                UAS_MGR_LOGGER.info("creating service %s in namespace %s" %
+                                    (service_name, namespace))
                 resp = self.api.create_namespaced_service(body=service_body,
                                                           namespace=namespace)
             except ApiException as e:
+                UAS_MGR_LOGGER.error("Failed to create service %s: %s" %
+                                     (service_name, e.reason))
                 resp = None
         return resp
 
@@ -148,6 +167,8 @@ class UaiManager(object):
         # Delete the service
         resp = None
         try:
+            UAS_MGR_LOGGER.info("deleting service %s in namespace %s" %
+                                 (service_name, namespace))
             resp = self.api.delete_namespaced_service(
                     name=service_name,
                     namespace=namespace,
@@ -156,6 +177,8 @@ class UaiManager(object):
                         grace_period_seconds=5))
         except ApiException as e:
             if e.status != 404:
+                UAS_MGR_LOGGER.error("Failed to delete service %s: %s" %
+                                     (service_name, e.reason))
                 abort(e.status, "Failed to delete service %s: %s" %
                       (service_name, e.reason))
             # if we get 404 we don't want to abort because it's possible that
@@ -214,17 +237,24 @@ class UaiManager(object):
         # Create deployment
         resp = None
         try:
+            UAS_MGR_LOGGER.info("creating deployment %s in namespace %s" %
+                                 (deployment.metadata.name, namespace))
             resp = self.extensions_v1beta1.create_namespaced_deployment(
                 body=deployment,
                 namespace=namespace)
         except ApiException as e:
-            abort(e.status, "Failed in create_deployment")
+            UAS_MGR_LOGGER.error("Failed to create deployment %s: %s"
+                                 % (deployment.metadata.name, e.reason))
+            abort(e.status, "Failed to create deployment %s: %s"
+                  % (deployment.metadata.name, e.reason))
         return resp
 
     def delete_deployment(self, deployment_name, namespace):
         # Delete deployment
         resp = None
         try:
+            UAS_MGR_LOGGER.info("delete deployment %s in namespace %s" %
+                                 (deployment_name, namespace))
             resp = self.extensions_v1beta1.delete_namespaced_deployment(
                 name=deployment_name,
                 namespace=namespace,
@@ -233,6 +263,8 @@ class UaiManager(object):
                     grace_period_seconds=5))
         except ApiException as e:
             if e.status != 404:
+                UAS_MGR_LOGGER.error("Failed to delete deployment %s: %s" %
+                                     (deployment_name, e.reason))
                 abort(e.status, "Failed to delete deployment %s: %s" %
                       (deployment_name, e.reason))
             # if we get 404 we don't want to abort because it's possible that
@@ -244,10 +276,15 @@ class UaiManager(object):
         uai = UAI()
         uai.username = deployment_name.split('-')[1]
         try:
+            UAS_MGR_LOGGER.info("getting pod info %s in namespace %s" %
+                                 (deployment_name, namespace))
             pod_resp = self.api.list_namespaced_pod(namespace=namespace,
                                                     include_uninitialized=True)
         except ApiException as e:
-            abort(e.status, "Failed to get pod info")
+            UAS_MGR_LOGGER.error("Failed to get pod info %s: %s" %
+                                 (deployment_name, e.reason))
+            abort(e.status, "Failed to get pod info %s: %s" %
+                  (deployment_name, e.reason))
         for pod in pod_resp.items:
             if pod.metadata.name.startswith(deployment_name):
                 uai.uai_name = deployment_name
@@ -274,11 +311,19 @@ class UaiManager(object):
                                 uai.uai_msg = s.state.waiting.reason
                 srv_resp = None
                 try:
+                    UAS_MGR_LOGGER.info("getting service info for %s-ssh in "
+                                        "namespace %s" % (deployment_name,
+                                                          namespace))
                     srv_resp = self.api.read_namespaced_service(name=deployment_name + "-ssh",
                                                                 namespace=namespace)
                 except ApiException as e:
                     if e.status != 404:
-                        abort(e.status, "Failed to get service info for %s" % (deployment_name + "-ssh"))
+                        UAS_MGR_LOGGER.error("Failed to get service info for "
+                                             "%s-ssh: %s" % (deployment_name,
+                                                             e.reason))
+                        abort(e.status, "Failed to get service info for "
+                                        "%s-ssh: %s" % (deployment_name,
+                                                        e.reason))
                 if srv_resp:
                     uai.uai_ip = self.uas_cfg.get_external_ip()
                     if srv_resp.spec.ports:
@@ -311,12 +356,18 @@ class UaiManager(object):
 
     def create_uai(self, username, publickey, imagename, namespace='default'):
         if not username:
+            UAS_MGR_LOGGER.warn("create_uai - missing username")
             abort(400, "Missing username.")
         if not publickey:
+            UAS_MGR_LOGGER.warn("create_uai - missing publickey")
             abort(400, "Missing ssh public key.")
         if not imagename:
             imagename = self.uas_cfg.get_default_image()
+            UAS_MGR_LOGGER.info("create_uai - no image name provided, "
+                                "using default %s" % imagename)
         if not self.uas_cfg.validate_image(imagename):
+            UAS_MGR_LOGGER.error("create_uai - image %s is invalid"
+                                 % imagename)
             abort(400, "Invalid image (%s). Valid images: %s. Default: %s"
                   % (imagename, self.uas_cfg.get_images(),
                      self.uas_cfg.get_default_image()))
@@ -329,17 +380,28 @@ class UaiManager(object):
         uas_ssh_svc_name = deployment_name + '-ssh'
         uas_ssh_svc = self.create_service_object(uas_ssh_svc_name, "ssh", deployment_name)
         deploy_resp = None
+
         try:
+            UAS_MGR_LOGGER.info("getting deployment %s in namespace %s" %
+                                 (deployment_name, namespace))
             deploy_resp = self.extensions_v1beta1.read_namespaced_deployment(deployment_name, namespace)
         except ApiException as e:
             if e.status != 404:
-                abort(e.status, "Failed to create deployment")
+                UAS_MGR_LOGGER.error("Failed to create deployment %s: %s" %
+                                     (deployment_name, e.reason))
+                abort(e.status, "Failed to create deployment %s: %s" %
+                      (deployment_name, e.reason))
         if not deploy_resp:
             deploy_resp = self.create_deployment(deployment, namespace)
+
         # Start the uas_ssh_svc service
+        UAS_MGR_LOGGER.info("creating the ssh service %s" %
+                            uas_ssh_svc_name)
         svc_resp = self.create_service(uas_ssh_svc_name, uas_ssh_svc, namespace)
         if not svc_resp:
             # Clean up the deployment
+            UAS_MGR_LOGGER.error("failed to create service, deleting UAIs %s" %
+                                 (deployment_name))
             self.delete_uais([deployment_name], namespace)
             abort(404, "Failed to create service: %s" % uas_ssh_svc_name)
         uai_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
@@ -360,10 +422,13 @@ class UaiManager(object):
         resp = None
         uai_list = []
         try:
+            UAS_MGR_LOGGER.info("listing deployments in namespace %s" %
+                                namespace)
             resp = self.extensions_v1beta1.list_namespaced_deployment(namespace=namespace,
                                                  include_uninitialized=True)
         except ApiException as e:
             if e.status != 404:
+                UAS_MGR_LOGGER.error("Failed to get deployment list")
                 abort(e.status, "Failed to get deployment list")
         for deployment in resp.items:
             if not username:
