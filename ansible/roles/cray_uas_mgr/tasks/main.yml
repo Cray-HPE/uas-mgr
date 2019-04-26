@@ -1,13 +1,5 @@
 # cray-uas-mgr installation ansible play
-<<<<<<< HEAD
-<<<<<<< HEAD
 # Copyright 2018-2019, Cray Inc. All Rights Reserved.
-=======
-# Copyright 2019, Cray Inc. All Rights Reserved.
->>>>>>> 50b9313... CASMUSER-1216: Implement macvlan for UAIs
-=======
-# Copyright 2018-2019, Cray Inc. All Rights Reserved.
->>>>>>> 85c3e8e... CASMUSER-1216: Address comments in review
 ---
 
 - name: Create cray-uas-mgr Kubernetes spec
