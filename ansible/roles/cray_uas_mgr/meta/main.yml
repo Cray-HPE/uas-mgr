@@ -6,7 +6,6 @@ dependencies:
   #@DEP@- kong
   #@DEP@- configmap_ca_certificate
   #@DEP@- cray_node_discovery
-  - slurm
 
 # NOTE: Ansible is very inefficent at handling complex
 #       recursive dependencies.  So rather than depending on
