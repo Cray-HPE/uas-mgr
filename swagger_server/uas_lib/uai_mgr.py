@@ -342,10 +342,10 @@ class UaiManager(object):
             # Clean up the deployment
             self.delete_uais([deployment_name], namespace)
             abort(404, "Failed to create service: %s" % uas_ssh_svc_name)
-        uan_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
-        while not uan_info.uai_ip:
-            uan_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
-        return uan_info
+        uai_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
+        while not uai_info.uai_ip:
+            uai_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
+        return uai_info
 
     def list_uais_for_user(self, username, namespace='default'):
         """
