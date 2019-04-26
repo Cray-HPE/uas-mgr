@@ -457,7 +457,6 @@ class UaiManager(object):
             uai_list = self.list_uais_for_user(None)
             for uai in uai_list:
                 deployment_list.append(uai.uai_name)
-<<<<<<< HEAD
         for d in [d.strip() for d in deployment_list]:
             # Do services first so that we don't orphan one if they abort
             service_resp = self.delete_service(d + "-ssh", namespace)
@@ -468,10 +467,4 @@ class UaiManager(object):
             else:
                 message = "Successfully deleted %s" % d
             resp_list.append(message)
-=======
-        for d in deployment_list:
-            self.delete_deployment(d, namespace)
-            self.delete_service(d + "-ssh", namespace)
-            resp_list.append(d)
->>>>>>> 73e8a7d... CASMUSER-1216: remove unused code that was for MetalLB
         return resp_list
