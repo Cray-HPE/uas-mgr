@@ -146,6 +146,335 @@ paths:
                 type: "object"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
+    post:
+      summary: "Add an image to the list of valid images"
+      description: "Add an image to the list of valid images"
+      operationId: "create_uas_image"
+      tags:
+      - "images"
+      - "UAS"
+      - "cli_hidden"
+      parameters:
+      - name: "imagename"
+        in: "query"
+        description: "Image to create"
+        required: true
+        schema:
+          type: "string"
+      - name: "default"
+        in: "query"
+        description: "default image (true/false)"
+        required: false
+        schema:
+          type: boolean
+          default: false
+          example: "node.local/uas-centos75:latest"
+      responses:
+        201:
+          description: "Image added"
+          content:
+            application/json:
+              schema:
+                type: "object"
+        304:
+          description: "Image not added"
+          content:
+            application/json:
+              schema:
+                type: "object"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+  /images/{imagename}:
+
+    delete:
+      summary: "Remove the image from the list of valid images"
+      description: "Remove the image from the list of valid images"
+      operationId: "delete_uas_image"
+      tags:
+      - "images/{imagename}"
+      - "UAS"
+      - "cli_hidden"
+      parameters:
+      - name: "imagename"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          example: "node.local/uas-centos75:latest"
+      responses:
+        200:
+          description: "Image removed from list"
+        404:
+          description: "Failed to delete image {image_id}"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+    patch:
+      summary: "Update an image"
+      description: "Update an image"
+      operationId: "update_uas_image"
+      tags:
+      - "images/{imagename}"
+      - "UAS"
+      - "cli_hidden"
+      parameters:
+      - name: "imagename"
+        in: "path"
+        description: "Image to update"
+        required: true
+        schema:
+          type: "string"
+      - name: "default"
+        in: "query"
+        description: "default image (true/false)"
+        required: false
+        schema:
+          type: boolean
+          default: false
+          example: "node.local/uas-centos75:latest"
+      responses:
+        201:
+          description: "Image updated"
+          content:
+            application/json:
+              schema:
+                type: "object"
+        304:
+          description: "No changes made"
+          content:
+            application/json:
+              schema:
+                type: "object"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+    get:
+      summary: "Get image info for imagename"
+      description: "Get image info for imagename"
+      operationId: "get_uas_image"
+      tags:
+      - "images/{imagename}"
+      - "UAS"
+      - "cli_hidden"
+      parameters:
+      - name: "imagename"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          example: "node.local/uas-centos75:latest"
+      responses:
+        200:
+          description: "UAS Image"
+          content:
+            application/json:
+              schema:
+                type: "object"
+        404:
+          description: "UAS Image {imagename} not found"
+          content:
+            application/json:
+             schema:
+                type: "object"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+  /volumes:
+
+    get:
+      summary: "List available UAS volumes"
+      description: "List available UAS volumes"
+      operationId: "get_uas_volumes"
+      tags:
+      - "volumes"
+      - "UAS"
+      - "cli_hidden"
+      responses:
+        200:
+          description: "UAS Volume list"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                 $ref: "#/components/schemas/Volume"
+        404:
+          description: "UAS Volumes not found"
+          content:
+            application/json:
+             schema:
+                type: "object"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+    post:
+      summary: "Add a volume"
+      description: "Add a volume"
+      operationId: "create_uas_volume"
+      tags:
+      - "volumes"
+      - "UAS"
+      - "cli_hidden"
+      parameters:
+      - name: "volumename"
+        in: "query"
+        description: "Volume to create"
+        required: true
+        schema:
+          type: "string"
+          example: "mymount"
+      - name: "type"
+        in: "query"
+        description: "Type of volume (refer to kubernetes documentation for valid types)"
+        required: false
+        schema:
+          type: "string"
+          default: "DirectoryOrCreate"
+          example: "DirectoryOrCreate"
+      - name: "mount_path"
+        in: "query"
+        description: "Path to mount inside the UAI"
+        required: false
+        schema:
+          type: "string"
+          example: "/mnt/test"
+      - name: "host_path"
+        in: "query"
+        description: "Path of mount on the host"
+        required: false
+        schema:
+          type: "string"
+          example: "/opt/host/path"
+      responses:
+        201:
+          description: "Volume added"
+          content:
+            application/json:
+              schema:
+                type: "object"
+        304:
+          description: "Volume not added"
+          content:
+            application/json:
+              schema:
+                type: "object"
+        400:
+          description: "Invalid type for host, volume not added"
+          content:
+            application/json:
+              schema:
+                type: "object"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+  /volumes/{volumename}:
+
+    delete:
+      summary: "Remove the volume from the list of valid volumes"
+      description: "Remove the volume from the list of valid volumes"
+      operationId: "delete_uas_volume"
+      tags:
+      - "volumes/{volumename}"
+      - "UAS"
+      - "cli_hidden"
+      parameters:
+      - name: "volumename"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          example: "node.local/uas-centos75:latest"
+      responses:
+        200:
+          description: "Volume removed from list"
+        404:
+          description: "Failed to delete volume {volume_id}"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+    patch:
+      summary: "Update a volume"
+      description: "Update a volume"
+      operationId: "update_uas_volume"
+      tags:
+      - "volumes/{volumename}"
+      - "UAS"
+      - "cli_hidden"
+      parameters:
+      - name: "volumename"
+        in: "path"
+        description: "Volume to create"
+        required: true
+        schema:
+          type: "string"
+          example: "mymount"
+      - name: "type"
+        in: "query"
+        description: "Type of volume (refer to kubernetes documentation for valid types)"
+        required: false
+        schema:
+          type: "string"
+          default: "DirectoryOrCreate"
+          example: "DirectoryOrCreate"
+      - name: "mount_path"
+        in: "query"
+        description: "Path to mount inside the UAI"
+        required: false
+        schema:
+          type: "string"
+          example: "/mnt/test"
+      - name: "host_path"
+        in: "query"
+        description: "Path of mount on the host"
+        required: false
+        schema:
+          type: "string"
+          example: "/opt/host/path"
+      responses:
+        201:
+          description: "Volume updated"
+          content:
+            application/json:
+              schema:
+                type: "object"
+        304:
+          description: "No changes made"
+          content:
+            application/json:
+              schema:
+                type: "object"
+        400:
+          description: "Invalid type for host, volume not updated"
+          content:
+            application/json:
+              schema:
+                type: "object"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+    get:
+      summary: "Get volume info for volumename"
+      description: "Get volume info for volumename"
+      operationId: "get_uas_volume"
+      tags:
+      - "volumes/{volumename}"
+      - "UAS"
+      - "cli_hidden"
+      parameters:
+      - name: "volumename"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          example: "node.local/uas-centos75:latest"
+      responses:
+        200:
+          description: "UAS Volume"
+          content:
+            application/json:
+              schema:
+                type: "object"
+        404:
+          description: "UAS Volume {volumename} not found"
+          content:
+            application/json:
+             schema:
+                type: "object"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
   /mgr-info:
 
     get:
@@ -240,3 +569,23 @@ components:
         uai_ip: "10.248.0.23"
         uai_status: "Running"
         uai_reason: "Deploying"
+    Volume:
+      type: "object"
+      properties:
+        volumename:
+          type: "string"
+        type:
+          type: "string"
+        mount_path:
+          type: "string"
+        host_path:
+          type: "string"
+        secret_name:
+          type: "string"
+        config_map:
+          type: "string"
+      example:
+        name: "example_mount"
+        type: "DirectoryOrCreate"
+        mount_path: "/opt/test/foo"
+        host_path: "/opt/host/foo"
