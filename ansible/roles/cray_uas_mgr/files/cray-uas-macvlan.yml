@@ -1,8 +1,9 @@
 # Based on https://github.com/intel/multus-cni/blob/master/examples/macvlan-conf.yml
+# Macvlan definition for UAS on the node management network
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
-  name: macvlan-uas-conf
+  name: macvlan-uas-nmn-conf
 spec:
   config: '{
       "cniVersion": "0.3.0",
