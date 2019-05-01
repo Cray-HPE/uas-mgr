@@ -11,12 +11,6 @@ uas_mgr:
     - name: lustre
       mount_path: /lus
       host_path: /lus
-    - name: slurm-config
-      mount_path: /etc/slurm
-      config_map: "{{ slurm_configmap }}"
-    - name: munge-key
-      mount_path: /root/slurm_config/munge
-      secret_name: "{{ munge_secret }}"
     - name: timezone
       mount_path: /etc/localtime
       host_path: /etc/localtime

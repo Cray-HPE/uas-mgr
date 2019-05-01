@@ -1,16 +1,13 @@
 # cray-uas-mgr localization ansible play
 # Copyright 2019, Cray Inc. All Rights Reserved.
 ---
-- name: Include uas_mgr.yml
-  include_vars: uas_mgr.yml
-  run_once: true
-
 - name: Localizing UAS IP
   lineinfile:
     regexp: '^ {4}uas_ip:'
     line: '    uas_ip: {{ gwn_ipv4 }}'
     dest: "/root/k8s/configmap-cray-uas-mgr.yaml"
     insertafter: "# uas_ip: UAS Instance IP"
+  when: gwn_ipv4 is defined
   run_once: True
 
 - name: Setting default UAS image
