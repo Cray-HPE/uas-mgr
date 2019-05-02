@@ -216,7 +216,7 @@ class UaiManager(object):
         # Create and configure a spec section
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(labels=self.gen_labels(deployment_name),
-                                         annotations={'k8s.v1.cni.cncf.io/networks': 'macvlan-uas-conf'}),
+                                         annotations={'k8s.v1.cni.cncf.io/networks': 'macvlan-uas-nmn-conf@nmn1'}),
             spec=client.V1PodSpec(containers=[container],
                                   affinity=affinity,
                                   volumes=volumes))
