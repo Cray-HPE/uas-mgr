@@ -57,6 +57,8 @@ spec:
         volumeMounts:
           - name: cray-uas-mgr-cfgmap
             mountPath: /etc/uas
+          - name: ca-vol
+            mountPath: /mnt/ca-vol
         readinessProbe:
           httpGet:
             path: /v1/mgr-info
