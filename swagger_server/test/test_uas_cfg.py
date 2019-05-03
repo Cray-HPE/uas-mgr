@@ -19,21 +19,24 @@ class TestUasCfg(unittest.TestCase):
 
     def test_get_images(self):
         images = self.uas_cfg.get_images()
-        self.assertEqual(images, ['dtr.dev.cray.com:443/cray/cray-uas-img:latest'])
+        self.assertEqual(images, ['dtr.dev.cray.com:443/cray/cray-uas-sles15:latest',
+                                  'dtr.dev.cray.com:443/cray/cray-uas-centos75:latest'])
         images = self.uas_cfg_empty.get_images()
         self.assertEqual(images, None)
 
     def test_get_default_image(self):
         image = self.uas_cfg.get_default_image()
-        self.assertEqual(image, 'dtr.dev.cray.com:443/cray/cray-uas-img:latest')
+        self.assertEqual(image, 'dtr.dev.cray.com:443/cray/cray-uas-sles15:latest')
         image = self.uas_cfg_empty.get_default_image()
         self.assertEqual(image, None)
 
     def test_validate_image_true(self):
-        self.assertTrue(self.uas_cfg.validate_image('dtr.dev.cray.com:443/cray/cray-uas-img:latest'))
+        self.assertTrue(self.uas_cfg.validate_image('dtr.dev.cray.com:443/cray/cray-uas-sles15:latest'))
+        self.assertTrue(self.uas_cfg.validate_image('dtr.dev.cray.com:443/cray/cray-uas-centos75:latest'))
 
     def test_validate_image_false(self):
         self.assertFalse(self.uas_cfg.validate_image('not-an-image'))
+        self.assertFalse(self.uas_cfg.validate_image(''))
 
     def test_get_external_ip(self):
         self.assertEqual('10.100.240.14',
