@@ -61,11 +61,11 @@ class UasAuth(object):
         except requests.exceptions.HTTPError as e:
           self.authError(e.response.status_code, 'HTTPError', e)
         except requests.exceptions.ConnectionError as e:
-          self.authError(e.response.status_code, 'ConnectionError', e)
+          self.authError(500, 'ConnectionError', e)
         except requests.exceptions.Timeout as e:
-          self.authError(e.reponse.status_code, 'Timeout', e)
+          self.authError(500, 'Timeout', e)
         except requests.exceptions.RequestException as e:
-          self.authError(e.response.status_code, 'RequestException', e)
+          self.authError(500, 'RequestException', e)
 
         try:
           userinfo = response.json()
