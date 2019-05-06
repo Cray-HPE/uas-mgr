@@ -72,4 +72,6 @@ class UasAuth(object):
         except JSONDecodeError:
           self.authError(500, 'json', 'Failed to decode /userinfo response')
 
+        UAS_MGR_LOGGER.info("UasAuth lookup complete for user %s" %
+                            userinfo['perferred_username'])
         return userinfo

@@ -14,15 +14,24 @@ class TestUasAuth(unittest.TestCase):
     loginShell = '/bin/bash'
     homeDirectory = '/users/home/hal'
 
+    def test_UasAuth(self):
+        auth = UasAuth(endpoint='https://sms-1.craydev.com/apis/keycloak', cacert='/foo')
+        self.assertEqual(auth.endpoint, 'https://sms-1.craydev.com/apis/keycloak')
+        self.assertEqual(auth.cacert, '/foo')
+
     def test_createPasswd(self):
 
-        passwd = self.uas_auth.createPasswd(self.uid, self.gid, self.username, self.name, self.homeDirectory, self.loginShell) 
+        passwd = self.uas_auth.createPasswd(self.uid, self.gid, self.username, 
+                                            self.name, self.homeDirectory, self.loginShell) 
 
         self.assertEqual('hal::1234:4321:Hal Gorithm:/users/home/hal:/bin/bash', passwd)
 
     def test_validateUserinfo(self):
 
-        userinfo={'sub': '60d2b60d-4d0d-4561-ac74-4b579c34fb3f', 'loginShell': self.loginShell, 'email_verified': False, 'homeDirectory': self.homeDirectory, 'uidNumber': self.uid, 'gidNumber': self.gid, 'name': self.name, 'preferred_username': self.username, 'given_name': self.name}
+        userinfo={'sub': '60d2b60d-4d0d-4561-ac74-4b579c34fb3f', 'loginShell': self.loginShell, 
+                  'email_verified': False, 'homeDirectory': self.homeDirectory, 'uidNumber': self.uid, 
+                  'gidNumber': self.gid, 'name': self.name, 'preferred_username': self.username, 
+                  'given_name': self.name}
         
         self.assertEqual(True, self.uas_auth.validateUserinfo(userinfo))
         del userinfo['uidNumber']
