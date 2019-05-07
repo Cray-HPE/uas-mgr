@@ -5,7 +5,7 @@ FROM python:3-slim as base
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
-COPY setup.py requirements.txt /usr/src/app/
+COPY setup.py requirements.txt .version /usr/src/app/
 COPY api/ swagger_server/ /usr/src/app/swagger_server/
 
 RUN pip3 install --no-cache-dir -r requirements.txt
@@ -15,7 +15,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 #########################
 FROM base as testing
 
-COPY test-requirements.txt .version /usr/src/app/
+COPY test-requirements.txt /usr/src/app/
 RUN pip3 install --no-cache-dir -r test-requirements.txt
 RUN ./swagger_server/test/version-check.sh
 RUN mkdir -p /var/run/secrets/kubernetes.io/
