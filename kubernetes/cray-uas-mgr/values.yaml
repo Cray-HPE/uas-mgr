@@ -7,7 +7,7 @@ uasConfig:
     - 30123
   images:
     # Must also appear in 'images' below
-    defaultImage: "cray/cray-uas-centos75:latest"
+    defaultImage: "cray/cray-uas-sles15:latest"
     images:
       - "cray/cray-uas-centos75:latest"
       - "cray/cray-uas-sles15:latest"
@@ -15,29 +15,45 @@ uasConfig:
     - name: lustre
       mount_path: /lus
       host_path: /lus
-    - name: slurm-config
-      mount_path: /etc/slurm
-      config_map: slurm-map
-    - name: munge-key
-      mount_path: /root/slurm_config/munge
-      secret_name: munge-secret
     - name: timezone
       mount_path: /etc/localtime
       host_path: /etc/localtime
       type: FileOrCreate
 
+
 cray-service:
   type: Deployment
-  nameOverride: uas-mgr
+  replicaCount: 2
+  nameOverride: cray-uas-mgr
   serviceAccountName: "cray-uas-mgr"
 
+  volumes:
+    - name: cray-uas-mgr-cfgmap
+      configMap:
+        name: cray-uas-mgr-cfgmap
+#    - name: ca-vol
+#      configMap:
+#        name: cray-configmap-ca-public-key
+
   affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-        - matchExpressions:
-          - key: uas
-            operator: Exists
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 50
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app
+              operator: In
+              values:
+              - cray-uas-mgr
+          topologyKey: kubernetes.io/hostname
+
+  service:
+    ports:
+    - port: 8080
+      name: http
+      protocol: TCP
+      targetPort: http
 
   containers:
     - name: cray-uas-mgr
@@ -45,23 +61,26 @@ cray-service:
         repository: cray/cray-uas-mgr
       ports:
         - name: http
-          port: 8080
+          containerPort: 8080
       livenessProbe:
-        enabled: true
-        port: 8080
-        path: /
+        httpGet:
+          port: 8080
+          path: /v1/mgr-info
         initialDelaySeconds: 5
         periodSeconds: 3
       readinessProbe:
-        enabled: true
-        port: 8080
-        path: /
+        httpGet:
+          port: 8080
+          path: /v1/mgr-info
         initialDelaySeconds: 5
         periodSeconds: 3
       volumeMounts:
         - name: cray-uas-mgr-cfgmap
           mountPath: /etc/uas
+#        - name: ca-vol
+#          mountPath: /mnt/ca-vol
 
-
-
-
+  ingress:
+    enabled: true
+    prefix: /apis/uas-mgr
+    uri: /
