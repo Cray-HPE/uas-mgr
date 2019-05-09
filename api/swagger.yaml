@@ -75,6 +75,13 @@ paths:
         schema:
           type: "string"
         example: "node.local/uas-centos75:latest"
+      - name: "ports"
+        in: "query"
+        description: "Additional ports to project from the UAI besides ssh. Restricted to ports 80 and 443."
+        required: false
+        schema:
+          type: "string"
+        example: "80,443"
       requestBody:
         content:
           multipart/form-data:
@@ -567,6 +574,10 @@ components:
           type: "string"
         uai_connect_string:
           type: "string"
+        uai_portmap:
+          type: "object"
+          additionalProperties:
+            type: "integer"
       example:
         uai_id: "user-uai-uai_image"
         username: "user_name"

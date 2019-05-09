@@ -83,6 +83,13 @@ class TestUasCfg(unittest.TestCase):
         self.assertEqual(1, len(port_list))
         self.assertEqual(30123, port_list[0].port)
 
+        optional_ports = [80, 443]
+        port_list = self.uas_cfg.gen_port_list(service_type="ssh", service=False,
+                                               optional_ports=optional_ports)
+        self.assertEqual(3, len(port_list))
+        for port in port_list:
+            self.assertIn(port.container_port, [30123, 80, 443])
+
         port_list = self.uas_cfg.gen_port_list(service_type="service", service=False)
         self.assertEqual([], port_list)
 
@@ -120,6 +127,10 @@ class TestUasCfg(unittest.TestCase):
         probe = self.uas_cfg.create_readiness_probe()
         self.assertIsInstance(probe, client.V1Probe)
         self.assertIsInstance(probe.tcp_socket, client.V1TCPSocketAction)
+
+    def test_get_valid_optional_ports(self):
+        port_list = self.uas_cfg.get_valid_optional_ports()
+        self.assertListEqual(port_list, [80, 443])
 
     def test_get_service_type(self):
         svc_type = self.uas_cfg.get_svc_type(service_type="ssh")
