@@ -39,6 +39,7 @@ paths:
         required: true
         schema:
           type: "string"
+        example: "user"
       responses:
         200:
           description: "List all UAIs for username"
@@ -66,12 +67,14 @@ paths:
         required: true
         schema:
           type: "string"
+        example: "user"
       - name: "imagename"
         in: "query"
         description: "Image to use for UAI"
         required: false
         schema:
           type: "string"
+        example: "node.local/uas-centos75:latest"
       requestBody:
         content:
           multipart/form-data:
@@ -115,6 +118,7 @@ paths:
           type: "array"
           items:
             type: "string"
+        example: ["uai-asdfgh098","uai-qwerty123"]
       responses:
         200:
           description: "UAIs deleted"
@@ -161,6 +165,7 @@ paths:
         required: true
         schema:
           type: "string"
+        example: "node.local/uas-centos75:latest"
       - name: "default"
         in: "query"
         description: "default image (true/false)"
@@ -168,7 +173,7 @@ paths:
         schema:
           type: boolean
           default: false
-          example: "node.local/uas-centos75:latest"
+        example: false
       responses:
         201:
           description: "Image added"
@@ -200,7 +205,7 @@ paths:
         required: true
         schema:
           type: "string"
-          example: "node.local/uas-centos75:latest"
+        example: "node.local/uas-centos75:latest"
       responses:
         200:
           description: "Image removed from list"
@@ -223,6 +228,7 @@ paths:
         required: true
         schema:
           type: "string"
+        example: "docker.local/cray/cray-uas-centos75:latest"
       - name: "default"
         in: "query"
         description: "default image (true/false)"
@@ -230,7 +236,7 @@ paths:
         schema:
           type: boolean
           default: false
-          example: "node.local/uas-centos75:latest"
+        example: false
       responses:
         201:
           description: "Image updated"
@@ -260,7 +266,7 @@ paths:
         required: true
         schema:
           type: "string"
-          example: "node.local/uas-centos75:latest"
+        example: "node.local/uas-centos75:latest"
       responses:
         200:
           description: "UAS Image"
@@ -318,7 +324,7 @@ paths:
         required: true
         schema:
           type: "string"
-          example: "mymount"
+        example: "mymount"
       - name: "type"
         in: "query"
         description: "Type of volume (refer to kubernetes documentation for valid types)"
@@ -326,21 +332,21 @@ paths:
         schema:
           type: "string"
           default: "DirectoryOrCreate"
-          example: "DirectoryOrCreate"
+        example: "DirectoryOrCreate"
       - name: "mount_path"
         in: "query"
         description: "Path to mount inside the UAI"
         required: false
         schema:
           type: "string"
-          example: "/mnt/test"
+        example: "/mnt/test"
       - name: "host_path"
         in: "query"
         description: "Path of mount on the host"
         required: false
         schema:
           type: "string"
-          example: "/opt/host/path"
+        example: "/opt/host/path"
       responses:
         201:
           description: "Volume added"
@@ -378,7 +384,7 @@ paths:
         required: true
         schema:
           type: "string"
-          example: "node.local/uas-centos75:latest"
+        example: "node.local/uas-centos75:latest"
       responses:
         200:
           description: "Volume removed from list"
@@ -401,7 +407,7 @@ paths:
         required: true
         schema:
           type: "string"
-          example: "mymount"
+        example: "mymount"
       - name: "type"
         in: "query"
         description: "Type of volume (refer to kubernetes documentation for valid types)"
@@ -409,21 +415,21 @@ paths:
         schema:
           type: "string"
           default: "DirectoryOrCreate"
-          example: "DirectoryOrCreate"
+        example: "DirectoryOrCreate"
       - name: "mount_path"
         in: "query"
         description: "Path to mount inside the UAI"
         required: false
         schema:
           type: "string"
-          example: "/mnt/test"
+        example: "/mnt/test"
       - name: "host_path"
         in: "query"
         description: "Path of mount on the host"
         required: false
         schema:
           type: "string"
-          example: "/opt/host/path"
+        example: "/opt/host/path"
       responses:
         201:
           description: "Volume updated"
@@ -459,7 +465,7 @@ paths:
         required: true
         schema:
           type: "string"
-          example: "node.local/uas-centos75:latest"
+        example: "node.local/uas-centos75:latest"
       responses:
         200:
           description: "UAS Volume"
