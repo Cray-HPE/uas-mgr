@@ -186,7 +186,7 @@ class UaiManager(object):
         return resp
 
     def create_deployment_object(self, username, deployment_name, imagename,
-                                 publickey, namespace):
+                                 publickeyStr, namespace):
         # Configure Pod template container
         container = client.V1Container(
             name=deployment_name,
@@ -199,7 +199,7 @@ class UaiManager(object):
                      value=self.get_user_account_info(username, namespace)),
                  client.V1EnvVar(
                      name='UAS_PUBKEY',
-                     value=publickey.read().decode())],
+                     value=publickeyStr)],
             ports=self.uas_cfg.gen_port_list(service=False),
             volume_mounts=self.uas_cfg.gen_volume_mounts(),
             readiness_probe=self.uas_cfg.create_readiness_probe())
@@ -358,9 +358,22 @@ class UaiManager(object):
         if not username:
             UAS_MGR_LOGGER.warn("create_uai - missing username")
             abort(400, "Missing username.")
+
         if not publickey:
             UAS_MGR_LOGGER.warn("create_uai - missing publickey")
             abort(400, "Missing ssh public key.")
+        else:
+            try:
+                publickeyStr = publickey.read().decode()
+                if not self.uas_cfg.validate_ssh_key(publickeyStr):
+                    # do not log the key here even if it's invalid, it
+                    # could be a private key accidentally passed in
+                    UAS_MGR_LOGGER.info("create_uai - invalid ssh public key")
+                    abort(400, "Invalid ssh public key.")
+            except Exception as e:
+                UAS_MGR_LOGGER.info("create_uai - invalid ssh public key")
+                abort(400, "Invalid ssh public key.")
+
         if not imagename:
             imagename = self.uas_cfg.get_default_image()
             UAS_MGR_LOGGER.info("create_uai - no image name provided, "
@@ -371,10 +384,11 @@ class UaiManager(object):
             abort(400, "Invalid image (%s). Valid images: %s. Default: %s"
                   % (imagename, self.uas_cfg.get_images(),
                      self.uas_cfg.get_default_image()))
+
         deployment_id = uuid.uuid4().hex[:8]
         deployment_name = 'uai-' + username + '-' + str(deployment_id)
         deployment = self.create_deployment_object(username, deployment_name,
-                                                   imagename, publickey,
+                                                   imagename, publickeyStr,
                                                    namespace)
         # Create a LoadBalancer service for the uas_ssh_port
         uas_ssh_svc_name = deployment_name + '-ssh'

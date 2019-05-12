@@ -6,10 +6,11 @@
 #
 
 import logging
+import sshpubkeys
+import sshpubkeys.exceptions as sshExceptions
 import yaml
 
 from flask import abort
-
 from kubernetes import client
 
 UAS_CFG_LOGGER = logging.getLogger('uas_cfg')
@@ -229,3 +230,23 @@ class UasCfg(object):
         :rtype bool
         """
         return mount_type in ("DirectoryOrCreate", "Directory", "FileOrCreate", "File", "Socket", "CharDevice", "BlockDevice")
+
+    def validate_ssh_key(self, ssh_key):
+        """
+        checks whether the ssh_key is a valid public key
+        ssh_key input is expected to be a string
+        :return: returns True if valid public key
+        :rtype bool
+        """
+        try:
+            ssh = sshpubkeys.SSHKey(ssh_key, strict=False,
+                                    skip_option_parsing=True)
+            ssh.parse()
+            return True
+        except sshExceptions.InvalidKeyError as err:
+            UAS_CFG_LOGGER.error("Unknown key type: ", err)
+        except (NotImplementedError, sshExceptions.MalformedDataError) as err:
+            UAS_CFG_LOGGER.error("Invalid key: ", err)
+        except Exception as err:
+            UAS_CFG_LOGGER.error("Invalid non-key input: ", err)
+        return False
