@@ -21,57 +21,75 @@ formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s"
 handler.setFormatter(formatter)
 UAS_AUTH_LOGGER.addHandler(handler)
 
+
 class UasAuth(object):
 
     """
-    The UasAuth class makes requests to Keycloak with a user's 
+    The UasAuth class makes requests to Keycloak with a user's
     JWT to find information like uid, gid, home directory, and
     preferred shell.
     """
 
     def __init__(self, cacert='/mnt/ca-vol/certificate_authority.crt',
-                 endpoint='https://api-gw-service-nmn.local/keycloak/realms/shasta/protocol/openid-connect/userinfo'):
+                 endpoint='https://api-gw-service-nmn.local/'
+                          'keycloak/realms/shasta/protocol/'
+                          'openid-connect/userinfo'):
 
         self.cacert = cacert
         self.endpoint = endpoint
+        self.uid = 'uidNumber'
+        self.gid = 'gidNumber'
+        self.username = 'preferred_username'
+        self.name = 'name'
+        self.home = 'homeDirectory'
+        self.shell = 'loginShell'
+        self.attributes = [self.uid, self.gid, self.username, self.name,
+                           self.home, self.shell]
 
     def authError(self, err, type, e):
 
-        UAS_MGR_LOGGER.error('UasAuth %s:%s', type, e)
+        UAS_AUTH_LOGGER.error('UasAuth %s:%s', type, e)
         abort(err, 'UasAuth %s: %s' % type, e)
 
-    def createPasswd(self, uid, gid, username, name, homeDirectory, loginShell):
+    def createPasswd(self, userinfo):
 
         fmt = '%s::%s:%s:%s:%s:%s'
-        return fmt % (username, uid, gid, name, homeDirectory, loginShell)
+        return fmt % (userinfo[self.username], userinfo[self.uid],
+                      userinfo[self.gid], userinfo[self.name],
+                      userinfo[self.home], userinfo[self.shell])
 
-    def validateUserinfo(self, userinfo):
+    def validUserinfo(self, userinfo):
 
-        attributes = ['uidNumber', 'gidNumber', 'preferred_username', 'homeDirectory', 'loginShell']
-        if all (field in userinfo for field in attributes):
-          return True
+        if all(field in userinfo for field in self.attributes):
+            return True
         else:
-          return [False,list(set(attributes).difference(userinfo))]
+            return False
+
+    def missingAttributes(self, userinfo):
+
+        return list(set(self.attributes).difference(userinfo))
 
     def userinfo(self, token):
 
-        headers = {'Authorization': 'Bearer '+token}
+        headers = {'Authorization': token}
         try:
-          response = requests.post(self.endpoint, verify=self.cacert, headers=headers)
+            response = requests.post(self.endpoint, verify=self.cacert,
+                                     headers=headers)
         except requests.exceptions.HTTPError as e:
-          self.authError(e.response.status_code, 'HTTPError', e)
+            self.authError(e.response.status_code, 'HTTPError', e)
         except requests.exceptions.ConnectionError as e:
-          self.authError(500, 'ConnectionError', e)
+            self.authError(500, 'ConnectionError', e)
         except requests.exceptions.Timeout as e:
-          self.authError(500, 'Timeout', e)
+            self.authError(500, 'Timeout', e)
         except requests.exceptions.RequestException as e:
-          self.authError(500, 'RequestException', e)
+            self.authError(500, 'RequestException', e)
 
         try:
-          userinfo = response.json()
+            userinfo = response.json()
         except JSONDecodeError:
-          self.authError(500, 'json', 'Failed to decode /userinfo response')
+            self.authError(500, 'json', 'Failed to decode /userinfo response')
 
-        UAS_MGR_LOGGER.info("UasAuth lookup complete for user %s" %
-                            userinfo['perferred_username'])
+        if self.username in userinfo:
+            UAS_AUTH_LOGGER.info("UasAuth lookup complete for user %s" %
+                                 userinfo[self.username])
         return userinfo

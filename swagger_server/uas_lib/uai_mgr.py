@@ -8,8 +8,7 @@
 import logging
 import sys
 import uuid
-
-from flask import abort
+from flask import abort, request
 from kubernetes import config, client
 from kubernetes.client import Configuration
 from kubernetes.client.apis import core_v1_api
@@ -17,6 +16,7 @@ from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 from swagger_server.models import UAI
 from swagger_server.uas_lib.uas_cfg import UasCfg
+from swagger_server.uas_lib.uas_auth import UasAuth
 
 
 UAS_MGR_LOGGER = logging.getLogger('uas_mgr')
@@ -40,6 +40,26 @@ class UaiManager(object):
         self.api = core_v1_api.CoreV1Api()
         self.extensions_v1beta1 = client.ExtensionsV1beta1Api()
         self.uas_cfg = UasCfg()
+        self.uas_auth = UasAuth()
+        self.userinfo = None
+        self.passwd = None
+        self.username = None
+
+        # Until Authorization is required, optionally gather user 
+        # information from Keycloak if a Bearer token is provided
+        # with the request.
+        if 'Authorization' in request.headers:
+            self.userinfo = self.uas_auth.userinfo(request.headers['Authorization'])
+            if self.uas_auth.validUserinfo(self.userinfo):
+                self.passwd = self.uas_auth.createPasswd(self.userinfo)
+                self.username = self.userinfo[self.uas_auth.username]
+                UAS_MGR_LOGGER.info("UAS request for: %s" % self.username)
+            else:
+                missing = self.uas_auth.missingAttributes(self.userinfo)
+                UAS_MGR_LOGGER.info("Token not valid for UAS. Attributes missing: "
+                                    "%s" % missing)
+                abort(400, "Token not valid for UAS. Attributes missing: "
+                                    "%s" % missing)
 
     def get_user_account_info(self, username, namespace):
         """
@@ -187,6 +207,12 @@ class UaiManager(object):
 
     def create_deployment_object(self, username, deployment_name, imagename,
                                  publickeyStr, namespace):
+        # Use passwd derived from the Auth token if present.
+        # CASMUSER-1460 tracks making this the only allowable passwd 
+        if not self.passwd:
+            passwd = self.get_user_account_info(username, namespace)
+        else:
+            passwd = self.passwd
         # Configure Pod template container
         container = client.V1Container(
             name=deployment_name,
@@ -196,7 +222,7 @@ class UaiManager(object):
                     value=deployment_name + "-ssh"),
                  client.V1EnvVar(
                      name='UAS_PASSWD',
-                     value=self.get_user_account_info(username, namespace)),
+                     value=passwd),
                  client.V1EnvVar(
                      name='UAS_PUBKEY',
                      value=publickeyStr)],
@@ -355,6 +381,17 @@ class UaiManager(object):
         return {"app": deployment_name, "uas": "managed"}
 
     def create_uai(self, username, publickey, imagename, namespace='default'):
+        # Use the username derived from the Auth token if present.
+        # CASMUSER-1460 tracks making this the only allowable username
+        if self.username:
+            if not username == self.username:
+                UAS_MGR_LOGGER.error("Username '%s' does not match "
+                                     "token username '%s'" %
+                                     (username, self.username))
+                abort(400, "Username '%s' does not match "
+                      "token username '%s'" %
+                      (username, self.username))
+            username = self.username
         if not username:
             UAS_MGR_LOGGER.warn("create_uai - missing username")
             abort(400, "Missing username.")
@@ -435,6 +472,17 @@ class UaiManager(object):
         """
         resp = None
         uai_list = []
+        # Use the username derived from the Auth token if present.
+        # CASMUSER-1460 tracks making this the only allowable username
+        if self.username:
+            if not username == self.username:
+                UAS_MGR_LOGGER.error("Username '%s' does not match "
+                                     "token username '%s'" %
+                                     (username, self.username))
+                abort(400, "Username '%s' does not match "
+                     "token username '%s'" %
+                     (username, self.username))
+            username = self.username
         try:
             UAS_MGR_LOGGER.info("listing deployments in namespace %s" %
                                 namespace)

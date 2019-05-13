@@ -3,24 +3,28 @@
 import unittest
 import os
 import werkzeug
-
+import flask
 from swagger_server.uas_lib.uai_mgr import UaiManager
 from swagger_server.models.uai import UAI
+
+app = flask.Flask(__name__)
 
 
 class TestUasMgr(unittest.TestCase):
 
-    os.environ["KUBERNETES_SERVICE_PORT"]="443"
-    os.environ["KUBERNETES_SERVICE_HOST"]="127.0.0.1"
+    os.environ["KUBERNETES_SERVICE_PORT"] = "443"
+    os.environ["KUBERNETES_SERVICE_HOST"] = "127.0.0.1"
     deployment_name = "hal-234a85"
-    uas_mgr = UaiManager()
+    with app.test_request_context('/'):
+        uas_mgr = UaiManager()
 
     def test_uas_mgr_init(self):
         return
 
     def test_gen_labels(self):
         labels = self.uas_mgr.gen_labels(self.deployment_name)
-        self.assertEqual(labels, {"app": self.deployment_name, "uas": "managed"})
+        self.assertEqual(labels, {"app": self.deployment_name,
+                                  "uas": "managed"})
         return
 
     def test_gen_connection_string(self):

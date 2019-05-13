@@ -2,7 +2,7 @@ openapi: "3.0.2"
 info:
   title: "Cray User Access Service"
   description: "Cray User Access Service. This service is responsible for the management of User Access Instance lifecycles."
-  version: "0.11.3"
+  version: "0.11.4"
 
 servers:
   - url: "/apis/uas-mgr/v1"

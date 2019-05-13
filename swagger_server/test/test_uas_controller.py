@@ -2,22 +2,27 @@
 
 import unittest
 import os
+import flask
 
 import swagger_server.controllers.uas_controller as uas_ctl
 from swagger_server import version
 from swagger_server.uas_lib.uas_cfg import UasCfg
 from swagger_server.uas_lib.uai_mgr import UaiManager
 
+app = flask.Flask(__name__)
+
 
 class TestUasController(unittest.TestCase):
 
-    os.environ["KUBERNETES_SERVICE_PORT"]="443"
-    os.environ["KUBERNETES_SERVICE_HOST"]="127.0.0.1"
+    os.environ["KUBERNETES_SERVICE_PORT"] = "443"
+    os.environ["KUBERNETES_SERVICE_HOST"] = "127.0.0.1"
     uas_ctl.uas_cfg = UasCfg(uas_cfg='swagger_server/test/cray-uas-mgr.yaml')
-    uas_ctl.uas_mgr = UaiManager()
+    with app.test_request_context('/'):
+        uas_ctl.uas_mgr = UaiManager()
 
     def test_create_uai(self):
-        resp = uas_ctl.create_uai(None)
+        with app.test_request_context('/'):
+            resp = uas_ctl.create_uai(None)
         self.assertEqual(resp, "Must supply username for UAI creation.")
 
     def test_delete_uai_by_name(self):
@@ -31,9 +36,12 @@ class TestUasController(unittest.TestCase):
     def test_get_uas_images(self):
         images = uas_ctl.get_uas_images()
         self.assertEqual(images,
-                         {'default_image': 'dtr.dev.cray.com:443/cray/cray-uas-sles15:latest',
-                          'image_list': ['dtr.dev.cray.com:443/cray/cray-uas-sles15:latest',
-                                         'dtr.dev.cray.com:443/cray/cray-uas-centos75:latest']})
+                         {'default_image':
+                          'dtr.dev.cray.com:443/cray/cray-uas-sles15:latest',
+                          'image_list':
+                          ['dtr.dev.cray.com:443/cray/cray-uas-sles15:latest',
+                           'dtr.dev.cray.com:443/cray/cray-uas-centos75:latest'
+                          ]})
 
     def test_get_uas_mgr_info(self):
         info = uas_ctl.get_uas_mgr_info()
