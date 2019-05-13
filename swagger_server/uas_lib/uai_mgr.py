@@ -54,6 +54,12 @@ class UaiManager(object):
                 self.passwd = self.uas_auth.createPasswd(self.userinfo)
                 self.username = self.userinfo[self.uas_auth.username]
                 UAS_MGR_LOGGER.info("UAS request for: %s" % self.username)
+            else:
+                missing = self.uas_auth.missingAttributes(self.userinfo)
+                UAS_MGR_LOGGER.info("Token not valid for UAS. Attributes missing: "
+                                    "%s" % missing)
+                abort(400, "Token not valid for UAS. Attributes missing: "
+                                    "%s" % missing)
 
     def get_user_account_info(self, username, namespace):
         """
@@ -378,6 +384,13 @@ class UaiManager(object):
         # Use the username derived from the Auth token if present.
         # CASMUSER-1460 tracks making this the only allowable username
         if self.username:
+            if not username == self.username:
+                UAS_MGR_LOGGER.error("Username '%s' does not match "
+                                     "token username '%s'" %
+                                     (username, self.username))
+                abort(400, "Username '%s' does not match "
+                      "token username '%s'" %
+                      (username, self.username))
             username = self.username
         if not username:
             UAS_MGR_LOGGER.warn("create_uai - missing username")
@@ -462,6 +475,13 @@ class UaiManager(object):
         # Use the username derived from the Auth token if present.
         # CASMUSER-1460 tracks making this the only allowable username
         if self.username:
+            if not username == self.username:
+                UAS_MGR_LOGGER.error("Username '%s' does not match "
+                                     "token username '%s'" %
+                                     (username, self.username))
+                abort(400, "Username '%s' does not match "
+                     "token username '%s'" %
+                     (username, self.username))
             username = self.username
         try:
             UAS_MGR_LOGGER.info("listing deployments in namespace %s" %
