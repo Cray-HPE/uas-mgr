@@ -2,7 +2,6 @@
 # Copyright 2019, Cray Inc.  All Rights Reserved.
 #
 
-from swagger_server.models.uai import UAI  # noqa: E501
 from swagger_server import version
 from swagger_server.uas_lib.uai_mgr import UaiManager
 from swagger_server.uas_lib.uas_cfg import UasCfg

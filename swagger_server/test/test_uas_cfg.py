@@ -139,6 +139,30 @@ class TestUasCfg(unittest.TestCase):
         self.assertFalse(self.uas_cfg.is_valid_host_path_mount_type(''))
         self.assertFalse(self.uas_cfg.is_valid_host_path_mount_type(None))
 
+    def test_validate_ssh_key(self):
+        self.assertFalse(self.uas_cfg.validate_ssh_key(None))
+        self.assertFalse(self.uas_cfg.validate_ssh_key(""))
+        self.assertFalse(self.uas_cfg.validate_ssh_key("cray"))
+        self.assertFalse(self.uas_cfg.validate_ssh_key("\n"))
+        self.assertFalse(self.uas_cfg.validate_ssh_key("   \t\n"))
+
+        # try a random non-key file
+        with open("/usr/src/app/swagger_server/test/version-check.sh", "r") as f:
+            nonKey = f.read()
+            self.assertFalse(self.uas_cfg.validate_ssh_key(nonKey))
+
+        with open("/usr/src/app/swagger_server/test/test_rsa.pub", "r") as f:
+            publicKey = f.read()
+            self.assertTrue(self.uas_cfg.validate_ssh_key(publicKey))
+            # pick some random substrings from the key - it should only
+            # validate a full key and not a partial one
+            self.assertFalse(self.uas_cfg.validate_ssh_key(publicKey[3:56]))
+            self.assertFalse(self.uas_cfg.validate_ssh_key(publicKey[0:58]))
+
+        with open("/usr/src/app/swagger_server/test/test_rsa", "r") as f:
+            privateKey = f.read()
+            self.assertFalse(self.uas_cfg.validate_ssh_key(privateKey))
+
 
 if __name__ == '__main__':
     unittest.main()
