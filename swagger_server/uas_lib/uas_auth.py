@@ -8,6 +8,7 @@
 import requests
 import logging
 import sys
+import json
 
 from flask import abort
 
@@ -49,7 +50,7 @@ class UasAuth(object):
     def authError(self, err, type, e):
 
         UAS_AUTH_LOGGER.error('UasAuth %s:%s', type, e)
-        abort(err, 'UasAuth %s: %s' % type, e)
+        abort(err, 'UasAuth %s: %s' % (type, e))
 
     def createPasswd(self, userinfo):
 
@@ -86,7 +87,7 @@ class UasAuth(object):
 
         try:
             userinfo = response.json()
-        except JSONDecodeError:
+        except json.decoder.JSONDecodeError:
             self.authError(500, 'json', 'Failed to decode /userinfo response')
 
         if self.username in userinfo:

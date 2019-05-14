@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import unittest
+import werkzeug
 
 from swagger_server.uas_lib.uas_auth import UasAuth
 
@@ -38,6 +39,22 @@ class TestUasAuth(unittest.TestCase):
         del userinfo[self.uas_auth.uid]
         self.assertEqual([self.uas_auth.uid],
                          self.uas_auth.missingAttributes(userinfo))
+
+    def test_validUserinfo(self):
+        userinfo = dict(self.userinfo)
+        self.assertEqual(True, self.uas_auth.validUserinfo(userinfo))
+        del userinfo[self.uas_auth.uid]
+        self.assertEqual(False,
+                         self.uas_auth.validUserinfo(userinfo))
+
+    def test_user_info(self):
+        auth = UasAuth(endpoint='http://localhost', cacert='/foo')
+        with self.assertRaises(werkzeug.exceptions.InternalServerError):
+            auth.userinfo("myawesometoken")
+        with self.assertRaises(werkzeug.exceptions.InternalServerError):
+            auth.userinfo(token=None)
+        with self.assertRaises(werkzeug.exceptions.InternalServerError):
+            auth.userinfo(token="")
 
 if __name__ == '__main__':
     unittest.main()
