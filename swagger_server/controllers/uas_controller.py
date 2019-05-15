@@ -10,7 +10,7 @@ from swagger_server.uas_lib.uas_cfg import UasCfg
 uas_cfg = UasCfg()
 
 
-def create_uai(username, publickey=None, imagename=None):  # noqa: E501
+def create_uai(username, publickey=None, imagename=None, ports=None):  # noqa: E501
     """Create a new UAI for username
 
     Create a new UAI for the username # noqa: E501
@@ -21,6 +21,8 @@ def create_uai(username, publickey=None, imagename=None):  # noqa: E501
     :type publickey: werkzeug.datastructures.FileStorage
     :param imagename: Image to use for UAI
     :type imagename: str
+    :param ports: Comma-separated list of ports to expose from the UAI
+    :type imagename: str
 
     :rtype: UAI
     """
@@ -28,7 +30,7 @@ def create_uai(username, publickey=None, imagename=None):  # noqa: E501
     if not username:
         return "Must supply username for UAI creation."
 
-    uai_response = uai_mgr.create_uai(username, publickey, imagename)
+    uai_response = uai_mgr.create_uai(username, publickey, imagename, ports)
     return uai_response
 
 

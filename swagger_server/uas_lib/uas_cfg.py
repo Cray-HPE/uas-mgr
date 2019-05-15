@@ -8,13 +8,22 @@
 import logging
 import sshpubkeys
 import sshpubkeys.exceptions as sshExceptions
+import sys
 import yaml
 
 from flask import abort
 from kubernetes import client
 
 UAS_CFG_LOGGER = logging.getLogger('uas_cfg')
+UAS_CFG_LOGGER.setLevel(logging.INFO)
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s"
+                              " - %(message)s")
+handler.setFormatter(formatter)
+UAS_CFG_LOGGER.addHandler(handler)
 UAS_CFG_DEFAULT_PORT = 30123
+UAS_CFG_OPTIONAL_PORTS = [80, 443]
 
 
 class UasCfg(object):
@@ -139,38 +148,68 @@ class UasCfg(object):
         else:
             return client.V1ContainerPort(container_port=port)
 
-    def gen_port_list(self, service_type=None, service=False):
+    def gen_port_list(self, service_type=None, service=False, optional_ports=[]):
+        """
+        gen_port_list creates a list of kubernetes port entry objects.
+        The type of the port entry object depends on whether the service_type
+        is "ssh" or "service", the latter being used for inter-shasta service
+        connections.
+
+        :param: service_type: one of either "ssh" or "service"
+        :type service_type: str
+        :param service: True creates a ServicePort object, False creates a ContainerPort object
+        :type service: bool
+        :param optional_ports: An optional list of ports to project in addition to the port used for SSH to the UAI
+        :type optional_ports: list
+        :return port_list: A list of kubernetes port entry objects
+        :rtype list
+        """
+        UAS_CFG_LOGGER.info("optional_ports: %s" % optional_ports)
         cfg = self.get_config()
         port_list = []
         if not cfg:
             return port_list
         if service_type == "service":
+            # Read the configmap for uas_svc_ports (ports to project to other services)
+            # cfg_port_list is a list of port numbers to be processed into kubernetes port entry objects
             try:
                 cfg_port_list = cfg['uas_svc_ports']
+                if optional_ports:
+                    # Add any optional ports to the cfg_port_list
+                    for port in optional_ports:
+                        cfg_port_list.append(port)
             except KeyError:
-                cfg_port_list = []
+                cfg_port_list = optional_ports
         else:
+            # Read the configmap for uas_ports (ports to project to the customer network)
+            # cfg_port_list is a list of port numbers to be processed into kubernetes port entry objects
             try:
                 cfg_port_list = cfg['uas_ports']
+                if optional_ports:
+                    # Add any optional ports to the cfg_port_list
+                    for port in optional_ports:
+                        cfg_port_list.append(port)
                 for port in cfg_port_list:
                     # check if a port range was given
                     if isinstance(port, str):
                         raise ValueError("uas_ports does not support ranges")
             except KeyError:
                 cfg_port_list = self.get_default_port()
+                if optional_ports:
+                    # Add any optional ports to the cfg_port_list
+                    for port in optional_ports:
+                        cfg_port_list.append(port)
 
+        UAS_CFG_LOGGER.info("cfg_port_list: %s" % cfg_port_list)
         for port in cfg_port_list:
             # check if a port range was given
             if isinstance(port, str):
                 port_range = port.split(':')
                 # build entries for all ports between port_range[0] and port_range[1]
                 for i in range(int(port_range[0]), int(port_range[1])+1):
-                    # Only allow ports greater than 1024
-                    if i > 1024:
-                        port_list.append(self.gen_port_entry(i, service))
+                    port_list.append(self.gen_port_entry(i, service))
             else:
-                if port > 1024:
-                    port_list.append(self.gen_port_entry(port, service))
+                port_list.append(self.gen_port_entry(port, service))
         return port_list
 
     def get_svc_type(self, service_type=None):
@@ -250,3 +289,11 @@ class UasCfg(object):
         except Exception as err:
             UAS_CFG_LOGGER.error("Invalid non-key input: ", err)
         return False
+
+    def get_valid_optional_ports(self):
+        """
+        Return list of valid optional ports.
+        :return: List of valid optional ports.
+        :rtype list
+        """
+        return UAS_CFG_OPTIONAL_PORTS

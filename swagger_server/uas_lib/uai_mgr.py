@@ -110,22 +110,26 @@ class UaiManager(object):
             abort(400, 'user not found. (%s)' % username)
         return uas_id.rstrip()
 
-    def create_service_object(self, service_name, service_type,
+    def create_service_object(self, service_name, service_type, opt_ports_list,
                               deployment_name):
         """
         Create a service object for the deployment of the UAI.
 
-        :param service_name:
+        :param service_name: Name of the service
         :type service_name: str
         :param service_type: One of "ssh" or "service"
         :type service_type: str
+        :param opt_ports_list: List of optional ports to project
+        :type opt_ports_list: list
         :return: service object
         """
         metadata = client.V1ObjectMeta(
             name=service_name,
             labels=self.gen_labels(deployment_name),
         )
-        ports = self.uas_cfg.gen_port_list(service_type, service=True)
+        ports = self.uas_cfg.gen_port_list(service_type, service=True,
+                                           optional_ports=opt_ports_list)
+
         # svc_type is a dict with the following fields:
         #   'svc_type': (NodePort, ClusterIP, or LoadBalancer)
         #   'ip_pool': (None, or a specific pool)  Valid only for LoadBalancer.
@@ -206,13 +210,19 @@ class UaiManager(object):
         return resp
 
     def create_deployment_object(self, username, deployment_name, imagename,
-                                 publickeyStr, namespace):
+                                 publickeyStr, opt_ports_list, namespace):
+
+        container_ports = self.uas_cfg.gen_port_list(service=False,
+                                                     optional_ports=opt_ports_list)
+        UAS_MGR_LOGGER.info("UAI Name: %s; Container ports: %s; Optional ports: %s" 
+                            % (deployment_name, container_ports, opt_ports_list))
         # Use passwd derived from the Auth token if present.
         # CASMUSER-1460 tracks making this the only allowable passwd 
         if not self.passwd:
             passwd = self.get_user_account_info(username, namespace)
         else:
             passwd = self.passwd
+
         # Configure Pod template container
         container = client.V1Container(
             name=deployment_name,
@@ -226,7 +236,7 @@ class UaiManager(object):
                  client.V1EnvVar(
                      name='UAS_PUBKEY',
                      value=publickeyStr)],
-            ports=self.uas_cfg.gen_port_list(service=False),
+            ports=container_ports,
             volume_mounts=self.uas_cfg.gen_volume_mounts(),
             readiness_probe=self.uas_cfg.create_readiness_probe())
         # Create a volumes template
@@ -300,6 +310,7 @@ class UaiManager(object):
     def get_pod_info(self, deployment_name, namespace='default'):
         pod_resp = None
         uai = UAI()
+        uai.uai_portmap = {}
         uai.username = deployment_name.split('-')[1]
         try:
             UAS_MGR_LOGGER.info("getting pod info %s in namespace %s" %
@@ -352,10 +363,12 @@ class UaiManager(object):
                                                         e.reason))
                 if srv_resp:
                     uai.uai_ip = self.uas_cfg.get_external_ip()
-                    if srv_resp.spec.ports:
-                        uai.uai_port = srv_resp.spec.ports[0].node_port
-                    else:
-                        uai.uai_port = "Unknown"
+                    for srv_port in srv_resp.spec.ports:
+                        if srv_port.port in self.uas_cfg.get_valid_optional_ports(): 
+                            uai.uai_portmap[srv_port.port] = srv_port.node_port
+                        else:
+                            uai.uai_port = srv_port.node_port
+
                 uai = self.gen_connection_string(uai)
         return uai
 
@@ -380,7 +393,7 @@ class UaiManager(object):
     def gen_labels(self, deployment_name):
         return {"app": deployment_name, "uas": "managed"}
 
-    def create_uai(self, username, publickey, imagename, namespace='default'):
+    def create_uai(self, username, publickey, imagename, opt_ports, namespace='default'):
         # Use the username derived from the Auth token if present.
         # CASMUSER-1460 tracks making this the only allowable username
         if self.username:
@@ -392,6 +405,7 @@ class UaiManager(object):
                       "token username '%s'" %
                       (username, self.username))
             username = self.username
+        opt_ports_list = []
         if not username:
             UAS_MGR_LOGGER.warn("create_uai - missing username")
             abort(400, "Missing username.")
@@ -421,17 +435,30 @@ class UaiManager(object):
             abort(400, "Invalid image (%s). Valid images: %s. Default: %s"
                   % (imagename, self.uas_cfg.get_images(),
                      self.uas_cfg.get_default_image()))
+        if opt_ports:
+            opt_ports_list = [int(i) for i in opt_ports.split(',')]
+            
+        # Restrict ports to valid_ports
+        if opt_ports_list:
+            for port in opt_ports_list:
+                if port not in self.uas_cfg.get_valid_optional_ports():
+                    UAS_MGR_LOGGER.error("create_uai - invalid port requested (%s). "
+                                         "Valid ports are %s."
+                                         % (port, self.uas_cfg.get_valid_optional_ports()))
+                    abort(400, "Invalid port requested (%s). Valid ports are: %s."
+                                % (port, self.uas_cfg.get_valid_optional_ports()))
 
         deployment_id = uuid.uuid4().hex[:8]
         deployment_name = 'uai-' + username + '-' + str(deployment_id)
         deployment = self.create_deployment_object(username, deployment_name,
-                                                   imagename, publickeyStr,
+                                                   imagename, publickeyStr, opt_ports_list,
                                                    namespace)
-        # Create a LoadBalancer service for the uas_ssh_port
+        # Create a service for the UAI 
         uas_ssh_svc_name = deployment_name + '-ssh'
-        uas_ssh_svc = self.create_service_object(uas_ssh_svc_name, "ssh", deployment_name)
-        deploy_resp = None
+        uas_ssh_svc = self.create_service_object(uas_ssh_svc_name, "ssh",  opt_ports_list, deployment_name)
 
+        # Make sure the UAI deployment is created
+        deploy_resp = None
         try:
             UAS_MGR_LOGGER.info("getting deployment %s in namespace %s" %
                                  (deployment_name, namespace))
@@ -445,13 +472,13 @@ class UaiManager(object):
         if not deploy_resp:
             deploy_resp = self.create_deployment(deployment, namespace)
 
-        # Start the uas_ssh_svc service
-        UAS_MGR_LOGGER.info("creating the ssh service %s" %
+        # Start the UAI services
+        UAS_MGR_LOGGER.info("creating the UAI service %s" %
                             uas_ssh_svc_name)
         svc_resp = self.create_service(uas_ssh_svc_name, uas_ssh_svc, namespace)
         if not svc_resp:
             # Clean up the deployment
-            UAS_MGR_LOGGER.error("failed to create service, deleting UAIs %s" %
+            UAS_MGR_LOGGER.error("failed to create service, deleting UAI %s" %
                                  (deployment_name))
             self.delete_uais([deployment_name], namespace)
             abort(404, "Failed to create service: %s" % uas_ssh_svc_name)
