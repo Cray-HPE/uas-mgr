@@ -223,10 +223,6 @@ class UaiManager(object):
         else:
             passwd = self.passwd
 
-        UAS_MGR_LOGGER.info("Optional ports: %s" % opt_ports_list)
-        container_ports = self.uas_cfg.gen_port_list(service=False,
-                                                     optional_ports=opt_ports_list)
-        UAS_MGR_LOGGER.info("Container ports: %s" % container_ports)
         # Configure Pod template container
         container = client.V1Container(
             name=deployment_name,
@@ -455,7 +451,7 @@ class UaiManager(object):
         deployment_id = uuid.uuid4().hex[:8]
         deployment_name = 'uai-' + username + '-' + str(deployment_id)
         deployment = self.create_deployment_object(username, deployment_name,
-                                                   imagename, publickey, opt_ports_list,
+                                                   imagename, publickeyStr, opt_ports_list,
                                                    namespace)
         # Create a service for the UAI 
         uas_ssh_svc_name = deployment_name + '-ssh'

@@ -282,7 +282,7 @@ class UAI(Model):
 
 
         :return: The uai_portmap of this UAI.
-        :rtype: list
+        :rtype: dict
         """
         return self._uai_portmap
 
@@ -292,7 +292,7 @@ class UAI(Model):
 
 
         :param uai_portmap: The uai_portmap of this UAI.
-        :type uai_portmap: list
+        :type uai_portmap: dict
         """
 
         self._uai_portmap = uai_portmap
