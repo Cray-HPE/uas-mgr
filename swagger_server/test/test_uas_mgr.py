@@ -41,9 +41,12 @@ class TestUasMgr(unittest.TestCase):
         self.assertRaises(TypeError, self.uas_mgr.create_image, "test123")
         with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.create_image("test123", default=True)
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.create_image("colons:and/slashes:5000", default=True)
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.create_image("walleye:5000/repo/image:tag",
                                       default=False)
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.create_image("", default=False)
         # XXX - to implement after the underlying code works
         #       - test duplicate image
@@ -56,9 +59,12 @@ class TestUasMgr(unittest.TestCase):
         self.assertRaises(TypeError, self.uas_mgr.update_image, "test123")
         with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.update_image("test123", default=True)
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.update_image("colons:and/slashes:5000", default=True)
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.update_image("walleye:5000/repo/image:tag",
                                       default=False)
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.update_image("", default=False)
         # XXX - to implement after the underlying code works
         #       - test duplicate image
@@ -71,6 +77,7 @@ class TestUasMgr(unittest.TestCase):
     def test_delete_image(self):
         with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.delete_image("colons:and/slashes:5000")
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.delete_image("")
         # XXX - to implement after the underlying code works
         #       - test delete image not in images list
@@ -82,6 +89,7 @@ class TestUasMgr(unittest.TestCase):
     def test_get_image(self):
         with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.get_image("colons:and/slashes:5000")
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.get_image("")
         # XXX - to implement after the underlying code works
         #       - test get image not in images list
@@ -93,12 +101,14 @@ class TestUasMgr(unittest.TestCase):
         with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.create_volume("test123", type='FileOrCreate',
                                        mount_path='/var/foobar')
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.create_volume("test124", type='DirectoryOrCreate',
                                        host_path='/var/foobar')
         with self.assertRaises(werkzeug.exceptions.BadRequest):
             self.uas_mgr.update_volume("test123", type='ketchup',
                                        mount_path='/var/foobar')
-            self.uas_mgr.updatee_volume("test124", type='',
+        with self.assertRaises(werkzeug.exceptions.BadRequest):
+            self.uas_mgr.update_volume("test124", type='',
                                         host_path='/var/foobar')
         # XXX - to implement after the underlying code works
         #       - test duplicate volume
@@ -109,12 +119,14 @@ class TestUasMgr(unittest.TestCase):
         with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.update_volume("test123", type='FileOrCreate',
                                        mount_path='/var/foobar')
-            self.uas_mgr.updatee_volume("test124", type='DirectoryOrCreate',
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
+            self.uas_mgr.update_volume("test124", type='DirectoryOrCreate',
                                         host_path='/var/foobar')
         with self.assertRaises(werkzeug.exceptions.BadRequest):
             self.uas_mgr.update_volume("test123", type='walleye',
                                        mount_path='/var/foobar')
-            self.uas_mgr.updatee_volume("test124", type='',
+        with self.assertRaises(werkzeug.exceptions.BadRequest):
+            self.uas_mgr.update_volume("test124", type='',
                                         host_path='/var/foobar')
         # XXX - to implement after the underlying code works
         #       - test with empty volume list
@@ -124,6 +136,7 @@ class TestUasMgr(unittest.TestCase):
     def test_delete_volume(self):
         with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.delete_volume("volume_that_exists")
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.delete_volume("volume_that_doesnt_exist")
         # XXX - to implement after the underlying code works
         #       - test delete volume not in volumes list
@@ -134,6 +147,7 @@ class TestUasMgr(unittest.TestCase):
     def test_get_volume(self):
         with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.get_volume("volume_1")
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.get_volume("")
         # XXX - to implement after the underlying code works
         #       - test get volume not in volumes list
