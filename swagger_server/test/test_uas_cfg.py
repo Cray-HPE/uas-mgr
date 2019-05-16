@@ -130,7 +130,7 @@ class TestUasCfg(unittest.TestCase):
 
     def test_get_valid_optional_ports(self):
         port_list = self.uas_cfg.get_valid_optional_ports()
-        self.assertListEqual(port_list, [80, 443])
+        self.assertListEqual(port_list, [80, 443, 8888])
 
     def test_get_service_type(self):
         svc_type = self.uas_cfg.get_svc_type(service_type="ssh")
