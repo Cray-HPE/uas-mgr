@@ -23,7 +23,7 @@ formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s"
 handler.setFormatter(formatter)
 UAS_CFG_LOGGER.addHandler(handler)
 UAS_CFG_DEFAULT_PORT = 30123
-UAS_CFG_OPTIONAL_PORTS = [80, 443]
+UAS_CFG_OPTIONAL_PORTS = [80, 443, 8888]
 
 
 class UasCfg(object):
