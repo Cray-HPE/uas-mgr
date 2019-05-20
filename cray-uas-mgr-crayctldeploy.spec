@@ -42,6 +42,7 @@ install -m 755 -d %{buildroot}%{ansible_dir}/customer_runbooks
 cp -R ansible/roles %{buildroot}%{ansible_dir}/
 cp -R ansible/main %{buildroot}%{ansible_dir}/
 cp -R ansible/roles/cray_uas_mgr_localize/files/uas-mgr.yml %{buildroot}%{ansible_dir}/customer_runbooks/
+cp -R ansible/roles/cray_uas_user %{buildroot}%{ansible_dir}/customer_runbooks/
 cp -R tests %{buildroot}%{test_dir}
 
 %changelog
