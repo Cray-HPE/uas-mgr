@@ -1,0 +1,4 @@
+@Library("dst-shared") _
+rpmBuild (
+    product: "shasta-premium"
+)
