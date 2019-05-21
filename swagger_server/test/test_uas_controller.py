@@ -39,9 +39,7 @@ class TestUasController(unittest.TestCase):
                          {'default_image':
                           'dtr.dev.cray.com:443/cray/cray-uas-sles15:latest',
                           'image_list':
-                          ['dtr.dev.cray.com:443/cray/cray-uas-sles15:latest',
-                           'dtr.dev.cray.com:443/cray/cray-uas-centos75:latest'
-                          ]})
+                          ['dtr.dev.cray.com:443/cray/cray-uas-sles15:latest']})
 
     def test_get_uas_mgr_info(self):
         info = uas_ctl.get_uas_mgr_info()

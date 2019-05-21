@@ -74,7 +74,7 @@ paths:
         required: false
         schema:
           type: "string"
-        example: "node.local/uas-centos75:latest"
+        example: "node.local/uas-sles15:latest"
       - name: "ports"
         in: "query"
         description: "Additional ports to project from the UAI besides ssh. Restricted to ports 80 and 443."
@@ -172,7 +172,7 @@ paths:
         required: true
         schema:
           type: "string"
-        example: "node.local/uas-centos75:latest"
+        example: "node.local/uas-sles15:latest"
       - name: "default"
         in: "query"
         description: "default image (true/false)"
@@ -212,7 +212,7 @@ paths:
         required: true
         schema:
           type: "string"
-        example: "node.local/uas-centos75:latest"
+        example: "node.local/uas-sles15:latest"
       responses:
         200:
           description: "Image removed from list"
@@ -235,7 +235,7 @@ paths:
         required: true
         schema:
           type: "string"
-        example: "docker.local/cray/cray-uas-centos75:latest"
+        example: "docker.local/cray/cray-uas-sles15:latest"
       - name: "default"
         in: "query"
         description: "default image (true/false)"
@@ -273,7 +273,7 @@ paths:
         required: true
         schema:
           type: "string"
-        example: "node.local/uas-centos75:latest"
+        example: "node.local/uas-sles15:latest"
       responses:
         200:
           description: "UAS Image"
@@ -391,7 +391,7 @@ paths:
         required: true
         schema:
           type: "string"
-        example: "node.local/uas-centos75:latest"
+        example: "node.local/uas-sles15:latest"
       responses:
         200:
           description: "Volume removed from list"
@@ -472,7 +472,7 @@ paths:
         required: true
         schema:
           type: "string"
-        example: "node.local/uas-centos75:latest"
+        example: "node.local/uas-sles15:latest"
       responses:
         200:
           description: "UAS Volume"

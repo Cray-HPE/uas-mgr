@@ -11,5 +11,4 @@ cray_uas_mgr_port: "8080"
 cray_uas_mgr_configmap: "cray-uas-mgr-cfgmap"
 
 # User Access Image configuration
-cray_uas_centos75_version: "latest"
 cray_uas_sles15_version: "latest"

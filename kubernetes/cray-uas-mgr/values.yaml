@@ -9,7 +9,6 @@ uasConfig:
     # Must also appear in 'images' below
     defaultImage: "cray/cray-uas-sles15:latest"
     images:
-      - "cray/cray-uas-centos75:latest"
       - "cray/cray-uas-sles15:latest"
   volumeMounts:
     - name: lustre

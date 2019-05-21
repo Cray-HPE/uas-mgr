@@ -20,4 +20,3 @@ uas_images:
   default_image: "dtr.dev.cray.com:443/cray/cray-uas-sles15:latest"
   images:
     - "dtr.dev.cray.com:443/cray/cray-uas-sles15:latest"
-    - "dtr.dev.cray.com:443/cray/cray-uas-centos75:latest"
