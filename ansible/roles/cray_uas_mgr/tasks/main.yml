@@ -8,12 +8,6 @@
     dest: /root/k8s/cray-uas-mgr.yaml
   run_once: true
 
-- name: Create cray-uas-id Kubernetes spec
-  template:
-    src: cray-uas-id.yaml.j2
-    dest: /root/k8s/cray-uas-id.yaml
-  run_once: true
-
 - name: Copy cray-uas-mgr-rbac.yaml to /root/k8s directory
   copy:
     src: cray-uas-mgr-rbac.yaml
@@ -78,10 +72,6 @@
 
 - name: Apply uas-mgr Kubernetes spec
   command: /usr/bin/kubectl apply -f /root/k8s/cray-uas-mgr.yaml
-  run_once: true
-
-- name: Apply uas-id Kubernetes spec
-  command: /usr/bin/kubectl apply -f /root/k8s/cray-uas-id.yaml
   run_once: true
 
 - name: Wait for cray-uas-mgr to be Available

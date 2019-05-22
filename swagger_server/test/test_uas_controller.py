@@ -20,18 +20,9 @@ class TestUasController(unittest.TestCase):
     with app.test_request_context('/'):
         uas_ctl.uas_mgr = UaiManager()
 
-    def test_create_uai(self):
-        with app.test_request_context('/'):
-            resp = uas_ctl.create_uai(None)
-        self.assertEqual(resp, "Must supply username for UAI creation.")
-
     def test_delete_uai_by_name(self):
         resp = uas_ctl.delete_uai_by_name([])
         self.assertEqual(resp, "Must provide a list of UAI names to delete.")
-
-    def test_get_uais_for_username(self):
-        resp = uas_ctl.get_uais_for_username(None)
-        self.assertEqual(resp, "Must provide username to list UAIs for user.")
 
     def test_get_uas_images(self):
         images = uas_ctl.get_uas_images()

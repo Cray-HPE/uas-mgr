@@ -41,6 +41,7 @@ fi
 # DEPLOY #
 ##########
 docker push $TAG
+exit 0
 ssh $TARGET kubectl delete pod -l app=cray-uas-mgr
 
 exit 0
