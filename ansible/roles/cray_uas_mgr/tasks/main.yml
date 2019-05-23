@@ -26,9 +26,9 @@
   changed_when: kubectl_result.stdout.find('created') != -1 or kubectl_result.stdout.find('configured') != -1
   run_once: true
 
-- name: Copy cray-uas-macvlan.yml to /root/k8s directory
-  copy:
-    src: cray-uas-macvlan.yml
+- name: Create cray-uas-macvlan.yml 
+  template:
+    src: cray-uas-macvlan.yml.j2
     dest: /root/k8s/cray-uas-macvlan.yml
   run_once: true
 
@@ -38,9 +38,9 @@
   changed_when: kubectl_result.stdout.find('created') != -1 or kubectl_result.stdout.find('configured') != -1
   run_once: true
 
-- name: Copy macvlan bridge setup script to sms03-nmn
-  copy:
-    src: macvlan-bridge-setup.sh
+- name: Create macvlan bridge setup script for sms03-nmn
+  template:
+    src: macvlan-bridge-setup.sh.j2
     dest: /root/macvlan-bridge-setup.sh
     mode: 0544
   when: inventory_hostname == 'sms03-nmn'
