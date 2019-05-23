@@ -1,0 +1,4 @@
+apiVersion: v1
+description: "Multis Network Attachment Definition CRD"
+name: "multis-nad-crd"
+version: 0.0.1
