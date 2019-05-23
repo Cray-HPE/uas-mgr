@@ -7,3 +7,4 @@
     - "customer_var.yml"
   roles:
     - cray_uas_mgr_localize
+    - cray_uas_user
