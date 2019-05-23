@@ -5,6 +5,11 @@
 # Admins should add or federated users to an Identity Provider
 # using the Keycloak GUI. The user(s) added by this ansible
 # play may be removed by using the Keycloak GUI.
+#
+# This play will create a keycloak user that will ultimately have
+# the following /etc/passwd entry when a UAI is created:
+# uastest::12345:12790:Uas User:/home/uastest:/bin/bash
+# Note that 12790 was chosen as a GID to match the group criemp
 ---
 uas_users:
   - { username: "uastest", password: "uastestpwd",
