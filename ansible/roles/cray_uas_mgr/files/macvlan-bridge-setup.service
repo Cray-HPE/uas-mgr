@@ -1,0 +1,16 @@
+#
+# Copyright 2019, Cray Inc. All Rights Reserved.
+#
+# Service for creating the macvlan bridge for UAI 
+#
+[Unit]
+Description=Setup_macvlan_bridge_for_UAI
+Wants=network-online.target
+After=network.target network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/root/macvlan-bridge-setup.sh
+
+[Install]
+WantedBy=multi-user.target
