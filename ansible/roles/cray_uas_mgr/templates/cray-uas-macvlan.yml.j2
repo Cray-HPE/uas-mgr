@@ -1,5 +1,6 @@
 # Based on https://github.com/intel/multus-cni/blob/master/examples/macvlan-conf.yml
 # Macvlan definition for UAS on the node management network
+{% set network_def = networks.node_management.network + "/" + networks.node_management.netmask %}
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
@@ -12,8 +13,8 @@ spec:
       "mode": "bridge",
       "ipam": {
         "type": "host-local",
-        "subnet": "10.2.0.0/16",
-        "rangeStart": "10.2.200.100",
-        "rangeEnd": "10.2.200.200"
+        "subnet": "{{ network_def | ipaddr('network/prefix') }}",
+        "rangeStart": "{{ networks.node_management.uai_macvlan_range_start }}",
+        "rangeEnd": "{{ networks.node_management.uai_macvlan_range_end }}"
       }
     }'
