@@ -15,5 +15,5 @@ uas_users:
   - { username: "uastest", password: "uastestpwd",
       uidNumber: "12345", gidNumber: "12790", 
       firstName: "Uas", lastName: "User", 
-      homeDirectory: "/home/uastest",
+      homeDirectory: "/lus/uastest",
       loginShell: "/bin/bash" }
