@@ -169,3 +169,7 @@
   register: kubectl_result
   changed_when: kubectl_result.stdout.find('created') != -1 or kubectl_result.stdout.find('configured') != -1
   run_once: True
+
+- name: Restart cray-uas-mgr pods
+  command: kubectl delete pod -l app=cray-uas-mgr
+  run_once: True
