@@ -24,25 +24,18 @@ paths:
           description: "Version response"
       x-openapi-router-controller: "swagger_server.controllers.versions_controller"
 
-  /uas/{username}:
+  /uas:
 
     get:
-      summary: "List all available UAIs for username"
-      description: "List all available UAIs for username"
-      operationId: "get_uais_for_username"
+      summary: "List all available UAIs for user"
+      description: "List all available UAIs for user"
+      operationId: "get_uais_for_user"
       tags:
-      - "uas/{username}"
+      - "uas"
       - "UAS"
-      parameters:
-      - name: "username"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-        example: "user"
       responses:
         200:
-          description: "List all UAIs for username"
+          description: "List all UAIs for user"
           content:
             application/json:
               schema:
@@ -51,23 +44,14 @@ paths:
                  $ref: "#/components/schemas/UAI"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
-  /uas:
-
     post:
-      summary: "Create a new UAI for the username"
-      description: "Create a new UAI for the username"
+      summary: "Create a new UAI"
+      description: "Create a new UAI"
       operationId: "create_uai"
       tags:
       - "uas"
       - "UAS"
       parameters:
-      - name: "username"
-        in: "query"
-        description: "Create UAI for username"
-        required: true
-        schema:
-          type: "string"
-        example: "user"
       - name: "imagename"
         in: "query"
         description: "Image to use for UAI"

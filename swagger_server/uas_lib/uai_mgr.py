@@ -44,10 +44,10 @@ class UaiManager(object):
         self.userinfo = None
         self.passwd = None
         self.username = None
+        self.check_authorization()
 
-        # Until Authorization is required, optionally gather user 
-        # information from Keycloak if a Bearer token is provided
-        # with the request.
+    def check_authorization(self):
+
         if 'Authorization' in request.headers:
             self.userinfo = self.uas_auth.userinfo(request.headers['Authorization'])
             if self.uas_auth.validUserinfo(self.userinfo):
@@ -60,55 +60,7 @@ class UaiManager(object):
                                     "%s" % missing)
                 abort(400, "Token not valid for UAS. Attributes missing: "
                                     "%s" % missing)
-
-    def get_user_account_info(self, username, namespace):
-        """
-        This function locates the uas-id service pod and performs
-        an exec of 'getent passwd <username>' via the kubernetes api to
-        retrieve the user's credentials.
-
-        Returns the output of 'getent passwd username'.
-
-        :param username: username to search for with getent
-        :type username: str
-        :param: namespace: kubernetes namespace
-        :return: output of 'getent passwd username'
-        :type return: str
-        """
-        # Find the pod name for the uas-id app.
-        resp = self.api.list_namespaced_pod(namespace,
-                                            label_selector='app=cray-uas-id')
-
-        uas_id_pod = None
-        for item in resp.items:
-            if item.status.container_statuses:
-                # CASMUSER-1266 - if the pod is not ready, we get an error
-                # when we try to exec into it. There's only 1 container
-                # so no need to iterate the conditions.
-                if item.status.container_statuses[0].ready:
-                    uas_id_pod = item.metadata.name
-
-        if not uas_id_pod:
-            abort(503, 'uas-id service not available.')
-
-        # Exec the command in uas_id_pod.
-        exec_command = [
-            'chroot',
-            '/host',
-            'getent',
-            'passwd',
-            username
-        ]
-        try:
-            uas_id = stream(self.api.connect_get_namespaced_pod_exec,
-                            uas_id_pod, namespace, command=exec_command,
-                            stdout=True, stdin=False, tty=False)
-        except ApiException:
-            abort(500, 'error connecting to uas-id service')
-
-        if not uas_id:
-            abort(400, 'user not found. (%s)' % username)
-        return uas_id.rstrip()
+         
 
     def create_service_object(self, service_name, service_type, opt_ports_list,
                               deployment_name):
@@ -209,19 +161,13 @@ class UaiManager(object):
             # other parts are still laying around (deployment for example)
         return resp
 
-    def create_deployment_object(self, username, deployment_name, imagename,
+    def create_deployment_object(self, deployment_name, imagename,
                                  publickeyStr, opt_ports_list, namespace):
 
         container_ports = self.uas_cfg.gen_port_list(service=False,
                                                      optional_ports=opt_ports_list)
         UAS_MGR_LOGGER.info("UAI Name: %s; Container ports: %s; Optional ports: %s" 
                             % (deployment_name, container_ports, opt_ports_list))
-        # Use passwd derived from the Auth token if present.
-        # CASMUSER-1460 tracks making this the only allowable passwd 
-        if not self.passwd:
-            passwd = self.get_user_account_info(username, namespace)
-        else:
-            passwd = self.passwd
 
         # Configure Pod template container
         container = client.V1Container(
@@ -232,7 +178,7 @@ class UaiManager(object):
                     value=deployment_name + "-ssh"),
                  client.V1EnvVar(
                      name='UAS_PASSWD',
-                     value=passwd),
+                     value=self.passwd),
                  client.V1EnvVar(
                      name='UAS_PUBKEY',
                      value=publickeyStr)],
@@ -391,25 +337,12 @@ class UaiManager(object):
         return uai
 
     def gen_labels(self, deployment_name):
-        return {"app": deployment_name, "uas": "managed"}
+        return {"app": deployment_name, 
+                "uas": "managed", 
+                "user": self.username}
 
-    def create_uai(self, username, publickey, imagename, opt_ports, namespace='default'):
-        # Use the username derived from the Auth token if present.
-        # CASMUSER-1460 tracks making this the only allowable username
-        if self.username:
-            if not username == self.username:
-                UAS_MGR_LOGGER.error("Username '%s' does not match "
-                                     "token username '%s'" %
-                                     (username, self.username))
-                abort(400, "Username '%s' does not match "
-                      "token username '%s'" %
-                      (username, self.username))
-            username = self.username
+    def create_uai(self, publickey, imagename, opt_ports, namespace='default'):
         opt_ports_list = []
-        if not username:
-            UAS_MGR_LOGGER.warn("create_uai - missing username")
-            abort(400, "Missing username.")
-
         if not publickey:
             UAS_MGR_LOGGER.warn("create_uai - missing publickey")
             abort(400, "Missing ssh public key.")
@@ -449,8 +382,8 @@ class UaiManager(object):
                                 % (port, self.uas_cfg.get_valid_optional_ports()))
 
         deployment_id = uuid.uuid4().hex[:8]
-        deployment_name = 'uai-' + username + '-' + str(deployment_id)
-        deployment = self.create_deployment_object(username, deployment_name,
+        deployment_name = 'uai-' + self.username + '-' + str(deployment_id)
+        deployment = self.create_deployment_object(deployment_name,
                                                    imagename, publickeyStr, opt_ports_list,
                                                    namespace)
         # Create a service for the UAI 
@@ -487,46 +420,30 @@ class UaiManager(object):
             uai_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
         return uai_info
 
-    def list_uais_for_user(self, username, namespace='default'):
+    def list_uais(self, label, namespace='default'):
         """
-        Lists the UAIs for the given username.
-        If username is None, it will list all UAIs.
+        Lists the UAIs based on a label selector
 
-        :param username: username of UAIs to list. If None, list all UAIs.
-        :type username: str
+        :param label: Label selector. If empty, use self.username
         :return: List of UAI information.
         :rtype: list
         """
         resp = None
         uai_list = []
-        # Use the username derived from the Auth token if present.
-        # CASMUSER-1460 tracks making this the only allowable username
-        if self.username:
-            if not username == self.username:
-                UAS_MGR_LOGGER.error("Username '%s' does not match "
-                                     "token username '%s'" %
-                                     (username, self.username))
-                abort(400, "Username '%s' does not match "
-                     "token username '%s'" %
-                     (username, self.username))
-            username = self.username
+        if not label:
+            label = 'user=' + self.username
         try:
             UAS_MGR_LOGGER.info("listing deployments in namespace %s" %
                                 namespace)
             resp = self.extensions_v1beta1.list_namespaced_deployment(namespace=namespace,
+                                                 label_selector=label,
                                                  include_uninitialized=True)
         except ApiException as e:
             if e.status != 404:
                 UAS_MGR_LOGGER.error("Failed to get deployment list")
                 abort(e.status, "Failed to get deployment list")
         for deployment in resp.items:
-            if not username:
-                if "uas" in deployment.metadata.labels:
-                    if deployment.metadata.labels['uas'] == "managed":
-                        uai_list.append(self.get_pod_info(deployment.metadata.name))
-            else:
-                if deployment.metadata.name.startswith("uai-" + username + "-"):
-                    uai_list.append(self.get_pod_info(deployment.metadata.name))
+            uai_list.append(self.get_pod_info(deployment.metadata.name))
         return uai_list
 
     def delete_uais(self, deployment_list, namespace='default'):
@@ -541,11 +458,13 @@ class UaiManager(object):
         """
         resp_list = []
         uai_list = []
-        if len(deployment_list) == 0:
-            uai_list = self.list_uais_for_user(None)
-            for uai in uai_list:
-                deployment_list.append(uai.uai_name)
-        for d in [d.strip() for d in deployment_list]:
+        if not deployment_list:
+            for uai in self.list_uais('uas=managed'):
+                uai_list.append(uai.uai_name)
+        else:
+            uai_list = [uai for uai in deployment_list if
+                        'uai-'+self.username+'-' in uai]
+        for d in [d.strip() for d in uai_list]:
             # Do services first so that we don't orphan one if they abort
             service_resp = self.delete_service(d + "-ssh", namespace)
             deploy_resp = self.delete_deployment(d, namespace)

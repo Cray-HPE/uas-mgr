@@ -24,7 +24,8 @@ class TestUasMgr(unittest.TestCase):
     def test_gen_labels(self):
         labels = self.uas_mgr.gen_labels(self.deployment_name)
         self.assertEqual(labels, {"app": self.deployment_name,
-                                  "uas": "managed"})
+                                  "uas": "managed",
+                                  "user": None})
         return
 
     def test_gen_connection_string(self):

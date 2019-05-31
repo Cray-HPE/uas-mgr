@@ -10,13 +10,11 @@ from swagger_server.uas_lib.uas_cfg import UasCfg
 uas_cfg = UasCfg()
 
 
-def create_uai(username, publickey=None, imagename=None, ports=None):  # noqa: E501
-    """Create a new UAI for username
+def create_uai(publickey=None, imagename=None, ports=None):  # noqa: E501
+    """Create a new UAI for user
 
-    Create a new UAI for the username # noqa: E501
+    Create a new UAI for the user # noqa: E501
 
-    :param username: Create UAI for username
-    :type username: str
     :param publickey: Public ssh key for the user
     :type publickey: werkzeug.datastructures.FileStorage
     :param imagename: Image to use for UAI
@@ -27,10 +25,7 @@ def create_uai(username, publickey=None, imagename=None, ports=None):  # noqa: E
     :rtype: UAI
     """
     uai_mgr = UaiManager()
-    if not username:
-        return "Must supply username for UAI creation."
-
-    uai_response = uai_mgr.create_uai(username, publickey, imagename, ports)
+    uai_response = uai_mgr.create_uai(publickey, imagename, ports)
     return uai_response
 
 
@@ -51,20 +46,15 @@ def delete_uai_by_name(uai_list):  # noqa: E501
     return uai_resp
 
 
-def get_uais_for_username(username):  # noqa: E501
-    """List all UAIs for username
+def get_uais_for_user():  # noqa: E501
+    """List all UAIs for user
 
-    List all available UAIs for username # noqa: E501
-
-    :param username:
-    :type username: str
+    List all available UAIs for user # noqa: E501
 
     :rtype: List[UAI]
     """
-    if not username:
-        return "Must provide username to list UAIs for user."
     uai_mgr = UaiManager()
-    uai_resp = uai_mgr.list_uais_for_user(username)
+    uai_resp = uai_mgr.list_uais('')
     return uai_resp
 
 
@@ -100,9 +90,8 @@ def get_all_uais():  # noqa: E501
     """List all UAIs
     :rtype: List[UAI]
     """
-    username = None
     uai_mgr = UaiManager()
-    uai_resp = uai_mgr.list_uais_for_user(username)
+    uai_resp = uai_mgr.list_uais('uas=managed')
     return uai_resp
 
 
