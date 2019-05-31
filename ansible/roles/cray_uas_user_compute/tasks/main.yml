@@ -1,0 +1,17 @@
+# Cray Shasta cray_uas_user_compute ansible role tasks
+# Copyright 2019 Cray Inc. All Rights Reserved
+---
+- name: Include cray_uas_user
+  include_vars:
+    file: roles/cray_uas_user/defaults/main.yml
+
+- name: Add users to compute nodes
+  user: 
+    name: "{{ item.username }}"
+    uid: "{{ item.uidNumber }}"
+    home: "{{ item.homeDirectory }}"
+    shell: "{{ item.loginShell }}"
+    create_home: yes
+    force: no
+  with_items: "{{ uas_users }}"
+  no_log: True
