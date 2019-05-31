@@ -85,11 +85,11 @@ spec:
         - name: ROUTE_PATH
           value: /apis/uas-mgr
         - name: HTTPS_REQUIRED
-          value: "{{ 'False' if (kong_allow_insecure | bool) else 'True' }}"  # SHASTACMS-1587: Make https-only once clients/tests are updated to https
+          value: "True"
         - name: OAUTH_CONFIG_DIR
           value: '/etc/admin-client-auth'
         - name: AUTHENTICATION_REQUIRED
-          value: "{{ 'True' if kong_auth_required else 'False' }}"
+          value: "True"
         volumeMounts:
         - name: ca-vol
           mountPath: /mnt/ca-vol
