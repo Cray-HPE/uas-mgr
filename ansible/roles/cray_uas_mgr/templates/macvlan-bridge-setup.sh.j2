@@ -6,11 +6,11 @@
 # any services running on the same host as the UAI.
 #
 
-# Check for existence of mac0 link to vlan002
-ip a | grep mac0@vlan002 > /dev/null 2>&1
-# Only create mac0 link to vlan002 if it doesn't exist
+# Check for existence of mac0 link
+ip a | grep mac0@{{ networks.node_management.uai_macvlan_bridge_if|default("vlan002", true) }} > /dev/null 2>&1
+# Only create mac0 bridge if it doesn't already exist
 if [ $? -ne 0 ]; then
-    ip link add mac0 link vlan002 type macvlan mode bridge
+    ip link add mac0 link {{ networks.node_management.uai_macvlan_bridge_if|default("vlan002", true) }} type macvlan mode bridge
     ip a add {{ networks.node_management.uai_macvlan_bridge_ip }} dev mac0
     ip link set mac0 up
     ip route add {{ networks.node_management.uai_macvlan_bridge_route }} dev mac0

@@ -43,22 +43,22 @@
     src: macvlan-bridge-setup.sh.j2
     dest: /root/macvlan-bridge-setup.sh
     mode: 0544
-  when: inventory_hostname == 'sms03-nmn'
+  when: inventory_hostname == 'sms03-nmn' or inventory_hostname == 'sms-3.craydev.com'
 
 - name: Setup macvlan bridge systemd service on sms03-nmn
   copy:
     src: macvlan-bridge-setup.service
     dest: /etc/systemd/system/macvlan-bridge-setup.service
     mode: 0644
-  when: inventory_hostname == 'sms03-nmn'
+  when: inventory_hostname == 'sms03-nmn' or inventory_hostname == 'sms-3.craydev.com'
 
 - name: Enable macvlan bridge systemd service on sms03-nmn
   shell: systemctl enable macvlan-bridge-setup.service
-  when: inventory_hostname == 'sms03-nmn'
+  when: inventory_hostname == 'sms03-nmn' or inventory_hostname == 'sms-3.craydev.com'
 
 - name: Run macvlan bridge systemd service on sms03-nmn
   shell: systemctl start macvlan-bridge-setup.service
-  when: inventory_hostname == 'sms03-nmn'
+  when: inventory_hostname == 'sms03-nmn' or inventory_hostname == 'sms-3.craydev.com'
 
 - name: Include uas_mgr.yml
   include_vars: uas_mgr.yml
