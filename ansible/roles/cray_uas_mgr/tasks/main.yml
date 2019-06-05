@@ -1,36 +1,23 @@
 # cray-uas-mgr installation ansible play
 # Copyright 2018-2019, Cray Inc. All Rights Reserved.
 ---
+- name: Include uas_mgr.yml
+  include_vars: uas_mgr.yml
+  run_once: true
 
-- name: Create cray-uas-mgr Kubernetes spec
+- name: Translate templates to K8s yaml files
   template:
-    src: cray-uas-mgr.yaml.j2
-    dest: /root/k8s/cray-uas-mgr.yaml
+    src: "{{ item.file }}.j2"
+    dest: "/root/k8s/{{ item.file }}"
   run_once: true
+  with_items: "{{ cray_uas_objects }}"
 
-- name: Copy cray-uas-mgr-rbac.yaml to /root/k8s directory
-  copy:
-    src: cray-uas-mgr-rbac.yaml
-    dest: /root/k8s/cray-uas-mgr-rbac.yaml
-  run_once: true
-
-- name: Apply cray-uas-mgr-rbac.yaml policies
-  command: kubectl apply -f /root/k8s/cray-uas-mgr-rbac.yaml
+- name: Apply K8s object files
+  command: kubectl apply -n "{{ item.ns }}" -f "/root/k8s/{{ item.file }}"
   register: kubectl_result
   changed_when: kubectl_result.stdout.find('created') != -1 or kubectl_result.stdout.find('configured') != -1
   run_once: true
-
-- name: Create cray-uas-macvlan.yml 
-  template:
-    src: cray-uas-macvlan.yml.j2
-    dest: /root/k8s/cray-uas-macvlan.yml
-  run_once: true
-
-- name: Apply cray-uas-macvlan.yml net-attach-def
-  command: kubectl apply -f /root/k8s/cray-uas-macvlan.yml
-  register: kubectl_result
-  changed_when: kubectl_result.stdout.find('created') != -1 or kubectl_result.stdout.find('configured') != -1
-  run_once: true
+  with_items: "{{ cray_uas_objects }}"
 
 - name: Create macvlan bridge setup script for sms03-nmn
   template:
@@ -46,38 +33,13 @@
     mode: 0644
   when: inventory_hostname == 'sms03-nmn' or inventory_hostname == 'sms-3.craydev.com'
 
-- name: Enable macvlan bridge systemd service on sms03-nmn
-  shell: systemctl enable macvlan-bridge-setup.service
+- name: Configure macvlan-bridge-setup
+  systemd:
+    name: macvlan-bridge-setup
+    enabled: yes
+    state: restarted
+    daemon_reload: yes
   when: inventory_hostname == 'sms03-nmn' or inventory_hostname == 'sms-3.craydev.com'
-
-- name: Run macvlan bridge systemd service on sms03-nmn
-  shell: systemctl start macvlan-bridge-setup.service
-  when: inventory_hostname == 'sms03-nmn' or inventory_hostname == 'sms-3.craydev.com'
-
-- name: Include uas_mgr.yml
-  include_vars: uas_mgr.yml
-  run_once: true
-
-- name: Create cray-uas-mgr Kubernetes configmap spec
-  template:
-    src: configmap-cray-uas-mgr.yaml.j2
-    dest: /root/k8s/configmap-cray-uas-mgr.yaml
-  run_once: true
-
-- name: Apply the cray-uas-mgr configmap yaml
-  command: kubectl apply -f /root/k8s/configmap-cray-uas-mgr.yaml
-  register: kubectl_result
-  changed_when: kubectl_result.stdout.find('created') != -1 or kubectl_result.stdout.find('configured') != -1
-  run_once: True
-
-- name: Apply uas-mgr Kubernetes spec
-  command: /usr/bin/kubectl apply -f /root/k8s/cray-uas-mgr.yaml
-  run_once: true
-
-- name: Wait for cray-uas-mgr to be Available
-  command: /usr/bin/kubectl wait --for=condition=Available deploy/cray-uas-mgr
-  run_once: true
-  ignore_errors: yes              # If this times out, don't break the whole install
 
 - name: Record that cray-uas ran  # Workaround https://github.com/ansible/ansible/issues/31751
   set_fact:

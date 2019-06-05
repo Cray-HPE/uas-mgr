@@ -1,0 +1,24 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  labels:
+    app.kubernetes.io/instance: cray-uas-mgr
+    app.kubernetes.io/name: cray-uas-mgr
+  name: cray-uas-mgr
+  namespace: services
+spec:
+  gateways:
+  - services-gateway
+  hosts:
+  - '*'
+  http:
+  - match:
+    - uri:
+        prefix: /apis/uas-mgr/
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: cray-uas-mgr
+        port:
+          number: {{ cray_uas_mgr_port }}
