@@ -14,7 +14,7 @@ class UAI(Model):
     Do not edit the class manually.
     """
 
-    def __init__(self, uai_name: str=None, username: str=None, publickey: str=None, uai_img: str=None, uai_ip: str=None, uai_status: str=None, uai_msg: str=None, uai_port: str=None, uai_connect_string: str=None, uai_portmap: dict={}):  # noqa: E501
+    def __init__(self, uai_name: str=None, username: str=None, publickey: str=None, uai_img: str=None, uai_ip: str=None, uai_status: str=None, uai_msg: str=None, uai_port: str=None, uai_connect_string: str=None, uai_portmap: dict={}, uai_host: str=None):  # noqa: E501
         """UAI - a model defined in Swagger
 
         :param uai_name: The uai_name of this UAI.  # noqa: E501
@@ -37,6 +37,8 @@ class UAI(Model):
         :type uai_connect_string: str
         :param uai_portmap: The uai_portmap of this UAI.  # noqa: E501
         :type uai_portmap: dict
+        :param uai_host: The physical host for this UAI.  # noqa: E501
+        :type uai_host: str
         """
         self.swagger_types = {
             'uai_name': str,
@@ -48,7 +50,8 @@ class UAI(Model):
             'uai_msg': str,
             'uai_port': str,
             'uai_connect_string': str,
-            'uai_portmap': dict
+            'uai_portmap': dict,
+            'uai_host': str
         }
 
         self.attribute_map = {
@@ -61,7 +64,8 @@ class UAI(Model):
             'uai_msg': 'uai_msg',
             'uai_port': 'uai_port',
             'uai_connect_string': 'uai_connect_string',
-            'uai_portmap': 'uai_portmap'
+            'uai_portmap': 'uai_portmap',
+            'uai_host': 'uai_host'
         }
 
         self._uai_name = uai_name
@@ -74,6 +78,7 @@ class UAI(Model):
         self._uai_port = uai_port
         self._uai_connect_string = uai_connect_string
         self._uai_portmap = uai_portmap
+        self._uai_host = uai_host
 
     @property
     def uai_name(self) -> str:
@@ -284,3 +289,24 @@ class UAI(Model):
         """
 
         self._uai_portmap = uai_portmap
+
+    @property
+    def uai_host(self) -> str:
+        """Gets the uai_host of this UAI.
+
+
+        :return: The uai_host of this UAI.
+        :rtype: str
+        """
+        return self._uai_host
+
+    @uai_host.setter
+    def uai_host(self, uai_host: str):
+        """Sets the uai_host of this UAI.
+
+
+        :param uai_host: The uai_host of this UAI.
+        :type uai_host: str
+        """
+
+        self._uai_host = uai_host

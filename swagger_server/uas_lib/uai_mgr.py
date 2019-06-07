@@ -13,7 +13,6 @@ from kubernetes import config, client
 from kubernetes.client import Configuration
 from kubernetes.client.apis import core_v1_api
 from kubernetes.client.rest import ApiException
-from kubernetes.stream import stream
 from swagger_server.models import UAI
 from swagger_server.uas_lib.uas_cfg import UasCfg
 from swagger_server.uas_lib.uas_auth import UasAuth
@@ -56,11 +55,10 @@ class UaiManager(object):
                 UAS_MGR_LOGGER.info("UAS request for: %s" % self.username)
             else:
                 missing = self.uas_auth.missingAttributes(self.userinfo)
-                UAS_MGR_LOGGER.info("Token not valid for UAS. Attributes missing: "
-                                    "%s" % missing)
+                UAS_MGR_LOGGER.info("Token not valid for UAS. Attributes "
+                                    "missing: %s" % missing)
                 abort(400, "Token not valid for UAS. Attributes missing: "
-                                    "%s" % missing)
-         
+                           "%s" % missing)
 
     def create_service_object(self, service_name, service_type, opt_ports_list,
                               deployment_name):
@@ -144,7 +142,7 @@ class UaiManager(object):
         resp = None
         try:
             UAS_MGR_LOGGER.info("deleting service %s in namespace %s" %
-                                 (service_name, namespace))
+                                (service_name, namespace))
             resp = self.api.delete_namespaced_service(
                     name=service_name,
                     namespace=namespace,
@@ -166,7 +164,7 @@ class UaiManager(object):
 
         container_ports = self.uas_cfg.gen_port_list(service=False,
                                                      optional_ports=opt_ports_list)
-        UAS_MGR_LOGGER.info("UAI Name: %s; Container ports: %s; Optional ports: %s" 
+        UAS_MGR_LOGGER.info("UAI Name: %s; Container ports: %s; Optional ports: %s"
                             % (deployment_name, container_ports, opt_ports_list))
 
         # Configure Pod template container
@@ -260,7 +258,7 @@ class UaiManager(object):
         uai.username = deployment_name.split('-')[1]
         try:
             UAS_MGR_LOGGER.info("getting pod info %s in namespace %s" %
-                                 (deployment_name, namespace))
+                                (deployment_name, namespace))
             pod_resp = self.api.list_namespaced_pod(namespace=namespace,
                                                     include_uninitialized=True)
         except ApiException as e:
@@ -271,6 +269,7 @@ class UaiManager(object):
         for pod in pod_resp.items:
             if pod.metadata.name.startswith(deployment_name):
                 uai.uai_name = deployment_name
+                uai.uai_host = pod.spec.node_name
                 for ctr in pod.spec.containers:
                     if ctr.name == deployment_name:
                         uai.uai_img = ctr.image
@@ -310,7 +309,7 @@ class UaiManager(object):
                 if srv_resp:
                     uai.uai_ip = self.uas_cfg.get_external_ip()
                     for srv_port in srv_resp.spec.ports:
-                        if srv_port.port in self.uas_cfg.get_valid_optional_ports(): 
+                        if srv_port.port in self.uas_cfg.get_valid_optional_ports():
                             uai.uai_portmap[srv_port.port] = srv_port.node_port
                         else:
                             uai.uai_port = srv_port.node_port
@@ -337,8 +336,8 @@ class UaiManager(object):
         return uai
 
     def gen_labels(self, deployment_name):
-        return {"app": deployment_name, 
-                "uas": "managed", 
+        return {"app": deployment_name,
+                "uas": "managed",
                 "user": self.username}
 
     def create_uai(self, publickey, imagename, opt_ports, namespace='default'):
@@ -370,7 +369,7 @@ class UaiManager(object):
                      self.uas_cfg.get_default_image()))
         if opt_ports:
             opt_ports_list = [int(i) for i in opt_ports.split(',')]
-            
+
         # Restrict ports to valid_ports
         if opt_ports_list:
             for port in opt_ports_list:
@@ -386,7 +385,7 @@ class UaiManager(object):
         deployment = self.create_deployment_object(deployment_name,
                                                    imagename, publickeyStr, opt_ports_list,
                                                    namespace)
-        # Create a service for the UAI 
+        # Create a service for the UAI
         uas_ssh_svc_name = deployment_name + '-ssh'
         uas_ssh_svc = self.create_service_object(uas_ssh_svc_name, "ssh",  opt_ports_list, deployment_name)
 
@@ -394,7 +393,7 @@ class UaiManager(object):
         deploy_resp = None
         try:
             UAS_MGR_LOGGER.info("getting deployment %s in namespace %s" %
-                                 (deployment_name, namespace))
+                                (deployment_name, namespace))
             deploy_resp = self.extensions_v1beta1.read_namespaced_deployment(deployment_name, namespace)
         except ApiException as e:
             if e.status != 404:

@@ -43,6 +43,7 @@ Via: kong/0.14.1
   "uai_port": 16325,
   "uai_status": "Waiting",
   "username": "exampleuser"
+  "uai_host": "sms03"
 }
 ----
 
@@ -107,6 +108,7 @@ Via: kong/0.14.1
     "uai_port": 16325,
     "uai_status": "Running: Ready",
     "username": "exampleuser"
+    "uai_host": "sms03"
   },
   {
     "uai_connect_string": "ssh exampleuser@172.30.52.69 -p 32117 -i ~/.ssh/id_rsa",
@@ -116,6 +118,7 @@ Via: kong/0.14.1
     "uai_port": 32117,
     "uai_status": "Running: Ready",
     "username": "exampleuser"
+    "uai_host": "sms03"
   }
 ]
 ----
@@ -144,6 +147,6 @@ Via: kong/0.14.1
 
 {
   "service_name": "cray-uas-mgr",
-  "version": "0.6.0"
+  "version": "0.13.0"
 }
 ----
