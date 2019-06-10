@@ -1,4 +1,0 @@
-apiVersion: v1
-description: "Kubernetes resources for uas-mgr"
-name: "cray-uas-mgr"
-version: 0.0.3

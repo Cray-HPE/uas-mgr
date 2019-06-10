@@ -34,6 +34,6 @@ ENTRYPOINT ["./api_test.sh"]
 #########################
 FROM base as application
 
-EXPOSE 8080
+EXPOSE 8088
 ENTRYPOINT ["python3"]
 CMD ["-m", "swagger_server"]
