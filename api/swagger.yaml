@@ -2,7 +2,7 @@ openapi: "3.0.2"
 info:
   title: "Cray User Access Service"
   description: "Cray User Access Service. This service is responsible for the management of User Access Instance lifecycles."
-  version: "0.13.0"
+  version: "0.13.1"
 
 servers:
   - url: "/apis/uas-mgr/v1"
@@ -562,6 +562,8 @@ components:
           type: "object"
           additionalProperties:
             type: "integer"
+        uai_host:
+          type: "string"
       example:
         uai_id: "user-uai-uai_image"
         username: "user_name"
@@ -570,6 +572,7 @@ components:
         uai_ip: "10.248.0.23"
         uai_status: "Running"
         uai_reason: "Deploying"
+        uai_host: "sms03"
     Volume:
       type: "object"
       properties:
