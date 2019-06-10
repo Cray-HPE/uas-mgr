@@ -8,7 +8,7 @@
 # group_vars/managers directory of the inventory being used.
 
 cray_uas_mgr_image_version: "latest"
-cray_uas_mgr_port: "8080"
+cray_uas_mgr_port: "8088"
 cray_uas_mgr_configmap: "cray-uas-mgr-cfgmap"
 
 # User Access Image configuration

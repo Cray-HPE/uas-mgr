@@ -165,7 +165,7 @@
   run_once: True
 
 - name: Apply the cray-uas-mgr configmap yaml
-  command: kubectl apply -n services -f /root/k8s/configmap-cray-uas-mgr.yaml
+  command: kubectl apply -n services -f /root/k8s/cray-uas-mgr-cfgmap.yaml
   register: kubectl_result
   changed_when: kubectl_result.stdout.find('created') != -1 or kubectl_result.stdout.find('configured') != -1
   run_once: True
