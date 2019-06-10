@@ -172,6 +172,32 @@ class TestUasCfg(unittest.TestCase):
             privateKey = f.read()
             self.assertFalse(self.uas_cfg.validate_ssh_key(privateKey))
 
+    def test_is_valid_volume_name(self):
+        # Capital letters are bad
+        self.assertFalse(self.uas_cfg.is_valid_volume_name('NoCaps'))
+        # can't have some of these
+        special_chars = ["*","$","%","'","!"]
+        for sc in special_chars:
+            self.assertFalse(self.uas_cfg.is_valid_volume_name(sc+'foo'))
+
+        # - is legal
+        self.assertTrue(self.uas_cfg.is_valid_volume_name('my-name-is'))
+        # numbers are ok
+        self.assertTrue(self.uas_cfg.is_valid_volume_name('jenny8675309'))
+        # although I think all numbers are okay with DNS-1123, k8s doesn't
+        # allow it
+        self.assertFalse(self.uas_cfg.is_valid_volume_name('8675309'))
+        # lower case letters & numbers are ok
+        self.assertTrue(self.uas_cfg.is_valid_volume_name('99something'))
+        # can't end with a -
+        self.assertFalse(self.uas_cfg.is_valid_volume_name('dashnotatend-'))
+        # can't start with a -
+        self.assertFalse(self.uas_cfg.is_valid_volume_name('-dashnotatstart'))
+        # has to be <= 63 chars
+        self.assertFalse(self.uas_cfg.is_valid_volume_name('mercury-venus-earth-asteroid-belt-mars-jupiter-saturn-uranus-neptune'))  # noqa E501
+        # 0 length not allowed
+        self.assertFalse(self.uas_cfg.is_valid_volume_name(''))
+
 
 if __name__ == '__main__':
     unittest.main()

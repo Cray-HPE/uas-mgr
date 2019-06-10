@@ -106,11 +106,17 @@ class TestUasMgr(unittest.TestCase):
             self.uas_mgr.create_volume("test124", type='DirectoryOrCreate',
                                        host_path='/var/foobar')
         with self.assertRaises(werkzeug.exceptions.BadRequest):
-            self.uas_mgr.update_volume("test123", type='ketchup',
+            self.uas_mgr.create_volume("test123", type='ketchup',
                                        mount_path='/var/foobar')
         with self.assertRaises(werkzeug.exceptions.BadRequest):
-            self.uas_mgr.update_volume("test124", type='',
-                                        host_path='/var/foobar')
+            self.uas_mgr.create_volume("test124", type='',
+                                       host_path='/var/foobar')
+        with self.assertRaises(werkzeug.exceptions.BadRequest):
+            self.uas_mgr.create_volume("abadname-", type='DirectoryOrCreate',
+                                       host_path='/var/foobar')
+        with self.assertRaises(werkzeug.exceptions.BadRequest):
+            self.uas_mgr.create_volume("BaDName", type='DirectoryOrCreate',
+                                       host_path='/var/foobar')
         # XXX - to implement after the underlying code works
         #       - test duplicate volume
         #       - test with empty volume list
@@ -122,13 +128,19 @@ class TestUasMgr(unittest.TestCase):
                                        mount_path='/var/foobar')
         with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.update_volume("test124", type='DirectoryOrCreate',
-                                        host_path='/var/foobar')
+                                       host_path='/var/foobar')
         with self.assertRaises(werkzeug.exceptions.BadRequest):
             self.uas_mgr.update_volume("test123", type='walleye',
                                        mount_path='/var/foobar')
         with self.assertRaises(werkzeug.exceptions.BadRequest):
             self.uas_mgr.update_volume("test124", type='',
-                                        host_path='/var/foobar')
+                                       host_path='/var/foobar')
+        with self.assertRaises(werkzeug.exceptions.BadRequest):
+            self.uas_mgr.update_volume("abadname-", type='DirectoryOrCreate',
+                                       host_path='/var/foobar')
+        with self.assertRaises(werkzeug.exceptions.BadRequest):
+            self.uas_mgr.update_volume("BaDName", type='DirectoryOrCreate',
+                                       host_path='/var/foobar')
         # XXX - to implement after the underlying code works
         #       - test with empty volume list
         #       - test with volume not in list

@@ -508,9 +508,16 @@ class UaiManager(object):
     def create_volume(self, volumename, type, mount_path=None, host_path=None,
                       secret_name=None, config_map=None):
         # Create the volume
+
         if not self.uas_cfg.is_valid_host_path_mount_type(type):
             abort(400, "Invalid type - please refer to the Kubernetes volume"
                   " documentation for valid types")
+
+        if not self.uas_cfg.is_valid_volume_name(volumename):
+            abort(400, "Invalid volume name - names must consist of lower case"
+                       " alphanumeric characters or '-', and must start and"
+                       " end with an alphanumeric character. Refer to the "
+                       "Kubernetes documentation for more information.")
 
         resp = None
         abort(501, "Not implemented")
@@ -519,9 +526,16 @@ class UaiManager(object):
     def update_volume(self, volumename, type, mount_path=None, host_path=None,
                       secret_name=None, config_map=None):
         # Update the volume
+
         if not self.uas_cfg.is_valid_host_path_mount_type(type):
             abort(400, "Invalid type - please refer to the Kubernetes volume"
                        " documentation for valid types")
+
+        if not self.uas_cfg.is_valid_volume_name(volumename):
+            abort(400, "Invalid volume name - names must consist of lower case"
+                       " alphanumeric characters or '-', and must start and"
+                       " end with an alphanumeric character. Refer to the "
+                       "Kubernetes documentation for more information.")
 
         resp = None
         abort(501, "Not implemented")
