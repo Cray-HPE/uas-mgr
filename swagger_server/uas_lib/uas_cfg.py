@@ -6,6 +6,7 @@
 #
 
 import logging
+import re
 import sshpubkeys
 import sshpubkeys.exceptions as sshExceptions
 import sys
@@ -112,21 +113,31 @@ class UasCfg(object):
             volume_mounts = []
         for vol in volume_mounts:
             if vol:
+                # XXX - after we switch volumes to APIs, we can drop
+                # this check here since the API will do the check before it
+                # could even get this far. This also applies to the check
+                # below.
+                if not self.is_valid_volume_name(vol['name']):
+                    abort(400, "Invalid volume name - names must consist of "
+                          " lower case alphanumeric characters or '-', and "
+                          " must start and end with an alphanumeric character."
+                          " Refer to the Kubernetes documentation for more "
+                          " information.")
+
                 if vol.get('host_path', None):
                     # support for an optional type attribute for host_path mounts
                     # if this attribute is unset we assume original behavior
                     # which is DirectoryOrCreate
                     mount_type = vol.get('type', 'DirectoryOrCreate')
                     if not self.is_valid_host_path_mount_type(mount_type):
-                        raise ValueError("%s mount_type is not supported - \
-                                         please refer to the Kubernetes docs \
-                                         for a list of supported host_path \
-                                         mount types")
+                        abort(400, "%s mount_type is not supported - please "
+                              "refer to the Kubernetes docs for a list of"
+                              " supported host_path mount types")
                     volume_list.append(client.V1Volume(name=vol['name'],
-                                        host_path=client.V1HostPathVolumeSource(
-                                        path=vol['host_path'],
-                                        type=mount_type
-                                        )))
+                                       host_path=client.V1HostPathVolumeSource(
+                                       path=vol['host_path'],
+                                       type=mount_type
+                                       )))
                 if vol.get('config_map', None):
                     volume_list.append(client.V1Volume(name=vol['name'],
                                        config_map=client.V1ConfigMapVolumeSource(
@@ -297,3 +308,16 @@ class UasCfg(object):
         :rtype list
         """
         return UAS_CFG_OPTIONAL_PORTS
+
+    def is_valid_volume_name(self, volume_name):
+        """
+        checks whether the passed in volume name is valid or not
+        k8s volume names need to be valid DNS-1123 name, which means
+        lower case alphanumeric characters or '-', and must start
+        and end with an alphanumeric character.
+
+        :return: returns True if volume name is valid, False if not.
+        :rtype bool
+        """
+        regex = re.compile('^(?![0-9]+$)(?!-)[a-z0-9-]{1,63}(?<!-)$')
+        return regex.match(volume_name) is not None
