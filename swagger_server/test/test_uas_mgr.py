@@ -33,7 +33,7 @@ class TestUasMgr(unittest.TestCase):
         uai.username = "testuser"
         uai.uai_port = 12345
         uai.uai_ip = "1.2.3.4"
-        self.uas_mgr.gen_connection_string(uai)
+        uai.uai_connect_string = self.uas_mgr.gen_connection_string(uai)
 
         self.assertEqual("ssh testuser@1.2.3.4 -p 12345 -i ~/.ssh/id_rsa",
                          uai.uai_connect_string)

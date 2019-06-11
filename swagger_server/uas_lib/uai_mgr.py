@@ -7,6 +7,7 @@
 
 import logging
 import sys
+import time
 import uuid
 from flask import abort, request
 from kubernetes import config, client
@@ -27,6 +28,9 @@ formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s"
                               " - %(message)s")
 handler.setFormatter(formatter)
 UAS_MGR_LOGGER.addHandler(handler)
+
+# picking 40 seconds so that it's under the gateway timeout
+UAI_IP_TIMEOUT = 40
 
 
 class UaiManager(object):
@@ -251,70 +255,89 @@ class UaiManager(object):
             # other parts are still laying around (services for example)
         return resp
 
-    def get_pod_info(self, deployment_name, namespace='default'):
+    def get_pod_info(self, deployment_name, namespace='default', host=None):  # noqa E501
         pod_resp = None
-        uai = UAI()
-        uai.uai_portmap = {}
-        uai.username = deployment_name.split('-')[1]
+
         try:
-            UAS_MGR_LOGGER.info("getting pod info %s in namespace %s" %
-                                (deployment_name, namespace))
-            pod_resp = self.api.list_namespaced_pod(namespace=namespace,
-                                                    include_uninitialized=True)
+            UAS_MGR_LOGGER.info("getting pod info %s in namespace %s"
+                                " on host %s" % (deployment_name, namespace,
+                                                 host))
+            if host:
+                pod_resp = self.api.list_namespaced_pod(namespace=namespace,
+                                                        include_uninitialized=True,
+                                                        label_selector="app=%s" % deployment_name,
+                                                        field_selector="spec.nodeName=%s" % host)
+            else:
+                pod_resp = self.api.list_namespaced_pod(namespace=namespace,
+                                                        include_uninitialized=True,
+                                                        label_selector="app=%s" % deployment_name)
         except ApiException as e:
             UAS_MGR_LOGGER.error("Failed to get pod info %s: %s" %
                                  (deployment_name, e.reason))
             abort(e.status, "Failed to get pod info %s: %s" %
                   (deployment_name, e.reason))
-        for pod in pod_resp.items:
-            if pod.metadata.name.startswith(deployment_name):
-                uai.uai_name = deployment_name
-                uai.uai_host = pod.spec.node_name
-                for ctr in pod.spec.containers:
-                    if ctr.name == deployment_name:
-                        uai.uai_img = ctr.image
-                if pod.status.container_statuses:
-                    for s in pod.status.container_statuses:
-                        if s.name == deployment_name:
-                            if s.state.running:
-                                for c in pod.status.conditions:
-                                    if c.type == 'Ready':
-                                        if pod.metadata.deletion_timestamp:
-                                            uai.uai_status = 'Terminating'
-                                        elif c.status == 'True':
-                                            uai.uai_status = 'Running: Ready'
-                                        else:
-                                            uai.uai_status = 'Running: Not Ready'
-                                            uai.uai_msg = c.message
-                            if s.state.terminated:
-                                uai.uai_status = 'Terminated'
-                            if s.state.waiting:
-                                uai.uai_status = 'Waiting'
-                                uai.uai_msg = s.state.waiting.reason
-                srv_resp = None
-                try:
-                    UAS_MGR_LOGGER.info("getting service info for %s-ssh in "
-                                        "namespace %s" % (deployment_name,
-                                                          namespace))
-                    srv_resp = self.api.read_namespaced_service(name=deployment_name + "-ssh",
-                                                                namespace=namespace)
-                except ApiException as e:
-                    if e.status != 404:
-                        UAS_MGR_LOGGER.error("Failed to get service info for "
-                                             "%s-ssh: %s" % (deployment_name,
-                                                             e.reason))
-                        abort(e.status, "Failed to get service info for "
-                                        "%s-ssh: %s" % (deployment_name,
-                                                        e.reason))
-                if srv_resp:
-                    uai.uai_ip = self.uas_cfg.get_external_ip()
-                    for srv_port in srv_resp.spec.ports:
-                        if srv_port.port in self.uas_cfg.get_valid_optional_ports():
-                            uai.uai_portmap[srv_port.port] = srv_port.node_port
-                        else:
-                            uai.uai_port = srv_port.node_port
 
-                uai = self.gen_connection_string(uai)
+        # previously this code could return an empty UAI object,
+        # but with the host filter, we could legitimately get 0
+        # results and returning an empty object puts an empty object
+        # into the return list.
+        if len(pod_resp.items) == 0:
+            return None
+        elif len(pod_resp.items) > 1:
+            UAS_MGR_LOGGER.warning("Oddly found more than one pod in "
+                                   "deployment %s" % deployment_name)
+
+        pod = pod_resp.items[0]
+
+        uai = UAI()
+        uai.uai_portmap = {}
+        uai.uai_name = deployment_name
+        uai.uai_host = pod.spec.node_name
+        uai.username = deployment_name.split('-')[1]
+        for ctr in pod.spec.containers:
+            if ctr.name == deployment_name:
+                uai.uai_img = ctr.image
+        if pod.status.container_statuses:
+            for s in pod.status.container_statuses:
+                if s.name == deployment_name:
+                    if s.state.running:
+                        for c in pod.status.conditions:
+                            if c.type == 'Ready':
+                                if pod.metadata.deletion_timestamp:
+                                    uai.uai_status = 'Terminating'
+                                elif c.status == 'True':
+                                    uai.uai_status = 'Running: Ready'
+                                else:
+                                    uai.uai_status = 'Running: Not Ready'
+                                    uai.uai_msg = c.message
+                    if s.state.terminated:
+                        uai.uai_status = 'Terminated'
+                    if s.state.waiting:
+                        uai.uai_status = 'Waiting'
+                        uai.uai_msg = s.state.waiting.reason
+        srv_resp = None
+        try:
+            UAS_MGR_LOGGER.info("getting service info for %s-ssh in "
+                                "namespace %s" % (deployment_name,
+                                                  namespace))
+            srv_resp = self.api.read_namespaced_service(name=deployment_name + "-ssh",
+                                                        namespace=namespace)
+        except ApiException as e:
+            if e.status != 404:
+                UAS_MGR_LOGGER.error("Failed to get service info for "
+                                     "%s-ssh: %s" % (deployment_name,
+                                                     e.reason))
+                abort(e.status, "Failed to get service info for "
+                                "%s-ssh: %s" % (deployment_name,
+                                                e.reason))
+        if srv_resp:
+            uai.uai_ip = self.uas_cfg.get_external_ip()
+            for srv_port in srv_resp.spec.ports:
+                if srv_port.port in self.uas_cfg.get_valid_optional_ports():
+                    uai.uai_portmap[srv_port.port] = srv_port.node_port
+                else:
+                    uai.uai_port = srv_port.node_port
+        uai.uai_connect_string = self.gen_connection_string(uai)
         return uai
 
     def gen_connection_string(self, uai):
@@ -329,11 +352,9 @@ class UaiManager(object):
         :type uai: uai
         :return: uai:
         """
-        uai.uai_connect_string = ("ssh %s@%s -p %s -i ~/.ssh/id_rsa" %
-                                  (uai.username,
-                                   uai.uai_ip,
-                                   uai.uai_port))
-        return uai
+        return "ssh %s@%s -p %s -i ~/.ssh/id_rsa" % (uai.username,
+                                                     uai.uai_ip,
+                                                     uai.uai_port)
 
     def gen_labels(self, deployment_name):
         return {"app": deployment_name,
@@ -414,16 +435,31 @@ class UaiManager(object):
                                  (deployment_name))
             self.delete_uais([deployment_name], namespace)
             abort(404, "Failed to create service: %s" % uas_ssh_svc_name)
-        uai_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
-        while not uai_info.uai_ip:
+
+        # Wait for the UAI IP to be set
+        total_wait = 0.0
+        delay = 0.5
+        while True:
+            UAS_MGR_LOGGER.error("waiting: " + str(total_wait))
             uai_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
+            if uai_info and uai_info.uai_ip:
+                break
+            if total_wait >= UAI_IP_TIMEOUT:
+                abort(504, "Failed to get IP for service: %s" %
+                      uas_ssh_svc_name)
+            time.sleep(delay)
+            total_wait += delay
         return uai_info
 
-    def list_uais(self, label, namespace='default'):
+    def list_uais(self, label, host=None, namespace='default'):
         """
-        Lists the UAIs based on a label selector
+        Lists the UAIs based on a label and/or field selector and namespace
 
         :param label: Label selector. If empty, use self.username
+        :param host: Used to select pods by host, if set,
+            If unset, the default of an empty string will select all.
+            Passed through to get_pod_info().
+        :param namespace: Filters results by a specific namespace
         :return: List of UAI information.
         :rtype: list
         """
@@ -432,17 +468,21 @@ class UaiManager(object):
         if not label:
             label = 'user=' + self.username
         try:
-            UAS_MGR_LOGGER.info("listing deployments in namespace %s" %
-                                namespace)
+            UAS_MGR_LOGGER.info("listing deployments matching: namespace %s,"
+                                " label %s" % (namespace, label))
             resp = self.extensions_v1beta1.list_namespaced_deployment(namespace=namespace,
-                                                 label_selector=label,
-                                                 include_uninitialized=True)
+                                                label_selector=label,
+                                                include_uninitialized=True)
+
         except ApiException as e:
             if e.status != 404:
-                UAS_MGR_LOGGER.error("Failed to get deployment list")
+                UAS_MGR_LOGGER.error("Failed to get deployment list: %s",
+                                     e.reason)
                 abort(e.status, "Failed to get deployment list")
         for deployment in resp.items:
-            uai_list.append(self.get_pod_info(deployment.metadata.name))
+            uai = self.get_pod_info(deployment.metadata.name, namespace, host)
+            if uai:
+                uai_list.append(uai)
         return uai_list
 
     def delete_uais(self, deployment_list, namespace='default'):
