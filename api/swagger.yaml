@@ -1,7 +1,45 @@
 openapi: "3.0.2"
 info:
-  title: "Cray User Access Service"
-  description: "Cray User Access Service. This service is responsible for the management of User Access Instance lifecycles."
+  title: "User Access Service"
+  description: |
+    The User Access Service (UAS) creates and deletes User Access Instances (UAIs).
+    A user may ssh or login to a UAI running on an NCN,
+    to build, run, and debug applications.
+
+
+      ## Single user workflow
+
+      * POST /uas - Request to create a new User Access Instance (UAI).
+      When an authenticated user requests a new UAI, the User Access
+      Service returns status and connection information for the newly
+      created UAI, which will be available via ssh and on the specified port.
+
+      * ssh to the new UAI
+
+      * DELETE /uas - Cleanup
+
+
+      ## Admin workflow
+
+    System wide APIs which manage the /images and /volumes resources are not yet implemented.
+
+
+      * GET /uas - Get a list of available UAIs
+
+      * GET /images - Get a list of available images
+
+      * POST /uas - Request to create new UAIs, having specified image(s)
+
+      * GET /volumes - Get a list of available volumes
+
+      * POST /volumes - Mount a volume inside a UAI
+
+      * DELETE /uas - Cleanup
+
+
+
+
+
   version: "0.13.3"
 
 servers:
@@ -12,12 +50,11 @@ paths:
   /:
 
     get:
-      summary: "Returns supported UAS API versions"
-      description: "Returns supported UAS API versions"
+      summary: "Return supported UAS API versions"
+      description: "Return supported UAS API versions."
       operationId: "root_get"
       tags:
       - "versions"
-      - "UAS"
       - "cli_ignore"
       responses:
         200:
@@ -27,15 +64,14 @@ paths:
   /uas:
 
     get:
-      summary: "List all available UAIs for user"
-      description: "List all available UAIs for user"
+      summary: "List UAIs"
+      description: "List all available UAIs for username."
       operationId: "get_uais_for_user"
       tags:
       - "uas"
-      - "UAS"
       responses:
         200:
-          description: "List all UAIs for user"
+          description: "OK"
           content:
             application/json:
               schema:
@@ -45,12 +81,11 @@ paths:
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     post:
-      summary: "Create a new UAI"
-      description: "Create a new UAI"
+      summary: "Create a UAI"
+      description: "Create a new UAI using the specified image.  It will be accessable via ssh, and projected onto ports, if ports are specified."
       operationId: "create_uai"
       tags:
       - "uas"
-      - "UAS"
       parameters:
       - name: "imagename"
         in: "query"
@@ -73,7 +108,7 @@ paths:
               type: "object"
               properties:
                 publickey:
-                  description: "Public ssh key for the user"
+                  description: "File containing public ssh key for the user"
                   type: "string"
                   format: "binary"
       responses:
@@ -84,7 +119,7 @@ paths:
               schema:
                 type: "object"
         404:
-          description: "Not able to provide UAI"
+          description: "Unable to create UAI"
           content:
             application/json:
               schema:
@@ -92,12 +127,11 @@ paths:
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     delete:
-      summary: "Delete UAI with uai_name. Takes a list of UAI names and deletes the associated UAI instances."
-      description: "Delete UAI with uai_name. Takes a list of UAI names and deletes the associated UAI instances."
+      summary: "Delete a UAI"
+      description: "Delete specified UAI(s). Takes a list of UAI names and deletes the associated UAI."
       operationId: "delete_uai_by_name"
       tags:
       - "uas"
-      - "UAS"
       parameters:
       - name: "uai_list"
         description: "comma separated list of UAI names"
@@ -115,17 +149,17 @@ paths:
           description: "UAIs deleted"
         404:
           description: "Failed to delete UAI with {uai_id}"
+ # Did whole list fail or were there specific uais that failed?  Schema.
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
   /images:
 
     get:
-      summary: "List available UAS images"
-      description: "List available UAS images"
+      summary: "List UAS images"
+      description: "List all available UAS images."
       operationId: "get_uas_images"
       tags:
       - "images"
-      - "UAS"
       responses:
         200:
           description: "UAS Image List"
@@ -142,12 +176,11 @@ paths:
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     post:
-      summary: "Add an image to the list of valid images"
-      description: "Add an image to the list of valid images"
+      summary: "Add an image"
+      description: "Not yet implemented."
       operationId: "create_uas_image"
       tags:
       - "images"
-      - "UAS"
       - "cli_hidden"
       parameters:
       - name: "imagename"
@@ -183,12 +216,11 @@ paths:
   /images/{imagename}:
 
     delete:
-      summary: "Remove the image from the list of valid images"
-      description: "Remove the image from the list of valid images"
+      summary: "Remove the imagename from set of valid images"
+      description: "Not yet implemented."
       operationId: "delete_uas_image"
       tags:
-      - "images/{imagename}"
-      - "UAS"
+      - "images"
       - "cli_hidden"
       parameters:
       - name: "imagename"
@@ -199,18 +231,17 @@ paths:
         example: "node.local/uas-sles15:latest"
       responses:
         200:
-          description: "Image removed from list"
+          description: "Image removed"
         404:
           description: "Failed to delete image {image_id}"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     patch:
       summary: "Update an image"
-      description: "Update an image"
+      description: "Not yet implemented."
       operationId: "update_uas_image"
       tags:
-      - "images/{imagename}"
-      - "UAS"
+      - "images"
       - "cli_hidden"
       parameters:
       - name: "imagename"
@@ -244,12 +275,11 @@ paths:
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     get:
-      summary: "Get image info for imagename"
-      description: "Get image info for imagename"
+      summary: "Get image info"
+      description: "Not yet implemented."
       operationId: "get_uas_image"
       tags:
-      - "images/{imagename}"
-      - "UAS"
+      - "images"
       - "cli_hidden"
       parameters:
       - name: "imagename"
@@ -276,12 +306,15 @@ paths:
   /volumes:
 
     get:
-      summary: "List available UAS volumes"
-      description: "List available UAS volumes"
+      summary: "List volumes"
+      description: "Not yet implemented. 
+
+        
+        The volume list is used during UAI creation.
+        This list does not necessarily relate to UAIs previously created."
       operationId: "get_uas_volumes"
       tags:
       - "volumes"
-      - "UAS"
       - "cli_hidden"
       responses:
         200:
@@ -302,11 +335,16 @@ paths:
 
     post:
       summary: "Add a volume"
-      description: "Add a volume"
+      description: "Not yet implemented. 
+
+        
+        Add a volume to the volume list. 
+        The volume list is used during UAI creation,
+        so this request only applies to UAIs subsequently created.  
+        Modifying the volume list does not affect existing UAIs."
       operationId: "create_uas_volume"
       tags:
       - "volumes"
-      - "UAS"
       - "cli_hidden"
       parameters:
       - name: "volumename"
@@ -318,7 +356,8 @@ paths:
         example: "mymount"
       - name: "type"
         in: "query"
-        description: "Type of volume (refer to kubernetes documentation for valid types)"
+        description: "Valid types: DirectoryOrCreate, Directory, FileOrCreate,
+          File, Socket, CharDevice, BlockDevice"
         required: false
         schema:
           type: "string"
@@ -362,12 +401,14 @@ paths:
   /volumes/{volumename}:
 
     delete:
-      summary: "Remove the volume from the list of valid volumes"
-      description: "Remove the volume from the list of valid volumes"
+      summary: "Remove the volume from the volume list."
+      description: "Not yet implemented. 
+
+
+        Remove the volume from the list of valid volumes."
       operationId: "delete_uas_volume"
       tags:
-      - "volumes/{volumename}"
-      - "UAS"
+      - "volumes"
       - "cli_hidden"
       parameters:
       - name: "volumename"
@@ -385,11 +426,10 @@ paths:
 
     patch:
       summary: "Update a volume"
-      description: "Update a volume"
+      description: "Not yet implemented."
       operationId: "update_uas_volume"
       tags:
-      - "volumes/{volumename}"
-      - "UAS"
+      - "volumes"
       - "cli_hidden"
       parameters:
       - name: "volumename"
@@ -401,7 +441,8 @@ paths:
         example: "mymount"
       - name: "type"
         in: "query"
-        description: "Type of volume (refer to kubernetes documentation for valid types)"
+        description: "Valid types: DirectoryOrCreate, Directory, FileOrCreate, 
+          File, Socket, CharDevice, BlockDevice"
         required: false
         schema:
           type: "string"
@@ -447,8 +488,7 @@ paths:
       description: "Get volume info for volumename"
       operationId: "get_uas_volume"
       tags:
-      - "volumes/{volumename}"
-      - "UAS"
+      - "volumes"
       - "cli_hidden"
       parameters:
       - name: "volumename"
@@ -475,19 +515,18 @@ paths:
   /mgr-info:
 
     get:
-      summary: "List uas-mgr service info"
-      description: "List uas-mgr service info"
+      summary: "List UAS info"
+      description: "Return User Access Service information."
       operationId: "get_uas_mgr_info"
       tags:
       - "mgr-info"
-      - "UAS"
       responses:
         200:
           description: "UAS-MGR Info"
           content:
             application/json:
               schema:
-                type: "object"
+                $ref: "#/components/schemas/UAS_mgr_info"
         404:
           description: "UAS-MGR Info not found"
           content:
@@ -500,7 +539,7 @@ paths:
 
     get:
       summary: "List all UAIs on the system"
-      description: "List all UAIs on the system"
+      description: "List all UAIs on the system."
       operationId: "get_all_uais"
       tags:
       - "uais"
@@ -522,13 +561,13 @@ paths:
         example: "sms03"
       responses:
         200:
-          description: "UAS Instance List"
+          description: "UAI List"
           content:
             application/json:
               schema:
                 type: "object"
         404:
-          description: "No UAS Instances found"
+          description: "No UAIs found"
           content:
             application/json:
               schema:
@@ -537,11 +576,10 @@ paths:
 
     delete:
       summary: "Delete all UAIs on the system"
-      description: "Delete all UAIs on the system"
+      description: "Delete all UAIs on the system."
       operationId: "delete_all_uais"
       tags:
       - "uais"
-      - "UAS"
       - "cli_danger$This will delete all running UAIs, Are you sure?"
       parameters:
       - name: "username"
@@ -553,9 +591,9 @@ paths:
         example: "uastest"
       responses:
         200:
-          description: "All UAS Instances Deleted"
+          description: "All UAIs Deleted"
         404:
-          description: "No UAS Instances found"
+          description: "No UAIs found"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
 components:
@@ -616,3 +654,14 @@ components:
         type: "DirectoryOrCreate"
         mount_path: "/opt/test/foo"
         host_path: "/opt/host/foo"
+    UAS_mgr_info:
+      type: "object"
+      properties:
+        service_name:
+          type: "string"
+        version:
+          type: "string"
+      example:
+        service_name: "cray-uas-mgr"
+        version: "version"
+
