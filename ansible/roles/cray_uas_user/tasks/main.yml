@@ -6,14 +6,17 @@
     kubectl get pods -l app=keycloak --no-headers |
     awk '{print $1}' | head -1
   register: get_pod
+  run_once: true
 
 - set_fact:
     keycloak_pod: "{{ get_pod.stdout }}"
+  run_once: true
 
 - name: Include keycloak vars
   include_vars:
     file: roles/keycloak/defaults/main.yml
   when: keycloak_pod | search("keycloak-")
+  run_once: true
 
 - name: Configure credentials in keycloak
   no_log: True
@@ -24,6 +27,7 @@
     --password {{ keycloak_master_admin_password }}
     --server http://localhost:8080/keycloak 
   when: keycloak_pod | search("keycloak-")
+  run_once: true
 
 - name: Add user in keycloak for UAS
   shell: >
@@ -46,6 +50,7 @@
     not (add_user_result.rc == 0 or 
     (add_user_result.rc == 1 and 'User exists with same username' in add_user_result.stderr))
   when: keycloak_pod | search("keycloak-")
+  run_once: true
 
 - name: Set user password in keycloak
   shell: >
@@ -57,3 +62,4 @@
   loop_control:
     label: "{{ item.username }}"
   when: keycloak_pod | search("keycloak-")
+  run_once: true
