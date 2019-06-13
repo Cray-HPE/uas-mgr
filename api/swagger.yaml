@@ -2,7 +2,7 @@ openapi: "3.0.2"
 info:
   title: "Cray User Access Service"
   description: "Cray User Access Service. This service is responsible for the management of User Access Instance lifecycles."
-  version: "0.13.2"
+  version: "0.13.3"
 
 servers:
   - url: "/apis/uas-mgr/v1"
@@ -61,7 +61,7 @@ paths:
         example: "node.local/uas-sles15:latest"
       - name: "ports"
         in: "query"
-        description: "Additional ports to project from the UAI besides ssh. Restricted to ports 80 and 443."
+        description: "Additional ports to project from the UAI besides ssh. Restricted to ports 80, 443 and 8888."
         required: false
         schema:
           type: "string"
@@ -505,6 +505,21 @@ paths:
       tags:
       - "uais"
       - "UAS"
+      parameters:
+      - name: "username"
+        in: "query"
+        description: "list all UAIs matching this username"
+        required: false
+        schema:
+          type: "string"
+        example: "uastest"
+      - name: "host"
+        in: "query"
+        description: "list all UAIs running on this host"
+        required: false
+        schema:
+          type: "string"
+        example: "sms03"
       responses:
         200:
           description: "UAS Instance List"
@@ -528,6 +543,14 @@ paths:
       - "uais"
       - "UAS"
       - "cli_danger$This will delete all running UAIs, Are you sure?"
+      parameters:
+      - name: "username"
+        in: "query"
+        description: "delete all UAIs matching this username"
+        required: false
+        schema:
+          type: "string"
+        example: "uastest"
       responses:
         200:
           description: "All UAS Instances Deleted"

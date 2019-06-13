@@ -86,21 +86,40 @@ def get_uas_mgr_info():  # noqa: E501
     return uas_mgr_info
 
 
-def get_all_uais():  # noqa: E501
-    """List all UAIs
+def get_all_uais(username=None, host=None):  # noqa: E501
+    """List all UAIs matching optional parameters
+
+    :param username:
+    :type username: str
+    :param host:
+    :type host: str
+
     :rtype: List[UAI]
     """
+    label = 'uas=managed'
+
+    if username:
+        label += ',user=%s' % username
+
     uai_mgr = UaiManager()
-    uai_resp = uai_mgr.list_uais('uas=managed')
+    uai_resp = uai_mgr.list_uais(label, host)
     return uai_resp
 
 
-def delete_all_uais():  # noqa: E501
+def delete_all_uais(username=None):  # noqa: E501
     """Delete all UAIs
+
+    :param username: username to delete UAIs for if specified
+    :type username: str
     :rtype: UAI
     """
-    uai_list = []
     uai_mgr = UaiManager()
+    uai_list = []
+
+    if username:
+        for uai in uai_mgr.list_uais('uas=managed,user=%s' % username):
+            uai_list.append(uai.uai_name)
+
     uai_resp = uai_mgr.delete_uais(uai_list)
     return uai_resp
 
