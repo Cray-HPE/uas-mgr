@@ -59,6 +59,7 @@ paths:
       responses:
         200:
           description: "Version response"
+ # Need response schema with example         
       x-openapi-router-controller: "swagger_server.controllers.versions_controller"
 
   /uas:
@@ -66,6 +67,7 @@ paths:
     get:
       summary: "List UAIs"
       description: "List all available UAIs for username."
+# Mention how/when username is authenticated     
       operationId: "get_uais_for_user"
       tags:
       - "uas"
@@ -118,17 +120,19 @@ paths:
             application/json:
               schema:
                 type: "object"
+# $ref: More details for response body                
         404:
           description: "Unable to create UAI"
           content:
             application/json:
               schema:
                 type: "object"
+# $ref: What is in schema if failure to create?                
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     delete:
       summary: "Delete a UAI"
-      description: "Delete specified UAI(s). Takes a list of UAI names and deletes the associated UAI."
+      description: "Delete specified UAI(s). Takes a list of UAI names and deletes the associated UAI(s)."
       operationId: "delete_uai_by_name"
       tags:
       - "uas"
@@ -150,6 +154,7 @@ paths:
         404:
           description: "Failed to delete UAI with {uai_id}"
  # Did whole list fail or were there specific uais that failed?  Schema.
+ # ref: ?
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
   /images:
@@ -166,6 +171,7 @@ paths:
           content:
             application/json:
               schema:
+ # ref: ?             
                 type: "object"
         404:
           description: "UAS Images not found"
@@ -173,9 +179,11 @@ paths:
             application/json:
              schema:
                 type: "object"
+ # ref: ?               
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     post:
+ # Add/Create - Use consistent term   
       summary: "Add an image"
       description: "Not yet implemented."
       operationId: "create_uas_image"
@@ -218,6 +226,7 @@ paths:
     delete:
       summary: "Remove the imagename from set of valid images"
       description: "Not yet implemented."
+ # Is image recoverable after this operation?     
       operationId: "delete_uas_image"
       tags:
       - "images"
@@ -234,6 +243,8 @@ paths:
           description: "Image removed"
         404:
           description: "Failed to delete image {image_id}"
+ # Possible reasons for failure? 
+ # ref:  to schema that includes message?
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     patch:
@@ -336,6 +347,7 @@ paths:
     post:
       summary: "Add a volume"
       description: "Not yet implemented. 
+ # Add/Create - Use consistent term     
 
         
         Add a volume to the volume list. 
@@ -402,7 +414,8 @@ paths:
 
     delete:
       summary: "Remove the volume from the volume list."
-      description: "Not yet implemented. 
+      description: "Not yet implemented.
+#This is just a list.  The actual volume itself is not affected in any way?      
 
 
         Remove the volume from the list of valid volumes."
@@ -422,6 +435,7 @@ paths:
           description: "Volume removed from list"
         404:
           description: "Failed to delete volume {volume_id}"
+# ref: ? Any cause available?  Incorrect volume_id?  Tried and failed?          
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     patch:
@@ -434,7 +448,7 @@ paths:
       parameters:
       - name: "volumename"
         in: "path"
-        description: "Volume to create"
+        description: "Volume to update"
         required: true
         schema:
           type: "string"
@@ -450,14 +464,14 @@ paths:
         example: "DirectoryOrCreate"
       - name: "mount_path"
         in: "query"
-        description: "Path to mount inside the UAI"
+        description: "Mount path inside the UAI"
         required: false
         schema:
           type: "string"
         example: "/mnt/test"
       - name: "host_path"
         in: "query"
-        description: "Path of mount on the host"
+        description: "Mount path on the host"
         required: false
         schema:
           type: "string"
@@ -469,6 +483,7 @@ paths:
             application/json:
               schema:
                 type: "object"
+ # ref:                
         304:
           description: "No changes made"
           content:
@@ -504,6 +519,7 @@ paths:
             application/json:
               schema:
                 type: "object"
+# $ref: define schema           
         404:
           description: "UAS Volume {volumename} not found"
           content:
@@ -566,6 +582,7 @@ paths:
             application/json:
               schema:
                 type: "object"
+# $ref:?               
         404:
           description: "No UAIs found"
           content:
