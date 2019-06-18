@@ -9,24 +9,36 @@ info:
 
       ## Single user workflow
       
-      * GET /uas - Get a list of user specific available UAIs.
+      * GET /uas - Get the list of available, user-specific UAIs.
 
       * POST /uas - Request to create a new User Access Instance (UAI).
       When an authenticated user requests a new UAI, the User Access
       Service returns status and connection information for the newly
       created UAI, which will be available via ssh and on the specified port.
-      Most properties of UAI (reference to UAI object) are static for life of UAI.
+      Most properties of UAI are static for the life of a UAI.
       UAIs are not shared - they do not have multiple owners.
 
-      * ssh to the new UAI
+      * ssh to the new UAI.
 
-      * DELETE /uas - Cleanup your own UAI.  Restricted to owner of UAI.
+      * DELETE /uas - Cleanup your own UAI.  This operation is restricted to owner of the UAI.
       
 
-      ## Admin workflow - Establish global configuration - Images/Volumes/Ports
+      ## Admin workflow  
+      
+    Establish the configuration, in terms of images, volumes, and ports, used for
+    UAI creation. 
+    The configuration applies to UAIs subsequently created. 
+    When the configuration 
+    changes, those changes do not affect pre-existing UAIs.
+    
+    
+    A newly created UAI will always be created with the specified /image and 
+    all configured /volumes, while /ports are optional.
 
-    System wide APIs which manage the /images, /volumes, /ports resources are not yet implemented.  
-    A UAI will always have /images and /volumes, while /ports are optional.
+
+    These system wide APIs which manage the /images, /volumes, /ports resources 
+    are not yet implemented.  
+    
 
 
       * GET /uas - Get a list of available UAIs
@@ -36,24 +48,17 @@ info:
       * GET /volumes - Get a list of available volumes
       
       * GET /ports - Get a list of available ports 
-
-      * POST /uas - Request to create new UAIs, having specified image.  All volumes in config are assigned.  Optionally, 
-      only specified ports from allowed ports are assigned.
       
-      config changes apply to future 
-
-      * GET /volumes - Get a list of available volumes
-
       * POST /volumes - Mount a volume inside a UAI
       
-      * POST /images - 
+      * POST /images - Add image name to list of valid images
       
-      * POST /ports
+      * POST /ports - Add port to list of valid ports
+
+      * POST /uas - Request to create new UAI, having the specified image.  All volumes listed in the configuration are assigned to a new
+      UAI, but only the specified ports from allowed ports are assigned.
 
       * DELETE /uas - Cleanup
-
-
-
 
 
   version: "0.13.3"
@@ -75,7 +80,7 @@ paths:
       responses:
         200:
           description: "Version response"
- # Need response schema with example         
+ # Need response schema with example?        
       x-openapi-router-controller: "swagger_server.controllers.versions_controller"
 
   /uas:
