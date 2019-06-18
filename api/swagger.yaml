@@ -8,31 +8,47 @@ info:
 
 
       ## Single user workflow
+      
+      * GET /uas - Get a list of user specific available UAIs.
 
       * POST /uas - Request to create a new User Access Instance (UAI).
       When an authenticated user requests a new UAI, the User Access
       Service returns status and connection information for the newly
       created UAI, which will be available via ssh and on the specified port.
+      Most properties of UAI (reference to UAI object) are static for life of UAI.
+      UAIs are not shared - they do not have multiple owners.
 
       * ssh to the new UAI
 
-      * DELETE /uas - Cleanup
+      * DELETE /uas - Cleanup your own UAI.  Restricted to owner of UAI.
+      
 
+      ## Admin workflow - Establish global configuration - Images/Volumes/Ports
 
-      ## Admin workflow
-
-    System wide APIs which manage the /images and /volumes resources are not yet implemented.
+    System wide APIs which manage the /images, /volumes, /ports resources are not yet implemented.  
+    A UAI will always have /images and /volumes, while /ports are optional.
 
 
       * GET /uas - Get a list of available UAIs
 
       * GET /images - Get a list of available images
+      
+      * GET /volumes - Get a list of available volumes
+      
+      * GET /ports - Get a list of available ports 
 
-      * POST /uas - Request to create new UAIs, having specified image(s)
+      * POST /uas - Request to create new UAIs, having specified image.  All volumes in config are assigned.  Optionally, 
+      only specified ports from allowed ports are assigned.
+      
+      config changes apply to future 
 
       * GET /volumes - Get a list of available volumes
 
       * POST /volumes - Mount a volume inside a UAI
+      
+      * POST /images - 
+      
+      * POST /ports
 
       * DELETE /uas - Cleanup
 
@@ -185,7 +201,8 @@ paths:
     post:
  # Add/Create - Use consistent term   
       summary: "Add an image"
-      description: "Not yet implemented."
+      description: "Not yet implemented. Add valid image name to configuration. Does not create or upload container image. 
+      	Optionally, set default."
       operationId: "create_uas_image"
       tags:
       - "images"
@@ -321,8 +338,9 @@ paths:
       description: "Not yet implemented. 
 
         
-        The volume list is used during UAI creation.
-        This list does not necessarily relate to UAIs previously created."
+        The volume list in the configuration is used during UAI creation.
+        This list does not necessarily relate to UAIs previously created.
+        This call does not affect the k8s volume itself."
       operationId: "get_uas_volumes"
       tags:
       - "volumes"
@@ -353,7 +371,9 @@ paths:
         Add a volume to the volume list. 
         The volume list is used during UAI creation,
         so this request only applies to UAIs subsequently created.  
-        Modifying the volume list does not affect existing UAIs."
+        Modifying the volume list does not affect existing UAIs.
+        
+        Not all parameters apply to all the volume types.
       operationId: "create_uas_volume"
       tags:
       - "volumes"
@@ -368,8 +388,8 @@ paths:
         example: "mymount"
       - name: "type"
         in: "query"
-        description: "Valid types: DirectoryOrCreate, Directory, FileOrCreate,
-          File, Socket, CharDevice, BlockDevice"
+        description: "Valid k8s hostPath subtypes: DirectoryOrCreate, Directory, FileOrCreate,
+          File, Socket, CharDevice, BlockDevice ??"
         required: false
         schema:
           type: "string"
@@ -377,14 +397,14 @@ paths:
         example: "DirectoryOrCreate"
       - name: "mount_path"
         in: "query"
-        description: "Path to mount inside the UAI"
+        description: "Mount path inside the UAI. Required??"
         required: false
         schema:
           type: "string"
         example: "/mnt/test"
       - name: "host_path"
         in: "query"
-        description: "Path of mount on the host"
+        description: "Mount path on the host. ??"
         required: false
         schema:
           type: "string"
@@ -414,11 +434,11 @@ paths:
 
     delete:
       summary: "Remove the volume from the volume list."
-      description: "Not yet implemented.
-#This is just a list.  The actual volume itself is not affected in any way?      
-
-
-        Remove the volume from the list of valid volumes."
+      description: 
+      	Not yet implemented.   
+      	Does not affect existing UAIs.
+		Remove the volume from the list of valid volumes.
+        The actual volume itself is not affected in any way.
       operationId: "delete_uas_volume"
       tags:
       - "volumes"
@@ -435,7 +455,7 @@ paths:
           description: "Volume removed from list"
         404:
           description: "Failed to delete volume {volume_id}"
-# ref: ? Any cause available?  Incorrect volume_id?  Tried and failed?          
+# ref: ? Any cause available? Incorrect volume_id?  Tried and failed?          
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     patch:
@@ -519,7 +539,7 @@ paths:
             application/json:
               schema:
                 type: "object"
-# $ref: define schema           
+# $ref: volume schema ?          
         404:
           description: "UAS Volume {volumename} not found"
           content:
@@ -582,7 +602,7 @@ paths:
             application/json:
               schema:
                 type: "object"
-# $ref:?               
+# $ref: array of UAIs?               
         404:
           description: "No UAIs found"
           content:
