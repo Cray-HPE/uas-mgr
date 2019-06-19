@@ -589,23 +589,22 @@ paths:
   /uais:
 
     get:
-      summary: "List all UAIs on the system"
+      summary: "List UAIs"
       description: "List all UAIs on the system."
       operationId: "get_all_uais"
       tags:
       - "uais"
-      - "UAS"
       parameters:
       - name: "username"
         in: "query"
-        description: "list all UAIs matching this username"
+        description: "List all UAIs matching this username"
         required: false
         schema:
           type: "string"
         example: "uastest"
       - name: "host"
         in: "query"
-        description: "list all UAIs running on this host"
+        description: "List all UAIs running on this host"
         required: false
         schema:
           type: "string"
@@ -627,7 +626,7 @@ paths:
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     delete:
-      summary: "Delete all UAIs on the system"
+      summary: "Delete UAIs"
       description: "Delete all UAIs on the system."
       operationId: "delete_all_uais"
       tags:
