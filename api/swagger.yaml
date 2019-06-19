@@ -17,7 +17,7 @@ info:
       * POST /uas - Request to create a new User Access Instance (UAI).
       When an authenticated user requests a new UAI, the User Access
       Service returns status and connection information for the newly
-      created UAI, which will be available via ssh and on the specified port.
+      created UAI, which will be available via ssh.
       Most properties of UAI are static for the life of a UAI.
       UAIs are not shared - they do not have multiple owners.
 
