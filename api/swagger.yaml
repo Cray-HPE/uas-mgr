@@ -399,7 +399,7 @@ paths:
       - name: "type"
         in: "query"
         description: "Valid k8s hostPath subtypes: DirectoryOrCreate, Directory, FileOrCreate,
-          File, Socket, CharDevice, BlockDevice ??"
+          File, Socket, CharDevice, BlockDevice"
         required: false
         schema:
           type: "string"
@@ -407,14 +407,16 @@ paths:
         example: "DirectoryOrCreate"
       - name: "mount_path"
         in: "query"
-        description: "Mount path inside the UAI. Required??"
+        description: "Mount path inside the UAI"
+# required?        
         required: false
         schema:
           type: "string"
         example: "/mnt/test"
       - name: "host_path"
         in: "query"
-        description: "Mount path on the host. ??"
+        description: "Mount path on the host"
+# required?        
         required: false
         schema:
           type: "string"
@@ -443,9 +445,12 @@ paths:
   /volumes/{volumename}:
 
     delete:
-      summary: "Remove the volume from the volume list."
+      summary: "Remove volume from the volume list"
       description: |
-        Not yet implemented. Does not affect existing UAIs.
+        Not yet implemented. 
+        
+        
+        Does not affect existing UAIs.
         Remove the volume from the list of valid volumes.
         The actual volume itself is not affected in any way.
         
