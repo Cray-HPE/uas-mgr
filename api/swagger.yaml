@@ -45,13 +45,13 @@ info:
 
       * GET /uas - Get a list of all available UAIs on the system
 
-      * GET /images - Get a list of available images on the system
+      * GET /images - Get a list of images available for use by a UAI 
       
-      * GET /volumes - Get a list of available volumes on the system
+      * GET /volumes - Get a list of volumes available for use by UAIs
       
       * GET /ports - Get a list of available ports 
       
-      * POST /volumes - Mount a volume inside a UAI
+      * POST /volumes - Adds a volume to the list of volumes that will be mounted in new UAIs
       
       * POST /images - Add image name to list of valid images
       
