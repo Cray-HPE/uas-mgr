@@ -17,7 +17,7 @@ info:
       * POST /uas - Request to create a new User Access Instance (UAI).
       When an authenticated user requests a new UAI, the User Access
       Service returns status and connection information for the newly
-      created UAI, which will be available via ssh and on the specified port.
+      created UAI, which will be available via ssh.
       Most properties of UAI are static for the life of a UAI.
       UAIs are not shared - they do not have multiple owners.
 
@@ -399,7 +399,7 @@ paths:
       - name: "type"
         in: "query"
         description: "Valid k8s hostPath subtypes: DirectoryOrCreate, Directory, FileOrCreate,
-          File, Socket, CharDevice, BlockDevice ??"
+          File, Socket, CharDevice, BlockDevice"
         required: false
         schema:
           type: "string"
@@ -407,14 +407,16 @@ paths:
         example: "DirectoryOrCreate"
       - name: "mount_path"
         in: "query"
-        description: "Mount path inside the UAI. Required??"
+        description: "Mount path inside the UAI"
+# required?        
         required: false
         schema:
           type: "string"
         example: "/mnt/test"
       - name: "host_path"
         in: "query"
-        description: "Mount path on the host. ??"
+        description: "Mount path on the host"
+# required?        
         required: false
         schema:
           type: "string"
@@ -443,9 +445,12 @@ paths:
   /volumes/{volumename}:
 
     delete:
-      summary: "Remove the volume from the volume list."
+      summary: "Remove volume from the volume list"
       description: |
-        Not yet implemented. Does not affect existing UAIs.
+        Not yet implemented. 
+        
+        
+        Does not affect existing UAIs.
         Remove the volume from the list of valid volumes.
         The actual volume itself is not affected in any way.
         
@@ -584,23 +589,22 @@ paths:
   /uais:
 
     get:
-      summary: "List all UAIs on the system"
+      summary: "List UAIs"
       description: "List all UAIs on the system."
       operationId: "get_all_uais"
       tags:
       - "uais"
-      - "UAS"
       parameters:
       - name: "username"
         in: "query"
-        description: "list all UAIs matching this username"
+        description: "List all UAIs matching this username"
         required: false
         schema:
           type: "string"
         example: "uastest"
       - name: "host"
         in: "query"
-        description: "list all UAIs running on this host"
+        description: "List all UAIs running on this host"
         required: false
         schema:
           type: "string"
@@ -622,7 +626,7 @@ paths:
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     delete:
-      summary: "Delete all UAIs on the system"
+      summary: "Delete UAIs"
       description: "Delete all UAIs on the system."
       operationId: "delete_all_uais"
       tags:
