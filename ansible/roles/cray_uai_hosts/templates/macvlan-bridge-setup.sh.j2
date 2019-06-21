@@ -1,0 +1,22 @@
+#!/bin/sh
+# 
+# This script sets up the mac0 bridge interface on UAI hosts. 
+#
+# Without the mac0 bridge, the UAI will not be able to communicate
+# any services running on the same host as the UAI.
+#
+{% set mac0_ip = uai_macvlan_bridge_gateway | ipaddr('address') %}
+{% set mac0_prefix = uai_macvlan_bridge_gateway | ipaddr('prefix') %}
+{% set mac0_octets = mac0_ip.split('.') %}
+{% set mac0_octet3 = mac0_octets[3] | int + item.offset | int %}
+{% set mac0_bridge_ip = mac0_octets[:3] | join('.') + '.' + mac0_octet3 | string + '/' + mac0_prefix | string %}
+
+# Check for existence of mac0 link
+ip a | grep mac0@vlan002 > /dev/null 2>&1
+# Only create mac0 bridge if it doesn't already exist
+if [ $? -ne 0 ]; then
+    ip link add mac0 link vlan002 type macvlan mode bridge
+    ip a add {{ mac0_bridge_ip }} dev mac0
+    ip link set mac0 up
+    ip route add {{ uai_macvlan_bridge_network }} dev mac0
+fi

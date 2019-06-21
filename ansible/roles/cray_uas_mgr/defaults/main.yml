@@ -18,5 +18,4 @@ cray_uas_objects:
  - { ns: "services", file: "cray-uas-mgr.yaml" }
  - { ns: "services", file: "cray-uas-mgr-vs.yaml" }
  - { ns: "services", file: "cray-uas-mgr-cfgmap.yaml" }
- - { ns: "default",  file: "cray-uas-mgr-netattachdef.yaml" }
  - { ns: "default",  file: "cray-uas-mgr-rbac.yaml" }

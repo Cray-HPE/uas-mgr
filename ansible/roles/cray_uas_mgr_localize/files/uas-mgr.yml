@@ -13,3 +13,8 @@
   gather_facts: no
   roles:
     - cray_uas_user_compute
+
+- hosts: uai_hosts
+  gather_facts: no
+  roles:
+    - cray_uai_hosts
