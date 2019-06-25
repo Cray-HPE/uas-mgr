@@ -39,6 +39,16 @@ docker images ${DEFAULT_IMAGE} | grep -v ${DEFAULT_IMAGE}
 rm -r $CRAY_CONFIG_DIR
 echo "... OK"
 
+echo "Checking to see whether any hosts are labeled and ready to run UAIs"
+NODES=(`kubectl get node --show-labels -l uas | grep Ready | awk '{ print $1 }'`)
+if [ "${#NODES[@]}" -eq 0 ]; then
+    echo "No nodes in Ready state with the uas=True label"
+    exit 1
+else
+    echo "UAIs are deployable to nodes: ${NODES[*]}"
+fi
+echo "... OK"
+
 echo "Ensuring that all host filesystems are mounted on any sms node labeled with UAS=true"
 HOSTFS=$(kubectl describe cm -n services cray-uas-mgr-cfgmap | grep host_path | grep -v ^# | awk '{ print $2 }')
 NODES=$(kubectl get node --show-labels -l uas | grep Ready | awk '{ print $1 }')
