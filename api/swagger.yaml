@@ -8,36 +8,59 @@ info:
 
 
       ## Single user workflow
+      
+      As an individual user, create a UAI for your own use and delete it when 
+      no longer needed.
+      
+      * GET /uas - Get the list of available, user-specific UAIs.
 
       * POST /uas - Request to create a new User Access Instance (UAI).
       When an authenticated user requests a new UAI, the User Access
       Service returns status and connection information for the newly
-      created UAI, which will be available via ssh and on the specified port.
+      created UAI, which will be available via ssh.
+      Most properties of UAI are static for the life of a UAI.
+      UAIs are not shared - they do not have multiple owners.
 
-      * ssh to the new UAI
+      * ssh to the new UAI.
+
+      * DELETE /uas - Cleanup your own UAI.  This operation is restricted to owner of the UAI.
+      
+
+      ## Admin workflow  
+      
+    As an administrator,
+    establish the system-wide configuration, 
+    in terms of images, volumes, and ports, used for
+    UAI creation. Subsequently created UAIs will contain the specified /image and 
+    all configured /volumes, and optionally specified /ports.
+    Note that the configuration applies to UAIs subsequently created. 
+    When the system-wide configuration 
+    changes, those changes do not affect pre-existing UAIs.
+    
+    
+    These system wide APIs which manage the /images, /volumes, and /ports resources 
+    are not yet implemented.  
+    
+
+
+      * GET /uas - Get a list of all available UAIs on the system
+
+      * GET /images - Get a list of images available for use by a UAI 
+      
+      * GET /volumes - Get a list of volumes available for use by UAIs
+      
+      * GET /ports - Get a list of available ports 
+      
+      * POST /volumes - Adds a volume to the list of volumes that will be mounted in new UAIs
+      
+      * POST /images - Add image name to list of valid images
+      
+      * POST /ports - Add port to list of valid ports
+
+      * POST /uas - Request to create new UAI, having the specified image.  All volumes listed in the configuration are assigned to a new
+      UAI, but only the specified ports from allowed ports are assigned.
 
       * DELETE /uas - Cleanup
-
-
-      ## Admin workflow
-
-    System wide APIs which manage the /images and /volumes resources are not yet implemented.
-
-
-      * GET /uas - Get a list of available UAIs
-
-      * GET /images - Get a list of available images
-
-      * POST /uas - Request to create new UAIs, having specified image(s)
-
-      * GET /volumes - Get a list of available volumes
-
-      * POST /volumes - Mount a volume inside a UAI
-
-      * DELETE /uas - Cleanup
-
-
-
 
 
   version: "0.13.3"
@@ -59,6 +82,7 @@ paths:
       responses:
         200:
           description: "Version response"
+ # Need response schema with example?        
       x-openapi-router-controller: "swagger_server.controllers.versions_controller"
 
   /uas:
@@ -66,6 +90,7 @@ paths:
     get:
       summary: "List UAIs"
       description: "List all available UAIs for username."
+# Mention how/when username is authenticated     
       operationId: "get_uais_for_user"
       tags:
       - "uas"
@@ -118,17 +143,19 @@ paths:
             application/json:
               schema:
                 type: "object"
+# $ref: More details for response body                
         404:
           description: "Unable to create UAI"
           content:
             application/json:
               schema:
                 type: "object"
+# $ref: What is in schema if failure to create?                
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     delete:
       summary: "Delete a UAI"
-      description: "Delete specified UAI(s). Takes a list of UAI names and deletes the associated UAI."
+      description: "Delete specified UAI(s). Takes a list of UAI names and deletes the associated UAI(s)."
       operationId: "delete_uai_by_name"
       tags:
       - "uas"
@@ -150,6 +177,7 @@ paths:
         404:
           description: "Failed to delete UAI with {uai_id}"
  # Did whole list fail or were there specific uais that failed?  Schema.
+ # ref: ?
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
   /images:
@@ -166,6 +194,7 @@ paths:
           content:
             application/json:
               schema:
+ # ref: ?             
                 type: "object"
         404:
           description: "UAS Images not found"
@@ -173,11 +202,14 @@ paths:
             application/json:
              schema:
                 type: "object"
+ # ref: ?               
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     post:
+ # Add/Create - Use consistent term   
       summary: "Add an image"
-      description: "Not yet implemented."
+      description: "Not yet implemented. Add valid image name to configuration. Does not create or upload container image. 
+        Optionally, set default."
       operationId: "create_uas_image"
       tags:
       - "images"
@@ -218,6 +250,7 @@ paths:
     delete:
       summary: "Remove the imagename from set of valid images"
       description: "Not yet implemented."
+ # Is image recoverable after this operation?     
       operationId: "delete_uas_image"
       tags:
       - "images"
@@ -234,6 +267,8 @@ paths:
           description: "Image removed"
         404:
           description: "Failed to delete image {image_id}"
+ # Possible reasons for failure? 
+ # ref:  to schema that includes message?
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     patch:
@@ -307,11 +342,15 @@ paths:
 
     get:
       summary: "List volumes"
-      description: "Not yet implemented. 
+      description: |
+      
+        Not yet implemented. 
 
         
-        The volume list is used during UAI creation.
-        This list does not necessarily relate to UAIs previously created."
+        The volume list in the configuration is used during UAI creation.
+        This list does not necessarily relate to UAIs previously created.
+        This call does not affect the k8s volume itself.
+        
       operationId: "get_uas_volumes"
       tags:
       - "volumes"
@@ -335,13 +374,16 @@ paths:
 
     post:
       summary: "Add a volume"
-      description: "Not yet implemented. 
-
+      description: |
+        Not yet implemented. 
         
-        Add a volume to the volume list. 
+        Add a volume to the volume list
+        in the configuration.
         The volume list is used during UAI creation,
         so this request only applies to UAIs subsequently created.  
-        Modifying the volume list does not affect existing UAIs."
+        Modifying the volume list does not affect existing UAIs.
+        
+        Not all parameters apply to all the volume types.
       operationId: "create_uas_volume"
       tags:
       - "volumes"
@@ -356,7 +398,7 @@ paths:
         example: "mymount"
       - name: "type"
         in: "query"
-        description: "Valid types: DirectoryOrCreate, Directory, FileOrCreate,
+        description: "Valid k8s hostPath subtypes: DirectoryOrCreate, Directory, FileOrCreate,
           File, Socket, CharDevice, BlockDevice"
         required: false
         schema:
@@ -365,14 +407,16 @@ paths:
         example: "DirectoryOrCreate"
       - name: "mount_path"
         in: "query"
-        description: "Path to mount inside the UAI"
+        description: "Mount path inside the UAI"
+# required?        
         required: false
         schema:
           type: "string"
         example: "/mnt/test"
       - name: "host_path"
         in: "query"
-        description: "Path of mount on the host"
+        description: "Mount path on the host"
+# required?        
         required: false
         schema:
           type: "string"
@@ -401,11 +445,15 @@ paths:
   /volumes/{volumename}:
 
     delete:
-      summary: "Remove the volume from the volume list."
-      description: "Not yet implemented. 
-
-
-        Remove the volume from the list of valid volumes."
+      summary: "Remove volume from the volume list"
+      description: |
+        Not yet implemented. 
+        
+        
+        Does not affect existing UAIs.
+        Remove the volume from the list of valid volumes.
+        The actual volume itself is not affected in any way.
+        
       operationId: "delete_uas_volume"
       tags:
       - "volumes"
@@ -422,6 +470,7 @@ paths:
           description: "Volume removed from list"
         404:
           description: "Failed to delete volume {volume_id}"
+# ref: ? Any cause available? Incorrect volume_id?  Tried and failed?          
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     patch:
@@ -434,7 +483,7 @@ paths:
       parameters:
       - name: "volumename"
         in: "path"
-        description: "Volume to create"
+        description: "Volume to update"
         required: true
         schema:
           type: "string"
@@ -450,14 +499,14 @@ paths:
         example: "DirectoryOrCreate"
       - name: "mount_path"
         in: "query"
-        description: "Path to mount inside the UAI"
+        description: "Mount path inside the UAI"
         required: false
         schema:
           type: "string"
         example: "/mnt/test"
       - name: "host_path"
         in: "query"
-        description: "Path of mount on the host"
+        description: "Mount path on the host"
         required: false
         schema:
           type: "string"
@@ -469,6 +518,7 @@ paths:
             application/json:
               schema:
                 type: "object"
+ # ref:                
         304:
           description: "No changes made"
           content:
@@ -504,6 +554,7 @@ paths:
             application/json:
               schema:
                 type: "object"
+# $ref: volume schema ?          
         404:
           description: "UAS Volume {volumename} not found"
           content:
@@ -538,23 +589,22 @@ paths:
   /uais:
 
     get:
-      summary: "List all UAIs on the system"
+      summary: "List UAIs"
       description: "List all UAIs on the system."
       operationId: "get_all_uais"
       tags:
       - "uais"
-      - "UAS"
       parameters:
       - name: "username"
         in: "query"
-        description: "list all UAIs matching this username"
+        description: "List all UAIs matching this username"
         required: false
         schema:
           type: "string"
         example: "uastest"
       - name: "host"
         in: "query"
-        description: "list all UAIs running on this host"
+        description: "List all UAIs running on this host"
         required: false
         schema:
           type: "string"
@@ -566,6 +616,7 @@ paths:
             application/json:
               schema:
                 type: "object"
+# $ref: array of UAIs?               
         404:
           description: "No UAIs found"
           content:
@@ -575,7 +626,7 @@ paths:
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     delete:
-      summary: "Delete all UAIs on the system"
+      summary: "Delete UAIs"
       description: "Delete all UAIs on the system."
       operationId: "delete_all_uais"
       tags:
@@ -664,4 +715,3 @@ components:
       example:
         service_name: "cray-uas-mgr"
         version: "version"
-
