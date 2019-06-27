@@ -293,6 +293,9 @@ class UaiManager(object):
         uai.uai_portmap = {}
         uai.uai_name = deployment_name
         uai.uai_host = pod.spec.node_name
+        age_str = self.uas_cfg.get_pod_age(pod.status.start_time)
+        if age_str:
+            uai.uai_age = age_str
         uai.username = deployment_name.split('-')[1]
         for ctr in pod.spec.containers:
             if ctr.name == deployment_name:

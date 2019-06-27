@@ -2,6 +2,7 @@
 
 import unittest
 
+from datetime import datetime, timedelta, timezone
 from swagger_server.uas_lib.uas_cfg import UasCfg
 from kubernetes import client
 
@@ -197,6 +198,28 @@ class TestUasCfg(unittest.TestCase):
         self.assertFalse(self.uas_cfg.is_valid_volume_name('mercury-venus-earth-asteroid-belt-mars-jupiter-saturn-uranus-neptune'))  # noqa E501
         # 0 length not allowed
         self.assertFalse(self.uas_cfg.is_valid_volume_name(''))
+
+    def test_get_pod_age(self):
+        self.assertEqual(self.uas_cfg.get_pod_age(None), None)
+
+        with self.assertRaises(TypeError):
+            self.assertEqual(self.uas_cfg.get_pod_age("wrong"), None)
+
+        now = datetime.now(timezone.utc)
+        self.assertEqual(self.uas_cfg.get_pod_age(now), "0m")
+        self.assertEqual(self.uas_cfg.get_pod_age(now-timedelta(hours=1)),
+                         "1h0m")
+        self.assertEqual(self.uas_cfg.get_pod_age(now-timedelta(hours=25)),
+                         "1d1h")
+        self.assertEqual(self.uas_cfg.get_pod_age(now-timedelta(minutes=25)),
+                         "25m")
+        self.assertEqual(self.uas_cfg.get_pod_age(now-timedelta(days=89)),
+                         "89d")
+        # for days > 0, don't print minutes
+        self.assertEqual(self.uas_cfg.get_pod_age(now-timedelta(minutes=1442)),
+                         "1d")
+        self.assertEqual(self.uas_cfg.get_pod_age(now-timedelta(minutes=1501)),
+                         "1d1h")
 
 
 if __name__ == '__main__':

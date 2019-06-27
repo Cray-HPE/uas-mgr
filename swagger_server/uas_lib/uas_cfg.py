@@ -12,6 +12,7 @@ import sshpubkeys.exceptions as sshExceptions
 import sys
 import yaml
 
+from datetime import datetime, timezone
 from flask import abort
 from kubernetes import client
 
@@ -321,3 +322,40 @@ class UasCfg(object):
         """
         regex = re.compile('^(?![0-9]+$)(?!-)[a-z0-9-]{1,63}(?<!-)$')
         return regex.match(volume_name) is not None
+
+    def get_pod_age(self, start_time):
+        """
+        given a start time as an RFC3339 datetime object, return the difference
+        in time between that time and the current time, in a k8s format
+        of dDhHmM - ie: 3d7h5m or 6h9m or 19m
+
+        :return a string representing the delta between pod start and now.
+        :rtype string
+        """
+        # on new UAI start the start_time can be None
+        if start_time is None:
+            return None
+
+        try:
+            now = datetime.now(timezone.utc)
+            delta = now - start_time
+        except Exception as e:
+            UAS_CFG_LOGGER.warning("Unable to convert pod start time" % e)
+            return None
+
+        # build the output string
+        retstr = ""
+        days, remainder = divmod(delta.total_seconds(), 60*60*24)
+        if days != 0:
+            retstr += "{:d}d".format(int(days))
+
+        hours, remainder = divmod(remainder, 60*60)
+        if hours != 0:
+            retstr += "{:d}h".format(int(hours))
+
+        # always show minutes, even if 0, but only if < 1 day old
+        if days == 0:
+            minutes = remainder / 60
+            retstr += "{:d}m".format(int(minutes))
+
+        return retstr
