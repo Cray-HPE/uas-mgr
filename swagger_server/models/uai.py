@@ -14,32 +14,41 @@ class UAI(Model):
     Do not edit the class manually.
     """
 
-    def __init__(self, uai_name: str=None, username: str=None, publickey: str=None, uai_img: str=None, uai_ip: str=None, uai_status: str=None, uai_msg: str=None, uai_port: str=None, uai_connect_string: str=None, uai_portmap: dict={}, uai_host: str=None):  # noqa: E501
+    def __init__(self, uai_name: str = None, username: str = None,
+                 publickey: str = None, uai_img: str = None,
+                 uai_ip: str = None, uai_status: str = None,
+                 uai_msg: str = None, uai_port: str = None,
+                 uai_connect_string: str = None, uai_portmap: dict = {},
+                 uai_host: str = None, uai_age: str = None):
+
         """UAI - a model defined in Swagger
 
-        :param uai_name: The uai_name of this UAI.  # noqa: E501
+        :param uai_name: The uai_name of this UAI.
         :type uai_name: str
-        :param username: The username of this UAI.  # noqa: E501
+        :param username: The username of this UAI.
         :type username: str
-        :param publickey: The publickey of this UAI.  # noqa: E501
+        :param publickey: The publickey of this UAI.
         :type publickey: str
-        :param uai_img: The uai_img of this UAI.  # noqa: E501
+        :param uai_img: The uai_img of this UAI.
         :type uai_img: str
-        :param uai_ip: The uai_ip of this UAI.  # noqa: E501
+        :param uai_ip: The uai_ip of this UAI.
         :type uai_ip: str
-        :param uai_status: The uai_status of this UAI.  # noqa: E501
+        :param uai_status: The uai_status of this UAI.
         :type uai_status: str
-        :param uai_msg: The uai_msg of this UAI.  # noqa: E501
+        :param uai_msg: The uai_msg of this UAI.
         :type uai_msg: str
-        :param uai_port: The uai_port of this UAI.  # noqa: E501
+        :param uai_port: The uai_port of this UAI.
         :type uai_port: str
-        :param uai_connect_string: The uai_connect_string of this UAI.  # noqa: E501
+        :param uai_connect_string: The uai_connect_string of this UAI.
         :type uai_connect_string: str
-        :param uai_portmap: The uai_portmap of this UAI.  # noqa: E501
+        :param uai_portmap: The uai_portmap of this UAI.
         :type uai_portmap: dict
-        :param uai_host: The physical host for this UAI.  # noqa: E501
+        :param uai_host: The physical host for this UAI.
         :type uai_host: str
+        :param uai_age: Age of the UAI.
+        :type uai_age: str
         """
+
         self.swagger_types = {
             'uai_name': str,
             'username': str,
@@ -51,7 +60,8 @@ class UAI(Model):
             'uai_port': str,
             'uai_connect_string': str,
             'uai_portmap': dict,
-            'uai_host': str
+            'uai_host': str,
+            'uai_age': str
         }
 
         self.attribute_map = {
@@ -65,7 +75,8 @@ class UAI(Model):
             'uai_port': 'uai_port',
             'uai_connect_string': 'uai_connect_string',
             'uai_portmap': 'uai_portmap',
-            'uai_host': 'uai_host'
+            'uai_host': 'uai_host',
+            'uai_age': 'uai_age'
         }
 
         self._uai_name = uai_name
@@ -79,6 +90,7 @@ class UAI(Model):
         self._uai_connect_string = uai_connect_string
         self._uai_portmap = uai_portmap
         self._uai_host = uai_host
+        self._uai_age = uai_age
 
     @property
     def uai_name(self) -> str:
@@ -310,3 +322,21 @@ class UAI(Model):
         """
 
         self._uai_host = uai_host
+
+    @property
+    def uai_age(self) -> str:
+        """Gets the uai_age of this UAI.
+
+        :return: The uai_age of this UAI.
+        :rtype: str
+        """
+        return self._uai_age
+
+    @uai_age.setter
+    def uai_age(self, uai_age: str):
+        """Sets the uai_age of this UAI.
+
+        :param uai_age: The uai_age of this UAI.
+        :type uai_age: str
+        """
+        self._uai_age = uai_age
