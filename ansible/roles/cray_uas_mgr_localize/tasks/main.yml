@@ -136,8 +136,8 @@
 
 - name: Adding UAS volume mounts (add type)
   lineinfile:
-    regexp: '^ {8}type: {{ item.type }}'
-    line: '        type: {{ item.type }}'
+    regexp: '^ {8}type: {{ item.type }} # type for {{ item.name }}'
+    line: '        type: {{ item.type }} # type for {{ item.name }}'
     dest: "/root/k8s/cray-uas-mgr-cfgmap.yaml"
     insertafter: "host_path: {{ item.host_path }}"
   loop: "{{ add_uas_volume_mounts }}"
