@@ -19,11 +19,8 @@
 set -o errexit
 set -o xtrace
 
-# Set TMPDIR
-# It would still be expanded to /tmp if $TMPDIR was set but to the empty string
-: "${TMPDIR:=/tmp}"
-
 # Output 
+# $TMPDIR is set by the ct-driver
 OUTPUT="$TMPDIR/confidencetest$$.txt"
 
 line="Confidence Test Suite test file on $HOSTNAME"
@@ -36,6 +33,10 @@ if [[ $line == $fileContents ]] ; then
     echo "PASS  The contents of $OUTPUT are as expected."
 else
     echo "FAIL  The contents of $OUTPUT are not as expected. fileContents=$fileContents."
+
+    # CT framework will clean up the test directory as soon as the test is done
+    # However, remove $OUTPUT before exiting for just in case
+    rm $OUTPUT
     exit 1
 fi
 
