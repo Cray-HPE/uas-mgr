@@ -19,8 +19,16 @@
 set -o errexit
 set -o xtrace
 
+# TMPDIR is set by the CT framework
+if [[ ! -z $TMPDIR ]]; then 
+    echo "TMPDIR is set by the CT framework : $TMPDIR"
+else
+    # If TMPDIR is not set, TMPDIR=$PWD: 
+    echo "TMPDIR=$PWD"
+    TMPDIR=$PWD
+fi
+
 # Output 
-# $TMPDIR is set by the ct-driver
 OUTPUT="$TMPDIR/confidencetest$$.txt"
 
 line="Confidence Test Suite test file on $HOSTNAME"
