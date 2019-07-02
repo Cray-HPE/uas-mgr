@@ -11,7 +11,7 @@
 #     TEST TITLE        : Simple Read Write Test for Confidence Suite
 #
 #     DESIGN DESCRIPTION
-#       These test cases are executed from the UAS.  The tests will
+#       These test cases are executed from the UAI.  The tests will
 #       verify we can R/W files
 #
 ###############################################################
@@ -21,8 +21,7 @@ set -o xtrace
 
 : "${TMPDIR:=/tmp}"
 
-hostname=$(hostname)
-line="Confidence Test Suite test file on $hostname"
+line="Confidence Test Suite test file on $HOSTNAME"
 echo ${line} > $TMPDIR/confidencetest$$.txt
 
 # put contents of confidencetest.txt into variable fileContents
