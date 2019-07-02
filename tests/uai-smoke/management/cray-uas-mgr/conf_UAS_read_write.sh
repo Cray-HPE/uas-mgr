@@ -19,18 +19,25 @@
 set -o errexit
 set -o xtrace
 
+# Set TMPDIR
+# It would still be expanded to /tmp if $TMPDIR was set but to the empty string
 : "${TMPDIR:=/tmp}"
 
+# Output 
+OUTPUT="$TMPDIR/confidencetest$$.txt"
+
 line="Confidence Test Suite test file on $HOSTNAME"
-echo ${line} > $TMPDIR/confidencetest$$.txt
+echo ${line} > $OUTPUT
 
 # put contents of confidencetest.txt into variable fileContents
-fileContents=$(cat $TMPDIR/confidencetest$$.txt)
+fileContents=$(cat $OUTPUT)
 
 if [[ $line == $fileContents ]] ; then
-    echo "PASS  The contents of $TMPDIR/confidencetest$$.txt are as expected."
+    echo "PASS  The contents of $OUTPUT are as expected."
 else
-    echo "FAIL  The contents of $TMPDIR/confidencetest$$.txt are not as expected. fileContents=$fileContents."
+    echo "FAIL  The contents of $OUTPUT are not as expected. fileContents=$fileContents."
+    exit 1
 fi
 
-rm $TMPDIR/confidencetest$$.txt
+rm $OUTPUT
+exit 0
