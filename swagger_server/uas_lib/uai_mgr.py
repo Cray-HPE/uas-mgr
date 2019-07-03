@@ -443,7 +443,6 @@ class UaiManager(object):
         total_wait = 0.0
         delay = 0.5
         while True:
-            UAS_MGR_LOGGER.error("waiting: " + str(total_wait))
             uai_info = self.get_pod_info(deploy_resp.metadata.name, namespace)
             if uai_info and uai_info.uai_ip:
                 break
@@ -452,6 +451,8 @@ class UaiManager(object):
                       uas_ssh_svc_name)
             time.sleep(delay)
             total_wait += delay
+            UAS_MGR_LOGGER.info("waiting for uai_ip %s seconds" %
+                                str(total_wait))
         return uai_info
 
     def list_uais(self, label, host=None, namespace='default'):
