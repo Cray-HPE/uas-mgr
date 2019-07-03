@@ -79,7 +79,7 @@
 
 - name: Removing unwanted UAS volume mounts (remove type)
   lineinfile:
-    line: '        type: {{ item.type }}'
+    line: '        type: {{ item.type }} # type for {{ item.name }}'
     dest: "/root/k8s/cray-uas-mgr-cfgmap.yaml"
     state: absent
   loop: "{{ delete_uas_volume_mounts }}"
