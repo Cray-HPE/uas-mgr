@@ -687,7 +687,7 @@ components:
         uai_status: "Running"
         uai_reason: "Deploying"
         uai_host: "sms03"
-        uai_age: "13d8h3m"
+        uai_age: "13d8h"
     Volume:
       type: "object"
       properties:
