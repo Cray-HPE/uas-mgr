@@ -191,8 +191,12 @@ class UaiManager(object):
         volumes = self.uas_cfg.gen_volumes()
 
         # Create and configure affinity
-        node_selector_terms = [client.V1NodeSelectorTerm(match_expressions=[client.V1NodeSelectorRequirement(
-                                                                       key='uas', operator='Exists')])]
+        node_selector_terms = [
+            client.V1NodeSelectorTerm(match_expressions=[
+                client.V1NodeSelectorRequirement(key='uas',
+                                                 operator='In',
+                                                 values=['True', 'true', 'TRUE'])
+                                                 ])]
         node_selector = client.V1NodeSelector(node_selector_terms)
         node_affinity = client.V1NodeAffinity(required_during_scheduling_ignored_during_execution=node_selector)
         affinity = client.V1Affinity(node_affinity=node_affinity)
