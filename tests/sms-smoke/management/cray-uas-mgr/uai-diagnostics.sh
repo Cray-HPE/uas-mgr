@@ -28,14 +28,15 @@ UAS_IP=$(kubectl describe cm -n services cray-uas-mgr-cfgmap | grep ^uas_ip | aw
 ping -c3 ${UAS_IP}
 echo "... OK"
 
-echo "Checking that default image is available"
+echo "Checking that default image is set"
 export CRAY_CONFIG_DIR=$(mktemp -d)
 cray init --hostname https://api-gw-service-nmn.local --no-auth
 cray auth login --username uastest --password uastestpwd
-
 DEFAULT_IMAGE=$(cray uas images list | grep ^default_image | awk '{ print $3 }' | sed 's/"//g')
-echo "Looking for ${DEFAULT_IMAGE} in docker"
-docker images ${DEFAULT_IMAGE} | grep -v ${DEFAULT_IMAGE}
+if [ -z "$DEFAULT_IMAGE" ]; then
+    echo "No default image found in images list output"
+    exit 1
+fi
 rm -r $CRAY_CONFIG_DIR
 echo "... OK"
 
@@ -49,10 +50,9 @@ else
 fi
 echo "... OK"
 
-echo "Ensuring that all host filesystems are mounted on any sms node labeled with UAS=true"
+echo "Ensuring that all host filesystems are mounted on all sms nodes labeled with UAS=true"
 HOSTFS=$(kubectl describe cm -n services cray-uas-mgr-cfgmap | grep host_path | grep -v ^# | awk '{ print $2 }')
-NODES=$(kubectl get node --show-labels -l uas | grep Ready | awk '{ print $1 }')
-for NODE in ${NODES}
+for NODE in "${NODES[@]}"
 do
     echo "Checking filesystems on $NODE"
     for FS in ${HOSTFS}
@@ -60,6 +60,14 @@ do
         echo "Looking for ${FS} on $NODE"
         ssh $NODE "ls ${FS}"
     done
+    echo "... OK"
+done
+
+echo "Checking that the ${DEFAULT_IMAGE} is available on all sms node labeled with UAS=true"
+for NODE in "${NODES[@]}"
+do
+    echo "Checking for Docker image ${DEFAULT_IMAGE} on $NODE"
+    ssh $NODE "docker images ${DEFAULT_IMAGE} | grep -v ^REPOSITORY"
     echo "... OK"
 done
 
