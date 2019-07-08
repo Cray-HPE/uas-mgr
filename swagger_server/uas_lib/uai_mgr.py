@@ -151,7 +151,7 @@ class UaiManager(object):
                     name=service_name,
                     namespace=namespace,
                     body=client.V1DeleteOptions(
-                        propagation_policy='Foreground',
+                        propagation_policy='Background',
                         grace_period_seconds=5))
         except ApiException as e:
             if e.status != 404:
@@ -247,7 +247,7 @@ class UaiManager(object):
                 name=deployment_name,
                 namespace=namespace,
                 body=client.V1DeleteOptions(
-                    propagation_policy='Foreground',
+                    propagation_policy='Background',
                     grace_period_seconds=5))
         except ApiException as e:
             if e.status != 404:
@@ -304,6 +304,8 @@ class UaiManager(object):
         for ctr in pod.spec.containers:
             if ctr.name == deployment_name:
                 uai.uai_img = ctr.image
+        if pod.status.phase == 'Pending':
+            uai.uai_status = 'Pending'
         if pod.status.container_statuses:
             for s in pod.status.container_statuses:
                 if s.name == deployment_name:
