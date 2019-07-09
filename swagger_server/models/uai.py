@@ -16,8 +16,7 @@ class UAI(Model):
 
     def __init__(self, uai_name: str = None, username: str = None,
                  publickey: str = None, uai_img: str = None,
-                 uai_ip: str = None, uai_status: str = None,
-                 uai_msg: str = None, uai_port: str = None,
+                 uai_status: str = None, uai_msg: str = None,
                  uai_connect_string: str = None, uai_portmap: dict = {},
                  uai_host: str = None, uai_age: str = None):
 
@@ -31,14 +30,10 @@ class UAI(Model):
         :type publickey: str
         :param uai_img: The uai_img of this UAI.
         :type uai_img: str
-        :param uai_ip: The uai_ip of this UAI.
-        :type uai_ip: str
         :param uai_status: The uai_status of this UAI.
         :type uai_status: str
         :param uai_msg: The uai_msg of this UAI.
         :type uai_msg: str
-        :param uai_port: The uai_port of this UAI.
-        :type uai_port: str
         :param uai_connect_string: The uai_connect_string of this UAI.
         :type uai_connect_string: str
         :param uai_portmap: The uai_portmap of this UAI.
@@ -54,10 +49,8 @@ class UAI(Model):
             'username': str,
             'publickey': str,
             'uai_img': str,
-            'uai_ip': str,
             'uai_status': str,
             'uai_msg': str,
-            'uai_port': str,
             'uai_connect_string': str,
             'uai_portmap': dict,
             'uai_host': str,
@@ -69,10 +62,8 @@ class UAI(Model):
             'username': 'username',
             'publickey': 'publickey',
             'uai_img': 'uai_img',
-            'uai_ip': 'uai_ip',
             'uai_status': 'uai_status',
             'uai_msg': 'uai_msg',
-            'uai_port': 'uai_port',
             'uai_connect_string': 'uai_connect_string',
             'uai_portmap': 'uai_portmap',
             'uai_host': 'uai_host',
@@ -83,10 +74,8 @@ class UAI(Model):
         self._username = username
         self._publickey = publickey
         self._uai_img = uai_img
-        self._uai_ip = uai_ip
         self._uai_status = uai_status
         self._uai_msg = uai_msg
-        self._uai_port = uai_port
         self._uai_connect_string = uai_connect_string
         self._uai_portmap = uai_portmap
         self._uai_host = uai_host
@@ -177,27 +166,6 @@ class UAI(Model):
         self._uai_img = uai_img
 
     @property
-    def uai_ip(self) -> str:
-        """Gets the uai_ip of this UAI.
-
-
-        :return: The uai_ip of this UAI.
-        :rtype: str
-        """
-        return self._uai_ip
-
-    @uai_ip.setter
-    def uai_ip(self, uai_ip: str):
-        """Sets the uai_ip of this UAI.
-
-
-        :param uai_ip: The uai_ip of this UAI.
-        :type uai_ip: str
-        """
-
-        self._uai_ip = uai_ip
-
-    @property
     def uai_status(self) -> str:
         """Gets the uai_status of this UAI.
 
@@ -238,27 +206,6 @@ class UAI(Model):
         """
 
         self._uai_msg = uai_msg
-
-    @property
-    def uai_port(self) -> str:
-        """Gets the uai_port of this UAI.
-
-
-        :return: The uai_port of this UAI.
-        :rtype: str
-        """
-        return self._uai_port
-
-    @uai_port.setter
-    def uai_port(self, uai_port: str):
-        """Sets the uai_port of this UAI.
-
-
-        :param uai_port: The uai_port of this UAI.
-        :type uai_port: str
-        """
-
-        self._uai_port = uai_port
 
     @property
     def uai_connect_string(self) -> str:

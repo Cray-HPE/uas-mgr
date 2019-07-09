@@ -63,7 +63,7 @@ info:
       * DELETE /uas - Cleanup
 
 
-  version: "0.13.4"
+  version: "0.13.5"
 
 servers:
   - url: "/apis/uas-mgr/v1"
@@ -660,13 +660,9 @@ components:
           type: "string"
         uai_img:
           type: "string"
-        uai_ip:
-          type: "string"
         uai_status:
           type: "string"
         uai_msg:
-          type: "string"
-        uai_port:
           type: "string"
         uai_connect_string:
           type: "string"
@@ -683,7 +679,6 @@ components:
         username: "user_name"
         publickey: "/Users/user/.ssh/id_rsa.pub"
         uai_img: "uai_img"
-        uai_ip: "10.248.0.23"
         uai_status: "Running"
         uai_reason: "Deploying"
         uai_host: "sms03"
