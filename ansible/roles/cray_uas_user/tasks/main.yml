@@ -3,7 +3,7 @@
 ---
 - name: Get keycloak pod name
   shell: >
-    kubectl get pods -l app=keycloak --no-headers |
+    kubectl get pods -n services -l app=keycloak --no-headers |
     awk '{print $1}' | head -1
   register: get_pod
   run_once: true
@@ -21,7 +21,7 @@
 - name: Configure credentials in keycloak
   no_log: True
   shell: >
-    kubectl exec {{ keycloak_pod }} --
+    kubectl exec -n services {{ keycloak_pod }} --
     /opt/jboss/keycloak/bin/kcadm.sh config credentials 
     --realm master --user {{ keycloak_master_admin_user }}
     --password {{ keycloak_master_admin_password }}
@@ -31,7 +31,7 @@
 
 - name: Add user in keycloak for UAS
   shell: >
-    kubectl exec {{ keycloak_pod }} --
+    kubectl exec -n services {{ keycloak_pod }} --
     /opt/jboss/keycloak/bin/kcadm.sh create users
     --server http://localhost:8080/keycloak 
     -r shasta -s enabled=true 
@@ -54,7 +54,7 @@
 
 - name: Set user password in keycloak
   shell: >
-    kubectl exec {{ keycloak_pod }} --
+    kubectl exec -n services {{ keycloak_pod }} --
     /opt/jboss/keycloak/bin/kcadm.sh set-password
     -r shasta --username "{{ item.username }}"
     --new-password "{{ item.password }}"
