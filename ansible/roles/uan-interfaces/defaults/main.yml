@@ -1,0 +1,4 @@
+---
+rt_tables:
+  - pref: '2'
+    name: rt_mtl
