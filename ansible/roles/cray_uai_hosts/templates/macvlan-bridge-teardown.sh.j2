@@ -4,7 +4,7 @@
 #
 
 # Check for existence of mac0 link
-ip a | grep mac0@vlan002 > /dev/null 2>&1
+ip a | grep mac0@{{ uai_macvlan_bridge_if }} > /dev/null 2>&1
 # Only teardown mac0 bridge if it already exists
 if [ $? -eq 0 ]; then
     ip link delete mac0

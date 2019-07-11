@@ -12,10 +12,10 @@
 {% set mac0_bridge_ip = mac0_octets[:3] | join('.') + '.' + mac0_octet3 | string + '/' + mac0_prefix | string %}
 
 # Check for existence of mac0 link
-ip a | grep mac0@vlan002 > /dev/null 2>&1
+ip a | grep mac0@{{ uai_macvlan_bridge_if }} > /dev/null 2>&1
 # Only create mac0 bridge if it doesn't already exist
 if [ $? -ne 0 ]; then
-    ip link add mac0 link vlan002 type macvlan mode bridge
+    ip link add mac0 link {{ uai_macvlan_bridge_if }} type macvlan mode bridge
     ip a add {{ mac0_bridge_ip }} dev mac0
     ip link set mac0 up
     ip route add {{ uai_macvlan_bridge_network }} dev mac0
