@@ -2,4 +2,8 @@ BOOTPROTO='static'
 STARTMODE='auto'
 ONBOOT='yes'
 MTU='1500'
-{% include 'ipaddr.j2' %}
+{% for node in static_ips.uan.uan_nodes %}
+    {%- if ansible_hostname == node.hostname -%}
+        IPADDR='{{ (node.ip, static_ips.uan.netmask) | join('/') | ipaddr() }}}}'
+    {%- endif -%}
+{% endfor %}

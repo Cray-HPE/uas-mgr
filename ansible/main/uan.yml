@@ -1,7 +1,4 @@
 ---
-- hosts: managers
-  gather_facts: yes
-
 - hosts: uan
   gather_facts: yes
   roles:
