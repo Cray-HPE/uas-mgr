@@ -1,0 +1,10 @@
+---
+- hosts: uan
+  gather_facts: yes
+  roles:
+    - uan-interfaces
+    - uan-config
+    - ntp
+    - identity
+    - munged
+    - slurm_node

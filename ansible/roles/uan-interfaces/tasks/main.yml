@@ -1,0 +1,40 @@
+---
+- name: Configure customer network interface lan0
+  template:
+    src: ifcfg-lan0.j2
+    dest: /etc/sysconfig/network/ifcfg-lan0
+    mode: 0644
+
+- name: Configure customer network gateway
+  template:
+    src: routes.j2
+    dest: /etc/sysconfig/network/routes
+    mode: 0644
+
+- name: Copy HSN interface config to UANs
+- name: Copy HSN interface config to UANs
+  copy:
+    src: ifcfg-hsn0
+    dest: /etc/sysconfig/network/ifcfg-hsn0
+    mode: 0644
+
+- name: Configure iproute2 tables
+  lineinfile:
+    path: /etc/iproute2/rt_tables
+    regexp: '^{{ item.pref }}\s+{{ item.name }}'
+    line: "{{ item.pref }}       {{ item.name }}"
+  loop: "{{ rt_tables }}"
+
+- name: wicked scripts directory exist
+  file:
+    state: directory
+    path: /etc/sysconfig/wicked/scripts/{{ item }}
+  loop:
+    - post-up
+    - post-down
+
+- name: Configure all interfaces
+  command: wicked ifreload all
+  changed_when: result.rc != 0 or result.rc == 162
+  failed_when: result.rc != 0 and result.rc != 162
+  register: result

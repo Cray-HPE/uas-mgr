@@ -1,0 +1,10 @@
+BOOTPROTO='static'
+STARTMODE='auto'
+ONBOOT='yes'
+MTU='1500'
+{% for node in static_ips.uan.uan_nodes %}
+    {%- if ansible_hostname == node.hostname -%}
+IPADDR='{{ (node.ip, static_ips.uan.netmask) | join('/') | ipaddr() }}'
+GATEWAY='{{ static_ips.uan.gateway }}'
+    {%- endif -%}
+{% endfor %}
