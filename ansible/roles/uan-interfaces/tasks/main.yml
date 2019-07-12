@@ -5,6 +5,13 @@
     dest: /etc/sysconfig/network/ifcfg-lan0
     mode: 0644
 
+- name: Configure customer network gateway
+  template:
+    src: routes.j2
+    dest: /etc/sysconfig/network/routes
+    mode: 0644
+
+- name: Copy HSN interface config to UANs
 - name: Copy HSN interface config to UANs
   copy:
     src: ifcfg-hsn0
