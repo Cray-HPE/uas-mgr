@@ -1,0 +1,195 @@
+# cray-uas-mgr localization ansible play
+# Copyright 2019, Cray Inc. All Rights Reserved.
+---
+- name: Set macvlan bridge facts
+  set_fact:
+    mac0_list: "{{ mac0_list | default([]) + [ uai_macvlan ] }}"
+  loop:
+    "{{ groups['uai_hosts'] | sort }}"
+  loop_control:
+    index_var: cur_host
+  run_once: True
+
+- name: Get existing UAI hosts
+  command: "kubectl get nodes -o name -l {{ item.key }}"
+  register: labeled_nodes
+  run_once: true
+  delegate_to: "{{ groups['managers']|first }}"
+  when: uai_tnl_labels is defined
+  with_items:
+    - "{{ uai_tnl_labels }}"
+
+- name: Prep groups['uai_hosts'] with 'node/'
+  shell: "echo node/{{ item }}"
+  register: new_uai_nodes
+  run_once: True
+  delegate_to: "{{ groups['managers']|first }}"
+  with_items:
+    - "{{ groups['uai_hosts'] }}"
+
+- name: Set existing UAI host facts
+  set_fact:
+    existing_uai_hosts: "{{ existing_uai_hosts | default([]) + item.stdout_lines }}"
+  with_items:
+    - "{{ labeled_nodes.results }}"
+
+- name: Set new UAI host facts
+  set_fact:
+    new_uai_hosts: "{{ new_uai_hosts | default([]) + item.stdout_lines }}"
+  run_once: True
+  delegate_to: "{{ groups['managers']|first }}"
+  with_items:
+    - "{{ new_uai_nodes.results }}"
+
+- name: Gather river network facts
+  set_fact:
+    uai_macvlan: "{{ item.subnets | selectattr('label', 'equalto', 'uai_macvlan') | list }}"
+    uai_macvlan_network: "{{ item.network }}"
+    uai_macvlan_bridge_vlan: "vlan{{ '%03d' | format( item.vlan_id | int ) }}"
+  loop: "{{ networks.node_management.blocks.ipv4 | selectattr('label', 'equalto', 'river') | list }}"
+
+- name: Gather mountain network facts
+  set_fact:
+    uai_macvlan_mtn_network: "{{ item.network | default(omit) }}"
+    uai_macvlan_mtn_gateway: "{{ item.gateway | default(omit) }}"
+  loop: "{{ networks.node_management.blocks.ipv4 | selectattr('label', 'equalto', 'mountain') | list }}"
+
+- name: Set UAI macvlan facts
+  set_fact:
+    uai_macvlan_bridge_network: "{{ item.network }}"
+    uai_macvlan_bridge_gateway: "{{ item.gateway }}"
+    uai_macvlan_dhcp_start: "{{ item.dhcp.start }}"
+    uai_macvlan_dhcp_end: "{{ item.dhcp.end }}"
+    uai_macvlan_bridge_if: "{{ item.macvlan_bridge_if | default( uai_macvlan_bridge_vlan ) }}"
+  loop: "{{ uai_macvlan }}"
+
+- name: Translate UAI macvlan network attachment definition
+  template:
+    src: cray-uas-mgr-netattachdef.yaml.j2
+    dest: /root/k8s/cray-uas-mgr-netattachdef.yaml
+  run_once: True
+  delegate_to: "{{ groups['managers']|first }}"
+
+- name: Apply UAI macvlan network attachment definition
+  command: kubectl apply -n default -f /root/k8s/cray-uas-mgr-netattachdef.yaml
+  register: kubectl_result
+  changed_when: kubectl_result.stdout.find('created') != -1 or kubectl_result.stdout.find('configured') != -1
+  run_once: True
+  delegate_to: "{{ groups['managers']|first }}"
+
+- name: Remove UAI labels from former UAI hosts
+  command: "kubectl label {{ item.0 }} {{ item.1.key }}-" 
+  register: result
+  run_once: True
+  delegate_to: "{{ groups['managers']|first }}"
+  when: new_uai_hosts is defined and item.0 is defined and item.1 is defined
+  with_nested:
+    - "{{ existing_uai_hosts| difference(new_uai_hosts) }}"
+    - "{{ uai_tnl_labels }}"
+  
+- name: If no UAI hosts are defined, clear any UAI labels from existing UAI hosts
+  command: "kubectl label {{ item.0 }} {{ item.1.key }}-" 
+  register: result
+  run_once: True
+  delegate_to: "{{ groups['managers']|first }}"
+  when: new_uai_hosts is not defined and item.0 is defined and item.1 is defined
+  with_nested:
+    - "{{ existing_uai_hosts }}"
+    - "{{ uai_tnl_labels }}"
+  
+- name: Remove UAI taints from former UAI hosts
+  command: "kubectl taint {{ item.0 }} {{ item.1.key }}:{{ item.1.effect }}"
+  register: result
+  run_once: True
+  delegate_to: "{{ groups['managers']|first }}"
+  when: item.0 is defined and item.1 is defined
+  with_nested:
+    - "{{ existing_uai_hosts | difference(new_uai_hosts) }}"
+    - "{{ uai_tnl_taints }}"
+
+- name: If no UAI hosts defined, clear any UAI taints from existing UAI hosts
+  command: "kubectl taint {{ item.0 }} {{ item.1.key }}:{{ item.1.effect }}"
+  register: result
+  run_once: True
+  delegate_to: "{{ groups['managers']|first }}"
+  when: new_uai_hosts is not defined and item.0 is defined and item.1 is defined
+  with_nested:
+    - "{{ existing_uai_hosts }}"
+    - "{{ uai_tnl_taints }}"
+
+- name: Assign labels to UAI hosts.
+  command: "kubectl label {{ item.0 }} {{ item.1.key }}={{ item.1.value }} --overwrite"
+  register: result
+  changed_when: result.rc == 0
+  failed_when: not (result.rc == 0 or (result.rc == 1 and 'already has a value' in result.stderr))
+  run_once: True
+  delegate_to: "{{ groups['managers']|first }}"
+  when: item.0 is defined and item.1 is defined
+  with_nested:
+    - "{{ new_uai_hosts }}"
+    - "{{ uai_tnl_labels }}"
+
+- name: Assign taints to UAI hosts.
+  command: "kubectl taint {{ item.0 }} {{ item.1.key }}={{ item.1.value }}:{{ item.1.effect }} --overwrite"
+  register: result
+  changed_when: result.rc == 0
+  failed_when: not (result.rc == 0 or (result.rc == 1 and 'already has a value' in result.stderr))
+  run_once: True
+  delegate_to: "{{ groups['managers']|first }}"
+  when: item.0 is defined and item.1 is defined
+  with_nested:
+    - "{{ new_uai_hosts }}"
+    - "{{ uai_tnl_taints }}"
+
+- name: Translate macvlan bridge setup script for UAI hosts
+  template:
+    src: macvlan-bridge-setup.sh.j2
+    dest: /root/macvlan-bridge-setup.sh
+    mode: 0544
+  loop:
+    "{{ mac0_list }}"
+  when: inventory_hostname == item.uai_host
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Setup macvlan bridge systemd service on UAI hosts
+  copy:
+    src: macvlan-bridge-setup.service
+    dest: /etc/systemd/system/macvlan-bridge-setup.service
+    mode: 0644
+  loop:
+    "{{ mac0_list }}"
+  when: inventory_hostname == item.uai_host
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Copy macvlan bridge teardown script to UAI hosts
+  copy:
+    src: macvlan-bridge-teardown.sh
+    dest: /root/macvlan-bridge-teardown.sh
+    mode: 0544
+  loop:
+    "{{ mac0_list }}"
+  when: inventory_hostname == item.uai_host
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Disable macvlan-bridge-setup on former UAI hosts
+  systemd:
+    name: macvlan-bridge-setup
+    enabled: no
+    state: stopped
+    daemon_reload: yes
+  loop:
+    "{{ existing_uai_hosts| difference(new_uai_hosts) }}"
+  when: inventory_hostname == item.split('/')[1]
+  run_once: True
+  delegate_to: "{{ item.split('/')[1] }}"
+
+- name: Enable and restart macvlan-bridge-setup on UAI hosts
+  systemd:
+    name: macvlan-bridge-setup
+    enabled: yes
+    state: restarted
+    daemon_reload: yes
+  loop:
+    "{{ mac0_list }}"
+  when: inventory_hostname == item.uai_host
+  delegate_to: "{{ inventory_hostname }}"

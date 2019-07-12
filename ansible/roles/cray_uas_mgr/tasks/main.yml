@@ -19,28 +19,6 @@
   run_once: true
   with_items: "{{ cray_uas_objects }}"
 
-- name: Create macvlan bridge setup script for sms03-nmn
-  template:
-    src: macvlan-bridge-setup.sh.j2
-    dest: /root/macvlan-bridge-setup.sh
-    mode: 0544
-  when: inventory_hostname == 'sms03-nmn' or inventory_hostname == 'sms-3.craydev.com'
-
-- name: Setup macvlan bridge systemd service on sms03-nmn
-  copy:
-    src: macvlan-bridge-setup.service
-    dest: /etc/systemd/system/macvlan-bridge-setup.service
-    mode: 0644
-  when: inventory_hostname == 'sms03-nmn' or inventory_hostname == 'sms-3.craydev.com'
-
-- name: Configure macvlan-bridge-setup
-  systemd:
-    name: macvlan-bridge-setup
-    enabled: yes
-    state: restarted
-    daemon_reload: yes
-  when: inventory_hostname == 'sms03-nmn' or inventory_hostname == 'sms-3.craydev.com'
-
 - name: Record that cray-uas ran  # Workaround https://github.com/ansible/ansible/issues/31751
   set_fact:
     cray_uas_mgr_ran: True

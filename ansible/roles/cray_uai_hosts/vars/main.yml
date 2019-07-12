@@ -1,0 +1,4 @@
+---
+uai_macvlan:
+  uai_host: "{{ item  }}"
+  offset: "{{ cur_host }}"
