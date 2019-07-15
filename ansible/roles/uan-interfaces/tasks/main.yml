@@ -1,4 +1,17 @@
 ---
+- name: Cleanup /etc/hosts
+  lineinfile:
+    dest: /etc/hosts
+    regex: "{{ item }}"
+    state: absent
+  loop:
+    - "# SMS"
+    - "sms"
+    - "mgmt-plane-nmn"
+    - "BMC"
+    - "-bmc"
+    - "HMN"
+
 - name: Configure customer network interface lan0
   template:
     src: ifcfg-lan0.j2
