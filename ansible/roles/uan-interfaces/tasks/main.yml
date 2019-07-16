@@ -18,9 +18,6 @@
     dest: /etc/sysconfig/network/ifcfg-lan0
     mode: 0644
 
-- name: Remove existing default route
-  command: "ip route delete default"
-
 - name: Configure customer network gateway
   template:
     src: routes.j2
@@ -50,6 +47,18 @@
 
 - name: Configure all interfaces
   command: wicked ifreload all
+  changed_when: result.rc != 0 or result.rc == 162
+  failed_when: result.rc != 0 and result.rc != 162
+  register: result
+
+- name: Remove existing default route
+  command: "ip route delete default"
+  changed_when: result.rc != 0 or result.rc == 162
+  failed_when: result.rc != 0 and result.rc != 162
+  register: result
+
+- name: Add new default route
+  command: "ip route add default via {{ static_ips.uan.gateway  }}"
   changed_when: result.rc != 0 or result.rc == 162
   failed_when: result.rc != 0 and result.rc != 162
   register: result
