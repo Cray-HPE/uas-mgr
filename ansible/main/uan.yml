@@ -4,6 +4,7 @@
   roles:
     - uan-interfaces
     - uan-config
+    - uan-motd
     - ntp
     - identity
     - munged

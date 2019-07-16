@@ -1,0 +1,6 @@
+---
+- name: Copy HSN interface config to UANs
+  copy:
+    src: uan-motd
+    dest: /etc/motd
+    mode: 0644
