@@ -1,5 +1,5 @@
 ---
-- name: Copy HSN interface config to UANs
+- name: Copy motd to UANs
   copy:
     src: uan-motd
     dest: /etc/motd
