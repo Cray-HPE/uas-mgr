@@ -1,10 +1,13 @@
 ---
 - hosts: uan
   gather_facts: yes
+  vars_files:
+    - customer_runbooks/customer_var.yml
   roles:
     - uan-interfaces
     - uan-config
     - ntp
     - identity
     - munged
+    - uan_ldap
     - slurm_node
