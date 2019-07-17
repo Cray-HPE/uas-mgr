@@ -1,8 +1,5 @@
 ---
 # Copyright 2019 Cray Inc. All Rights Reserved.
-uan_motd_sysadmins: Cray System Admins
-uan_motd_sysadmins_email: something@cray.com
-
 uan_motd_info:
   - "Hostname: ": "{{ ansible_hostname }}"
   - "Distro:   ": "{{ ansible_distribution }} {{ ansible_distribution_version }} {{ ansible_distribution_release }}"
