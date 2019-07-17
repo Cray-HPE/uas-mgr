@@ -1,10 +1,10 @@
 ---
 # Copyright 2019 Cray Inc. All Rights Reserved.
-- name: Copy motd to UANs
-# Allow motd file to be defined in customer_var.yml so this role can run at install 
-# or at anytime to update the motd.
+- name: Load customer_var.yml
   include_vars: "/opt/cray/crayctl/ansible_framework/customer_runbooks/customer_var.yml"
-  copy:
-    src: "{{ uan_motd_file }}"
+
+- name: Copy motd to UANs
+  template:
+    src: uan-motd.j2
     dest: /etc/motd
     mode: 0644

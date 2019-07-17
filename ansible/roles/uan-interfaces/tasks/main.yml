@@ -58,7 +58,7 @@
   register: result
 
 - name: Add new default route
-  command: "ip route add default via {{ static_ips.uan.gateway  }}"
+  command: "ip route add default via {{ static_ips.uan.gateway }}"
   changed_when: result.rc != 0 or result.rc == 162
   failed_when: result.rc != 0 and result.rc != 162
   register: result
