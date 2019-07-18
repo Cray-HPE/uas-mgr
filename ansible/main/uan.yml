@@ -2,8 +2,8 @@
 - hosts: uan
   gather_facts: yes
   roles:
-    - uan-interfaces
     - uan-config
+    - uan-interfaces
     - uan-motd
     - ntp
     - identity
