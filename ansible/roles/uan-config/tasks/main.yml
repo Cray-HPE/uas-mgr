@@ -1,11 +1,22 @@
 ---
-- name: copy hosts file from sms01
-  copy:
+- name: Copy hosts file from SMS node
+  synchronize:
     src: /etc/hosts
     dest: /etc/hosts
-    owner: root
-    group: root
-    mode: 0644
+  delegate_to: "{{ groups['managers']|first }}"
+
+- name: Cleanup /etc/hosts
+  lineinfile:
+    dest: /etc/hosts
+    regex: "{{ item }}"
+    state: absent
+  loop:
+    - "# SMS"
+    - "sms"
+    - "mgmt-plane-nmn"
+    - "BMC"
+    - "-bmc"
+    - "HMN"
 
 - name: Create swap partition
   parted:
@@ -53,7 +64,7 @@
 
 - name: Set permissions on swap file.
   file:
-    path: "{{ uan_swap}}/{{ swap_file }}"
+    path: "{{ uan_swap }}/{{ swap_file }}"
     owner: root
     group: root
     mode: 0600
@@ -72,7 +83,7 @@
 - name: Turn swap on
   command: swapon -a
 
-- name: Set swapiness
+- name: Set swappiness
   sysctl:
     name: vm.swappiness
     value: "{{ swap_swappiness }}"
