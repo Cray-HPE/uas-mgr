@@ -161,9 +161,9 @@
   when: inventory_hostname == item.uai_host
   delegate_to: "{{ inventory_hostname }}"
 
-- name: Copy macvlan bridge teardown script to UAI hosts
-  copy:
-    src: macvlan-bridge-teardown.sh
+- name: Translate macvlan bridge teardown script for UAI hosts
+  template:
+    src: macvlan-bridge-teardown.sh.j2
     dest: /root/macvlan-bridge-teardown.sh
     mode: 0544
   loop:
