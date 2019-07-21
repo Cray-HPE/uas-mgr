@@ -11,6 +11,7 @@
 {% set mac0_octet3 = mac0_octets[3] | int + item.offset | int %}
 {% set mac0_bridge_ip = mac0_octets[:3] | join('.') + '.' + mac0_octet3 | string + '/' + mac0_prefix | string %}
 
+echo "Starting macvlan setup"
 # Check for existence of mac0 link
 ip a | grep mac0@{{ uai_macvlan_bridge_if }} > /dev/null 2>&1
 # Only create mac0 bridge if it doesn't already exist

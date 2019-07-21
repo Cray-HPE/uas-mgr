@@ -10,6 +10,7 @@ After=network.target network-online.target
 
 [Service]
 Type=oneshot
+RemainAfterExit=yes
 ExecStart=/root/macvlan-bridge-setup.sh
 ExecStop=/root/macvlan-bridge-teardown.sh
 
