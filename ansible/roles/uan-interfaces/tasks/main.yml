@@ -5,6 +5,12 @@
     dest: /etc/sysconfig/network/ifcfg-lan0
     mode: 0644
 
+- name: Tell DHCP client to not set default gateway
+  lineinfile:
+    path: /etc/sysconfig/network/dhcp
+    regex: '^DHCLIENT_SET_DEFAULT_ROUTE='
+    line: DHCLIENT_SET_DEFAULT_ROUTE="no"
+
 - name: Configure customer network gateway
   template:
     src: routes.j2
