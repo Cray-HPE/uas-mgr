@@ -52,6 +52,10 @@
   when: keycloak_pod | search("keycloak-")
   run_once: true
 
+# Debug for CASMUSER-1911
+- debug: msg="item.rc={{ item.rc }}, item.stdout_lines={{ item.stdout_lines }}, item.stderr_lines={{ item.stderr_lines }}"
+  with_items: "{{ add_user_result.results }}"
+
 - name: Set user password in keycloak
   shell: >
     kubectl exec -n services {{ keycloak_pod }} --
