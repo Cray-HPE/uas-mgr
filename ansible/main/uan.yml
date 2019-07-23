@@ -4,8 +4,8 @@
   vars_files:
     - customer_runbooks/customer_var.yml
   roles:
-    - uan-interfaces
     - uan-config
+    - uan-interfaces
     - uan-motd
     - ntp
     - identity
