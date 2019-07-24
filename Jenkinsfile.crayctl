@@ -1,4 +1,7 @@
 @Library("dst-shared") _
 rpmBuild (
-    product: "shasta-premium"
+    channel: "casm-user",
+    slack_notify: ['FAILURE'],
+    product: "shasta-premium",
+    target_node: "ncn"
 )
