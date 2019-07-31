@@ -1,0 +1,8 @@
+---
+# Copyright 2019 Cray Inc. All Rights Reserved.
+- hosts: uan
+  gather_facts: yes
+  vars_files:
+    - customer_var.yml
+  roles:
+    - uan-motd
