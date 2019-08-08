@@ -141,10 +141,15 @@
     - "{{ new_uai_hosts }}"
     - "{{ uai_tnl_taints }}"
 
+- name: Ensure /opt/cray/uas dir exists
+  file: 
+    path: /opt/cray/uas
+    state: directory
+
 - name: Translate macvlan bridge setup script for UAI hosts
   template:
     src: macvlan-bridge-setup.sh.j2
-    dest: /root/macvlan-bridge-setup.sh
+    dest: /opt/cray/uas/macvlan-bridge-setup.sh
     mode: 0544
   loop:
     "{{ mac0_list }}"
@@ -164,7 +169,7 @@
 - name: Translate macvlan bridge teardown script for UAI hosts
   template:
     src: macvlan-bridge-teardown.sh.j2
-    dest: /root/macvlan-bridge-teardown.sh
+    dest: /opt/cray/uas/macvlan-bridge-teardown.sh
     mode: 0544
   loop:
     "{{ mac0_list }}"
