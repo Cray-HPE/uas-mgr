@@ -1,6 +1,0 @@
-BOOTPROTO='dhcp'
-STARTMODE='auto'
-USERCONTROL='no'
-ONBOOT='yes'
-LINK_REQUIRED='no'
-MTU='9000'
