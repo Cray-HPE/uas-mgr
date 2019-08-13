@@ -63,7 +63,7 @@ info:
       * DELETE /uas - Cleanup
 
 
-  version: "0.13.7"
+  version: "0.13.8"
 
 servers:
   - url: "/apis/uas-mgr/v1"

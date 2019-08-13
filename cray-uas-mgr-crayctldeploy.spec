@@ -9,7 +9,7 @@ Name: cray-uas-mgr-crayctldeploy
 License: Cray Software License Agreement
 Summary: User Access Service Manager Deployment
 Version: %(cat .version)
-Release: 1_%(echo $BUILD_NUMBER)__g%(git rev-parse --short HEAD)
+Release: %(echo ${BUILD_METADATA})
 Source: %{name}-%{version}.tar.bz2
 Vendor: Cray Inc.
 Group: Productivity/Clustering/Computing
