@@ -137,10 +137,10 @@ class TestUasCfg(unittest.TestCase):
 
     def test_get_service_type(self):
         svc_type = self.uas_cfg.get_svc_type(service_type="ssh")
-        self.assertEqual(svc_type['svc_type'], "NodePort")
+        self.assertEqual(svc_type['svc_type'], "LoadBalancer")
         self.assertEqual(svc_type['ip_pool'], None)
         svc_type = self.uas_cfg_empty.get_svc_type(service_type="ssh")
-        self.assertEqual(svc_type['svc_type'], "NodePort")
+        self.assertEqual(svc_type['svc_type'], "LoadBalancer")
         self.assertEqual(svc_type['ip_pool'], None)
         svc_type = self.uas_cfg_svc.get_svc_type(service_type="ssh")
         self.assertEqual(svc_type['ip_pool'], "customer")
