@@ -19,6 +19,6 @@ uas_mgr:
   uas_ports:
     - 30123
 
-  uas_ssh_type: "NodePort"
+  uas_ssh_type: "LoadBalancer"
 
-  uas_ssh_lb_pool: "customer"
+  uas_ssh_lb_pool: "customer-access"
