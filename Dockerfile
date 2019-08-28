@@ -1,7 +1,21 @@
+# Cray User Access Service Dockerfile
+# Copyright 2019 Cray Inc. All Rights Reserved.
+
 #########################
 ### Base
 #########################
-FROM python:3-slim as base
+FROM dtr.dev.cray.com/baseos/alpine as base
+
+# Install application dependencies
+RUN apk update && apk add \
+    g++ \
+    gcc \
+    libffi-dev \
+    linux-headers \
+    musl-dev \
+    openssl-dev \
+    python3 \
+    python3-dev
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
@@ -26,7 +40,7 @@ ENTRYPOINT pytest --cov swagger_server --cov-fail-under 68
 #########################
 FROM base as testing
 COPY api_test.sh api_test.sh
-RUN apt-get update && apt-get install -y curl
+RUN apk update && apk add curl
 ENTRYPOINT ["./api_test.sh"]
 
 #########################
