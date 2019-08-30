@@ -21,7 +21,7 @@
 - name: Configure credentials in keycloak
   no_log: True
   shell: >
-    kubectl exec -n services {{ keycloak_pod }} --
+    kubectl exec -n services {{ keycloak_pod }} -c keycloak --
     /opt/jboss/keycloak/bin/kcadm.sh config credentials 
     --realm master --user {{ keycloak_master_admin_user }}
     --password {{ keycloak_master_admin_password }}
@@ -31,7 +31,7 @@
 
 - name: Add user in keycloak for UAS
   shell: >
-    kubectl exec -n services {{ keycloak_pod }} --
+    kubectl exec -n services {{ keycloak_pod }} -c keycloak --
     /opt/jboss/keycloak/bin/kcadm.sh create users
     --server http://localhost:8080/keycloak 
     -r shasta -s enabled=true 
@@ -52,13 +52,9 @@
   when: keycloak_pod | search("keycloak-")
   run_once: true
 
-# Debug for CASMUSER-1911
-- debug: msg="item.rc={{ item.rc }}, item.stdout_lines={{ item.stdout_lines }}, item.stderr_lines={{ item.stderr_lines }}"
-  with_items: "{{ add_user_result.results }}"
-
 - name: Set user password in keycloak
   shell: >
-    kubectl exec -n services {{ keycloak_pod }} --
+    kubectl exec -n services {{ keycloak_pod }} -c keycloak --
     /opt/jboss/keycloak/bin/kcadm.sh set-password
     -r shasta --username "{{ item.username }}"
     --new-password "{{ item.password }}"
