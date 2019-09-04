@@ -71,5 +71,18 @@ do
     echo "... OK"
 done
 
+echo "Checking that the macvlan interface is available and online"
+for NODE in "${NODES[@]}"
+do
+    echo "Checking that the mac0 interface on $NODE exists"
+    OUT=`ssh $NODE "ip a show mac0 up"`
+    echo "Checking that the mac0 interface on $NODE is up"
+    if [ -z "$OUT" ]; then
+        echo "The mac0 interface is not up"
+        exit 1
+    fi
+    echo "... OK"
+done
+
 echo "All checks completed successfully"
 exit 0
