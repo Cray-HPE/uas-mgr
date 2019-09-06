@@ -74,8 +74,7 @@ do
         echo "PASS: ssh $i_uan module list works well"
     else
         echo "FAIL: ssh $i_uan module list doesn't work."
-        echo "After CASMUSER-1328 is fixed, need to change exit 123 to exit 1"
-        exit 123
+        exit 1
     fi
 done
 
