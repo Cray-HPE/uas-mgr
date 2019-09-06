@@ -50,7 +50,7 @@ else
 fi
 echo "... OK"
 
-echo "Ensuring that all host filesystems are mounted on all sms nodes labeled with UAS=true"
+echo "Ensuring that all host filesystems are mounted on all nodes labeled with UAS=true"
 HOSTFS=$(kubectl describe cm -n services cray-uas-mgr-cfgmap | grep host_path | grep -v ^# | awk '{ print $2 }')
 for NODE in "${NODES[@]}"
 do
@@ -63,7 +63,7 @@ do
     echo "... OK"
 done
 
-echo "Checking that the ${DEFAULT_IMAGE} is available on all sms node labeled with UAS=true"
+echo "Checking that the ${DEFAULT_IMAGE} is available on all nodes labeled with UAS=true"
 for NODE in "${NODES[@]}"
 do
     echo "Checking for Docker image ${DEFAULT_IMAGE} on $NODE"
