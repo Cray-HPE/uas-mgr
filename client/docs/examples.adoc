@@ -42,7 +42,7 @@ Via: kong/0.14.1
   "uai_port": 16325,
   "uai_status": "Waiting",
   "username": "exampleuser",
-  "uai_host": "sms03",
+  "uai_host": "ncn-w001",
   "uai_age": "1d7h"
 }
 ----
@@ -106,7 +106,7 @@ Via: kong/0.14.1
     "uai_name": "exampleuser-2803b6e4",
     "uai_status": "Running: Ready",
     "username": "exampleuser",
-    "uai_host": "sms03",
+    "uai_host": "ncn-w001",
     "uai_age": "1d7h"
   },
   {
@@ -115,7 +115,7 @@ Via: kong/0.14.1
     "uai_name": "exampleuser-9e829eff",
     "uai_status": "Running: Ready",
     "username": "exampleuser",
-    "uai_host": "sms03",
+    "uai_host": "ncn-w001",
     "uai_age": "1d7h"
   }
 ]

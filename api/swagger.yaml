@@ -63,7 +63,7 @@ info:
       * DELETE /uas - Cleanup
 
 
-  version: "0.13.9"
+  version: "0.13.10"
 
 servers:
   - url: "/apis/uas-mgr/v1"
@@ -608,7 +608,7 @@ paths:
         required: false
         schema:
           type: "string"
-        example: "sms03"
+        example: "ncn-w001"
       responses:
         200:
           description: "UAI List"
@@ -681,7 +681,7 @@ components:
         uai_img: "uai_img"
         uai_status: "Running"
         uai_reason: "Deploying"
-        uai_host: "sms03"
+        uai_host: "ncn-w001"
         uai_age: "13d8h"
     Volume:
       type: "object"
