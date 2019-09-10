@@ -14,7 +14,7 @@
   command: "kubectl get nodes -o name -l {{ item.key }}"
   register: labeled_nodes
   run_once: true
-  delegate_to: "{{ groups['managers']|first }}"
+  delegate_to: "{{ groups['bis']|first }}"
   when: uai_tnl_labels is defined
   with_items:
     - "{{ uai_tnl_labels }}"
@@ -23,7 +23,7 @@
   shell: "echo node/{{ item }}"
   register: new_uai_nodes
   run_once: True
-  delegate_to: "{{ groups['managers']|first }}"
+  delegate_to: "{{ groups['bis']|first }}"
   with_items:
     - "{{ groups['uai_hosts'] }}"
 
@@ -37,7 +37,7 @@
   set_fact:
     new_uai_hosts: "{{ new_uai_hosts | default([]) + item.stdout_lines }}"
   run_once: True
-  delegate_to: "{{ groups['managers']|first }}"
+  delegate_to: "{{ groups['bis']|first }}"
   with_items:
     - "{{ new_uai_nodes.results }}"
 
@@ -68,40 +68,40 @@
     src: cray-uas-mgr-netattachdef.yaml.j2
     dest: /root/k8s/cray-uas-mgr-netattachdef.yaml
   run_once: True
-  delegate_to: "{{ groups['managers']|first }}"
+  delegate_to: "{{ groups['bis']|first }}"
 
 - name: Apply UAI macvlan network attachment definition
   command: kubectl apply -n default -f /root/k8s/cray-uas-mgr-netattachdef.yaml
   register: kubectl_result
   changed_when: kubectl_result.stdout.find('created') != -1 or kubectl_result.stdout.find('configured') != -1
   run_once: True
-  delegate_to: "{{ groups['managers']|first }}"
+  delegate_to: "{{ groups['bis']|first }}"
 
 - name: Remove UAI labels from former UAI hosts
-  command: "kubectl label {{ item.0 }} {{ item.1.key }}-" 
+  command: "kubectl label {{ item.0 }} {{ item.1.key }}-"
   register: result
   run_once: True
-  delegate_to: "{{ groups['managers']|first }}"
+  delegate_to: "{{ groups['bis']|first }}"
   when: new_uai_hosts is defined and item.0 is defined and item.1 is defined
   with_nested:
     - "{{ existing_uai_hosts| difference(new_uai_hosts) }}"
     - "{{ uai_tnl_labels }}"
-  
+
 - name: If no UAI hosts are defined, clear any UAI labels from existing UAI hosts
-  command: "kubectl label {{ item.0 }} {{ item.1.key }}-" 
+  command: "kubectl label {{ item.0 }} {{ item.1.key }}-"
   register: result
   run_once: True
-  delegate_to: "{{ groups['managers']|first }}"
+  delegate_to: "{{ groups['bis']|first }}"
   when: new_uai_hosts is not defined and item.0 is defined and item.1 is defined
   with_nested:
     - "{{ existing_uai_hosts }}"
     - "{{ uai_tnl_labels }}"
-  
+
 - name: Remove UAI taints from former UAI hosts
   command: "kubectl taint {{ item.0 }} {{ item.1.key }}:{{ item.1.effect }}"
   register: result
   run_once: True
-  delegate_to: "{{ groups['managers']|first }}"
+  delegate_to: "{{ groups['bis']|first }}"
   when: item.0 is defined and item.1 is defined
   with_nested:
     - "{{ existing_uai_hosts | difference(new_uai_hosts) }}"
@@ -111,7 +111,7 @@
   command: "kubectl taint {{ item.0 }} {{ item.1.key }}:{{ item.1.effect }}"
   register: result
   run_once: True
-  delegate_to: "{{ groups['managers']|first }}"
+  delegate_to: "{{ groups['bis']|first }}"
   when: new_uai_hosts is not defined and item.0 is defined and item.1 is defined
   with_nested:
     - "{{ existing_uai_hosts }}"
@@ -123,7 +123,7 @@
   changed_when: result.rc == 0
   failed_when: not (result.rc == 0 or (result.rc == 1 and 'already has a value' in result.stderr))
   run_once: True
-  delegate_to: "{{ groups['managers']|first }}"
+  delegate_to: "{{ groups['bis']|first }}"
   when: item.0 is defined and item.1 is defined
   with_nested:
     - "{{ new_uai_hosts }}"
@@ -135,14 +135,14 @@
   changed_when: result.rc == 0
   failed_when: not (result.rc == 0 or (result.rc == 1 and 'already has a value' in result.stderr))
   run_once: True
-  delegate_to: "{{ groups['managers']|first }}"
+  delegate_to: "{{ groups['bis']|first }}"
   when: item.0 is defined and item.1 is defined
   with_nested:
     - "{{ new_uai_hosts }}"
     - "{{ uai_tnl_taints }}"
 
 - name: Ensure /opt/cray/uas dir exists
-  file: 
+  file:
     path: /opt/cray/uas
     state: directory
 
