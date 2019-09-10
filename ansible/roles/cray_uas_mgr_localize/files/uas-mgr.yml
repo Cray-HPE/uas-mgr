@@ -1,7 +1,7 @@
 # cray-uas-mgr localization play
 # Copyright 2019, Cray Inc.  All Rights Reserved.
 ---
-- hosts: managers
+- hosts: bis
   gather_facts: no
   vars_files:
     - "customer_var.yml"
