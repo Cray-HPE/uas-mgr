@@ -2,7 +2,8 @@
 # RPM spec file for cray-uas-mgr deployment
 # Copyright 2018 Cray Inc. All Rights Reserved.
 #
-%define ansible_dir /opt/cray/crayctl/ansible_framework
+%define crayctl_dir /opt/cray/crayctl
+%define ansible_dir %{crayctl_dir}/ansible_framework
 %define test_dir /opt/cray/tests
 
 Name: cray-uas-mgr-crayctldeploy
@@ -14,20 +15,24 @@ Source: %{name}-%{version}.tar.bz2
 Vendor: Cray Inc.
 Group: Productivity/Clustering/Computing
 
-%description
-This package provides an ansible role and playbook for deploying the User Access
-Service Manager and User Access Service ID to a Cray Shasta system.
+BuildRequires: cme-premium-cf-crayctldeploy-buildmacro
 
+Requires: cme-premium-cf-crayctldeploy
 Requires: cray-crayctl
 Requires: sms-crayctldeploy
 Requires: kubernetes-crayctldeploy
 Requires: cray-ct-driver-crayctldeploy
 
+%description
+This package provides an ansible role and playbook for deploying the User Access
+Service Manager and User Access Service ID to a Cray Shasta system.
+
 %files
-%dir /opt/cray/crayctl
+%dir %{crayctl_dir}
 %{ansible_dir}
-%dir %{ansible_dir}/customer_runbooks
 %{test_dir}
+%{cme_premium_plays_dir}
+%{cme_premium_roles_dir}
 
 %prep
 %setup -q
@@ -35,15 +40,14 @@ Requires: cray-ct-driver-crayctldeploy
 %build
 
 %install
-
 # Install ansible files
-install -m 755 -d %{buildroot}%{ansible_dir}
-install -m 755 -d %{buildroot}%{ansible_dir}/customer_runbooks
-cp -R ansible/roles %{buildroot}%{ansible_dir}/
-cp -R ansible/main %{buildroot}%{ansible_dir}/
-cp -R ansible/roles/cray_uas_mgr_localize/files/uas-mgr.yml %{buildroot}%{ansible_dir}/customer_runbooks/
-cp -R ansible/roles/uan-motd/files/uan-motd.yml %{buildroot}%{ansible_dir}/customer_runbooks/
-cp -R ansible/roles/cray_uas_user %{buildroot}%{ansible_dir}/customer_runbooks/
+mkdir -p %{buildroot}%{crayctl_dir}
+cp -R ansible %{buildroot}%{ansible_dir}
 cp -R tests %{buildroot}%{test_dir}
+
+install -D -m 644 ansible/customer_runbooks/uas-mgr.yml %{buildroot}%{cme_premium_plays_dir}/uas-mgr.yml
+install -D -m 644 ansible/customer_runbooks/uai-hosts.yml %{buildroot}%{cme_premium_plays_dir}/uai-hosts.yml
+mkdir -p %{buildroot}%{cme_premium_roles_dir}
+cp -R ansible/roles/cray_* %{buildroot}%{cme_premium_roles_dir}
 
 %changelog
