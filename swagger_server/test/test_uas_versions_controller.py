@@ -1,5 +1,9 @@
 #!/usr/bin/python3
 
+#
+# Copyright 2019, Cray Inc.  All Rights Reserved.
+#
+
 import unittest
 
 import swagger_server.controllers.versions_controller as versions_ctl

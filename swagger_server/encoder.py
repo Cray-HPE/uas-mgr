@@ -1,3 +1,7 @@
+#
+# Copyright 2019, Cray Inc.  All Rights Reserved.
+#
+
 from connexion.apps.flask_app import FlaskJSONEncoder
 import six
 

@@ -1,3 +1,7 @@
+#
+# Copyright 2019, Cray Inc.  All Rights Reserved.
+#
+
 import pprint
 
 import six

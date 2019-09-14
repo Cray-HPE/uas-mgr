@@ -1,5 +1,9 @@
 #!/bin/sh
 
+#
+# Copyright 2019, Cray Inc.  All Rights Reserved.
+#
+
 set -ex
 
 python3 -m swagger_server &

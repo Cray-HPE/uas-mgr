@@ -1,3 +1,6 @@
+#
+# Copyright 2019, Cray Inc.  All Rights Reserved.
+#
 openapi: "3.0.2"
 info:
   title: "User Access Service"
