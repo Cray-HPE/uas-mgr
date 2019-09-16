@@ -1,5 +1,9 @@
 #!/bin/bash
 
+#
+# Copyright 2019, Cray Inc.  All Rights Reserved.
+#
+
 set -x
 
 TAG="dtr.dev.cray.com/$USER/cray-uas-mgr:latest"

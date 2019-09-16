@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+#
+# Copyright 2019, Cray Inc.  All Rights Reserved.
+#
+
 import connexion
 import unittest
 

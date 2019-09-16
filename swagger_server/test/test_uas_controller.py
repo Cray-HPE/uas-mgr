@@ -1,5 +1,9 @@
 #!/usr/bin/python3
 
+#
+# Copyright 2019, Cray Inc.  All Rights Reserved.
+#
+
 import unittest
 import os
 import flask
