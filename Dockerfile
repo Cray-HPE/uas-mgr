@@ -6,16 +6,14 @@
 #########################
 FROM dtr.dev.cray.com/baseos/alpine as base
 
+# packages needed to run the app & install deps
+ENV BASE_PACKAGES g++ gcc libffi-dev linux-headers musl-dev openssl-dev python3 python3-dev
+
+# packages needed to debug the application from inside the container
+ENV DEBUG_PACKAGES procps iputils curl wget vim less
+
 # Install application dependencies
-RUN apk update && apk add \
-    g++ \
-    gcc \
-    libffi-dev \
-    linux-headers \
-    musl-dev \
-    openssl-dev \
-    python3 \
-    python3-dev
+RUN apk update && apk add $BASE_PACKAGES && apk add $DEBUG_PACKAGES
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
@@ -40,7 +38,6 @@ ENTRYPOINT pytest --cov swagger_server --cov-fail-under 68
 #########################
 FROM base as testing
 COPY api_test.sh api_test.sh
-RUN apk update && apk add curl
 ENTRYPOINT ["./api_test.sh"]
 
 #########################
