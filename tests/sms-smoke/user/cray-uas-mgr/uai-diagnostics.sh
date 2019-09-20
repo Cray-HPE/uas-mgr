@@ -84,5 +84,18 @@ do
     echo "... OK"
 done
 
+echo "Checking that keycloak pods are Running"
+kubectl get pods -n services -l app=keycloak-database | grep Running
+if [ $? -ne 0 ]; then
+    echo "Keycloak Database pods are not in a Running state."
+    exit 1
+fi
+kubectl get pods -n services -l app=keycloak | grep Running
+if [ $? -ne 0 ]; then
+    echo "Keycloak pods are not in a Running state."
+    exit 1
+fi
+echo "... OK"
+
 echo "All checks completed successfully"
 exit 0
