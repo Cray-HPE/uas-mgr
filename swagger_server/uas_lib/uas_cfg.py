@@ -26,6 +26,7 @@ handler.setFormatter(formatter)
 UAS_CFG_LOGGER.addHandler(handler)
 UAS_CFG_DEFAULT_PORT = 30123
 UAS_CFG_OPTIONAL_PORTS = [80, 443, 8888]
+UAS_CFG_DEFAULT_UAI_NAMESPACE = "default"
 
 
 class UasCfg(object):
@@ -359,3 +360,22 @@ class UasCfg(object):
             retstr += "{:d}m".format(int(minutes))
 
         return retstr
+
+    def get_uai_namespace(self):
+        """
+        Gets the namespace in which UAIs will be created. This namespace is
+        assumed to have been created by the installation process. Defaults
+        to UAS_CFG_DEFAULT_UAI_NAMESPACE if unset.
+        :return: k8s namespace
+        :rtype string
+        """
+        cfg = self.get_config()
+        if not cfg:
+            return None
+        try:
+            return cfg['uai_namespace']
+        except (TypeError, KeyError):
+            UAS_CFG_LOGGER.info("configuration uai_namespace not found, "
+                                "using %s namespace for UAIs",
+                                UAS_CFG_DEFAULT_UAI_NAMESPACE)
+            return UAS_CFG_DEFAULT_UAI_NAMESPACE

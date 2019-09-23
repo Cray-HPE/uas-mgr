@@ -225,6 +225,10 @@ class TestUasCfg(unittest.TestCase):
         self.assertEqual(self.uas_cfg.get_pod_age(now-timedelta(minutes=1501)),
                          "1d1h")
 
+    def test_get_uai_namespace(self):
+        self.assertEqual(self.uas_cfg.get_uai_namespace(), "somens")
+        self.assertEqual(self.uas_cfg_svc.get_uai_namespace(), "default")
+
 
 if __name__ == '__main__':
     unittest.main()

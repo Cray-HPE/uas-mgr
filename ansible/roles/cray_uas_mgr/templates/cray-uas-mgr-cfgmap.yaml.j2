@@ -100,6 +100,8 @@ data:
         - "{{ item }}"
 {% endfor %}
 {% endif %}
+
+    uai_namespace: "{{ uai_namespace }}"
 kind: ConfigMap
 metadata:
   name: {{ cray_uas_mgr_configmap }}

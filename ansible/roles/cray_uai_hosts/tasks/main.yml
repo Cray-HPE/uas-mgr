@@ -71,7 +71,7 @@
   delegate_to: "{{ groups['bis']|first }}"
 
 - name: Apply UAI macvlan network attachment definition
-  command: kubectl apply -n default -f /root/k8s/cray-uas-mgr-netattachdef.yaml
+  command: kubectl apply -n default -f /root/k8s/cray-uas-mgr-netattachdef.yaml -n "{{ uai_namespace }}"
   register: kubectl_result
   changed_when: kubectl_result.stdout.find('created') != -1 or kubectl_result.stdout.find('configured') != -1
   run_once: True
