@@ -36,7 +36,7 @@ Via: kong/0.14.1
 
 {
   "uai_connect_string": "ssh exampleuser@172.30.52.69 -p 16325 -i ~/.ssh/id_rsa",
-  "uai_img": "sms.local:5000/cray/cray-uas-sles15:latest",
+  "uai_img": "bis.local:5000/cray/cray-uas-sles15:latest",
   "uai_msg": "ContainerCreating",
   "uai_name": "exampleuser-2803b6e4",
   "uai_port": 16325,
@@ -102,7 +102,7 @@ Via: kong/0.14.1
 [
   {
     "uai_connect_string": "ssh exampleuser@172.30.52.69 -p 16325 -i ~/.ssh/id_rsa",
-    "uai_img": "sms.local:5000/cray/cray-uas-sles15:latest",
+    "uai_img": "bis.local:5000/cray/cray-uas-sles15:latest",
     "uai_name": "exampleuser-2803b6e4",
     "uai_status": "Running: Ready",
     "username": "exampleuser",
@@ -111,7 +111,7 @@ Via: kong/0.14.1
   },
   {
     "uai_connect_string": "ssh exampleuser@172.30.52.69 -p 32117 -i ~/.ssh/id_rsa",
-    "uai_img": "sms.local:5000/cray/cray-uas-slest15:latest",
+    "uai_img": "bis.local:5000/cray/cray-uas-slest15:latest",
     "uai_name": "exampleuser-9e829eff",
     "uai_status": "Running: Ready",
     "username": "exampleuser",
