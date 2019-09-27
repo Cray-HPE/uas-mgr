@@ -3,10 +3,12 @@
 # wlm-diagnostics.sh - WLM Health Check
 # Copyright 2019 Cray Inc. All Rights Reserved.
 
+TEST_CASE=1
+
 echo ""
-echo "##################################################"
-echo "# Test Case 1: Checking that DNS pods are running "
-echo "##################################################"
+echo "###########################################################"
+echo "# Test Case $TEST_CASE: Checking that DNS pods are running "
+echo "###########################################################"
 # check_pod_status is defined in /opt/cray/tests/sms-resources/bin
 check_pod_status coredns
 if [[ $? == 0 ]]; then
@@ -24,10 +26,11 @@ else
     exit 1
 fi
 
+((TEST_CASE += 1))
 echo ""
-echo "###################################"
-echo "# Test Case 2: Checking DNS health "
-echo "###################################"
+echo "#############################################"
+echo "# Test Case $TEST_CASE: Checking DNS health "
+echo "############################################"
 
 for dns_pod in $LIST_COREDNS_PODS
 do
@@ -44,10 +47,11 @@ do
     fi
 done
 
+((TEST_CASE += 1))
 echo ""
-echo "#############################################################"
-echo "# Test Case 3: Checking that metallb-system pods are running "
-echo "#############################################################"
+echo "######################################################################"
+echo "# Test Case $TEST_CASE: Checking that metallb-system pods are running "
+echo "######################################################################"
 check_pod_status metallb-system
 if [[ $? == 0 ]]; then
     echo "SUCCESS: metallb-system pods are running."
@@ -56,10 +60,11 @@ else
     exit 1
 fi
 
+((TEST_CASE += 1))
 echo ""
-echo "############################################################"
-echo "# Test Case 4: Verify that all compute nodes are up running "
-echo "############################################################"
+echo "#####################################################################"
+echo "# Test Case $TEST_CASE: Verify that all compute nodes are up running "
+echo "#####################################################################"
 # Find list of compute nodes
 nid_list=$(grep nid.*.local /etc/hosts | grep -v nmn | grep -v bmc | awk '{print $3}')
 
@@ -83,3 +88,29 @@ else
     exit 1
 fi
 
+((TEST_CASE += 1))
+echo ""
+echo "####################################################################################"
+echo "# Test Case $TEST_CASE: Verify that at least one of WLM pods is running on a system "
+echo "####################################################################################"
+# Verify that slurm pod is running on a system
+# check_pod_status is defined in /opt/cray/tests/sms-resources/bin/
+check_pod_status slurm
+rc_slurm_pod=$?
+
+# Verify that pbs pod is running on a system
+check_pod_status pbs
+rc_pbs_pod=$?
+
+if [[ $rc_slurm_pod == 0 && $rc_pbs_pod == 0 ]]; then
+    echo "SUCCESS: Both SLURM and PBS pods are running a system."
+elif [[ $rc_slurm_pod == 0 ]]; then
+    echo "SUCCESS: SLURM pod is running a system"
+elif [[ $rc_pbs_pod == 0 ]]; then
+    echo "SUCCESS: PBS pod is running on a system"
+else
+    echo "FAIL: No WLM pod is running on a system."
+    exit 1
+fi
+
+exit 0
