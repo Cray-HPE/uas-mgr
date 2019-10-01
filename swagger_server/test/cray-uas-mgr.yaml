@@ -4,6 +4,8 @@ uas_ip: 10.100.240.14
 uas_ports:
   - 30123
 
+uai_namespace: "somens"
+
 volume_mounts:
   - name: scratch
     mount_path: /scratch

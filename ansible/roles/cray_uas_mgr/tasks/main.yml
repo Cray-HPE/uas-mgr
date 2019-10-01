@@ -5,6 +5,13 @@
   include_vars: uas_mgr.yml
   run_once: true
 
+- name: Create uai_namespace if needed
+  shell: >
+    kubectl create namespace {{ uai_namespace }}
+  register: k8s_result
+  changed_when: k8s_result.stdout.find('created') != -1
+  failed_when: k8s_result.rc != 0 and k8s_result.stdout.find('AlreadyExists') != -1
+
 - name: Translate templates to K8s yaml files
   template:
     src: "{{ item.file }}.j2"

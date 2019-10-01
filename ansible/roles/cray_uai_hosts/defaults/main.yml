@@ -1,0 +1,6 @@
+# Copyright 2019, Cray Inc. All Rights Reserved.
+---
+# The default namespace for UAIs. Do not change on a running
+# system or you will lose track of the running UAIs.
+# If this is changed - slurm and pbs ansible will also need to change.
+uai_namespace: "user"

@@ -12,8 +12,13 @@ cray_uas_mgr_configmap: "cray-uas-mgr-cfgmap"
 # User Access Image configuration
 cray_uas_sles15_version: "latest"
 
+# The default namespace for UAIs. Do not change on a running
+# system or you will lose track of the running UAIs.
+# If this is changed - slurm and pbs ansible will also need to change.
+uai_namespace: "user"
+
 cray_uas_objects:
  - { ns: "services", file: "cray-uas-mgr.yaml" }
  - { ns: "services", file: "cray-uas-mgr-vs.yaml" }
  - { ns: "services", file: "cray-uas-mgr-cfgmap.yaml" }
- - { ns: "default",  file: "cray-uas-mgr-rbac.yaml" }
+ - { ns: "user",  file: "cray-uas-mgr-rbac.yaml" }

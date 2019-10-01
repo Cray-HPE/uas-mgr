@@ -259,8 +259,13 @@ class UaiManager(object):
             # other parts are still laying around (services for example)
         return resp
 
-    def get_pod_info(self, deployment_name, namespace='default', host=None):  # noqa E501
+    def get_pod_info(self, deployment_name, namespace=None, host=None):  # noqa E501
         pod_resp = None
+
+        if not namespace:
+            namespace = self.uas_cfg.get_uai_namespace()
+            UAS_MGR_LOGGER.info("get_pod_info - UAIs will be gathered from"
+                                " the %s namespace.", namespace)
 
         try:
             UAS_MGR_LOGGER.info("getting pod info %s in namespace %s"
@@ -371,7 +376,7 @@ class UaiManager(object):
                 "uas": "managed",
                 "user": self.username}
 
-    def create_uai(self, publickey, imagename, opt_ports, namespace='default'):
+    def create_uai(self, publickey, imagename, opt_ports, namespace=None):
         opt_ports_list = []
         if not publickey:
             UAS_MGR_LOGGER.warn("create_uai - missing publickey")
@@ -388,10 +393,16 @@ class UaiManager(object):
                 UAS_MGR_LOGGER.info("create_uai - invalid ssh public key")
                 abort(400, "Invalid ssh public key.")
 
+        if not namespace:
+            namespace = self.uas_cfg.get_uai_namespace()
+            UAS_MGR_LOGGER.info("create_uai - UAI will be created in"
+                                " the %s namespace.", namespace)
+
         if not imagename:
             imagename = self.uas_cfg.get_default_image()
             UAS_MGR_LOGGER.info("create_uai - no image name provided, "
                                 "using default %s" % imagename)
+
         if not self.uas_cfg.validate_image(imagename):
             UAS_MGR_LOGGER.error("create_uai - image %s is invalid"
                                  % imagename)
@@ -462,7 +473,7 @@ class UaiManager(object):
                                 str(total_wait))
         return uai_info
 
-    def list_uais(self, label, host=None, namespace='default'):
+    def list_uais(self, label, host=None, namespace=None):
         """
         Lists the UAIs based on a label and/or field selector and namespace
 
@@ -476,6 +487,12 @@ class UaiManager(object):
         """
         resp = None
         uai_list = []
+
+        if not namespace:
+            namespace = self.uas_cfg.get_uai_namespace()
+            UAS_MGR_LOGGER.info("list_uais - UAI will be listed from"
+                                " the %s namespace.", namespace)
+
         if not label:
             label = 'user=' + self.username
         try:
@@ -496,7 +513,7 @@ class UaiManager(object):
                 uai_list.append(uai)
         return uai_list
 
-    def delete_uais(self, deployment_list, namespace='default'):
+    def delete_uais(self, deployment_list, namespace=None):
         """
         Deletes the UAIs named in deployment_list.
         If deployment_list is empty, it will delete all UAIs.
@@ -508,6 +525,12 @@ class UaiManager(object):
         """
         resp_list = []
         uai_list = []
+
+        if not namespace:
+            namespace = self.uas_cfg.get_uai_namespace()
+            UAS_MGR_LOGGER.info("delete_uais - UAI will be deleted from"
+                                " the %s namespace.", namespace)
+
         if not deployment_list:
             for uai in self.list_uais('uas=managed'):
                 uai_list.append(uai.uai_name)
