@@ -4,6 +4,7 @@
 - name: Include uas_mgr.yml
   include_vars: uas_mgr.yml
   run_once: true
+  delegate_to: "{{ groups['bis'][0] }}"
 
 - name: Translate templates to K8s yaml files
   template:
@@ -11,6 +12,7 @@
     dest: "/root/k8s/{{ item.file }}"
   run_once: true
   with_items: "{{ cray_uas_objects }}"
+  delegate_to: "{{ groups['bis'][0] }}"
 
 - name: Apply K8s object files
   command: kubectl apply -n "{{ item.ns }}" -f "/root/k8s/{{ item.file }}"
@@ -18,7 +20,9 @@
   changed_when: kubectl_result.stdout.find('created') != -1 or kubectl_result.stdout.find('configured') != -1
   run_once: true
   with_items: "{{ cray_uas_objects }}"
+  delegate_to: "{{ groups['bis'][0] }}"
 
 - name: Record that cray-uas ran  # Workaround https://github.com/ansible/ansible/issues/31751
   set_fact:
     cray_uas_mgr_ran: True
+  delegate_to: "{{ groups['bis'][0] }}"
