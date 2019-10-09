@@ -3,80 +3,45 @@
 # uan-smoke.sh - UAN Smoke
 # Copyright 2019 Cray Inc. All Rights Reserved.
 
-# See if Role="Application" for UAN is in the Node Map
-cray hsm Defaults NodeMaps list | grep Application
-if [[ $? == 0 ]]; then 
-    echo "Role=Application for UAN is in the Node Map"
+# UAS common functions to test
+# $RESOURCES is set to /opt/cray/tests/ncn-resources
+if [[ -f $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh ]]; then
+    source $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh
 else
-    echo "Role=Application for UAN is not in the Node Map. Skipping check..."
-    echo "After an automated installation of UAN is done, we need to change exit 123 to exit 1"
+    echo "FAIL: Cannot find uas-common-lib.sh. Skipping check..."
     exit 123
 fi
 
-# Get ID for UAN
-ID_UANs=$(cray hsm Defaults NodeMaps list | grep ID | grep -v NID | awk '{print $3}' | sed 's/"//g')
+RESULT_TEST="$PWD/output_${@}$$.txt"
+touch $RESULT_TEST
 
-if [[ -n $ID_UANs ]]; then
-    echo "#################################################"
-    echo "ID for nodes: $ID_UANs"
-    echo "#################################################"
-else
-    echo "FAIL: No IDs are available on a system"
-    exit 1
-fi
+echo "UAN Smoke test" >> $RESULT_TEST
+echo "" >> $RESULT_TEST
 
-# Run cray hsm Inventory Hardware describe ID
-for id in $ID_UANs
-do
-    echo ""
-    echo "#################################################"
-    echo "cray hsm Inventory Hardware describe $id"
-    echo "#################################################"
-    cray hsm Inventory Hardware describe $id
-    if [[ $? == 0 ]]; then
-        echo "UAN is installed on a system."
-    else
-        echo "FAIL: UAN is not installed on a system. Skipping check..."
-        echo "After an automated installation of UAN is done, we need to change exit 123 to exit 1"
-        exit 123
-    fi
-done
-
-# Get list of UANs
-if [[ -f /etc/ansible/hosts/uan ]]; then
-    List_UANs=$(cat /etc/ansible/hosts/uan | grep -v "\[" | grep -v "#")
-    if [[ -n $List_UANs ]]; then
-        echo "List of UANs: $List_UANs"
-    else
-        echo "FAIL: No UANs on a system"
-        exit 1
-    fi
-else
-    echo "FAIL: /etc/ansible/hosts/uan doesn't exit"
-    exit 1
-fi
+# Check that UAN is available on a system
+IS_UAN_AVAILABLE
 
 # Verify that ssh UAN works well
 for i_uan in $List_UANs
 do
-    # Verify that ssh UAN cat /etc/motd works well
+    TEST_CASE_HEADER "Verify that ssh UAN cat /etc/motd works well"
     ssh $i_uan cat /etc/motd
     if [[ $? == 0 ]]; then
-        echo "PASS: ssh $i_uan cat /etc/motd works well"
+        echo "SUCCESS: ssh $i_uan cat /etc/motd works well"
     else
-        echo "FAIL: ssh $i_uan cat /etc/motd doesn't work."
-        exit 1	
+        echo "FAIL: ssh $i_uan cat /etc/motd doesn't work." >> $RESULT_TEST
+        exit_code=1
     fi
 
-    # Verify that PE is installed on UAN
+    TEST_CASE_HEADER "Verify that PE is installed on UAN"
     ssh $i_uan module list
     if [[ $? == 0 ]]; then
-        echo "PASS: ssh $i_uan module list works well"
+        echo "SUCCESS: PE is installed on $i_uan"
     else
-        echo "FAIL: ssh $i_uan module list doesn't work."
-        exit 1
+        echo "FAIL: PE is not installed on $i_uan" >> $RESULT_TEST
+        exit_code=1
     fi
 done
 
-exit 0
-
+# Check a final result
+CHECK_FINAL_RESULT
