@@ -155,13 +155,8 @@ class UasCfg(object):
     def gen_port_entry(self, port, service):
         # Generate a port entry for the service object
         if service:
-            target_port = port
-            if port == UAS_CFG_DEFAULT_PORT:
-                # XXX Fix to be port 22 for CASMUSER-1304
-                target_port = port
             return client.V1ServicePort(name='port' + str(port),
                                         port=port,
-                                        target_port=target_port,
                                         protocol="TCP")
         else:
             return client.V1ContainerPort(container_port=port)
@@ -238,14 +233,14 @@ class UasCfg(object):
             if service_type == "service":
                 svc_type['svc_type'] = 'ClusterIP'
             if service_type == "ssh":
-                svc_type['svc_type'] = 'LoadBalancer'
+                svc_type['svc_type'] = 'NodePort'
         else:
             if service_type == "service":
                 svc_type['svc_type'] = cfg.get('uas_svc_type', 'ClusterIP')
                 if svc_type['svc_type'] == "LoadBalancer":
                     svc_type['ip_pool'] = cfg.get('uas_svc_lb_pool', None)
             if service_type == "ssh":
-                svc_type['svc_type'] = cfg.get('uas_ssh_type', 'LoadBalancer')
+                svc_type['svc_type'] = cfg.get('uas_ssh_type', 'NodePort')
                 if svc_type['svc_type'] == "LoadBalancer":
                     svc_type['ip_pool'] = cfg.get('uas_ssh_lb_pool', None)
         if svc_type['svc_type'] in ['NodePort', 'ClusterIP', 'LoadBalancer']:
