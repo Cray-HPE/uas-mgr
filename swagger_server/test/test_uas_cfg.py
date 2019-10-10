@@ -111,7 +111,7 @@ class TestUasCfg(unittest.TestCase):
         port_list = self.uas_cfg_svc.gen_port_list(service_type="ssh", service=True)
         self.assertEqual(1, len(port_list))
         for pl in port_list:
-            self.assertEqual(30123, pl.port)
+            self.assertEqual(22, pl.port)
             self.assertIsInstance(pl, client.V1ServicePort)
 
         # equivalent to service_type=None, service=False

@@ -154,10 +154,21 @@ class UasCfg(object):
 
     def gen_port_entry(self, port, service):
         # Generate a port entry for the service object
+        svc_type = self.get_svc_type(service_type="ssh")
         if service:
-            return client.V1ServicePort(name='port' + str(port),
-                                        port=port,
-                                        protocol="TCP")
+            if svc_type['svc_type'] == "LoadBalancer":
+                target_port = port
+                if port == UAS_CFG_DEFAULT_PORT:
+                    port = 22
+                    target_port = UAS_CFG_DEFAULT_PORT
+                return client.V1ServicePort(name='port' + str(port),
+                                            port=port,
+                                            target_port=target_port,
+                                            protocol="TCP")
+            else:
+                return client.V1ServicePort(name='port' + str(port),
+                                            port=port,
+                                            protocol="TCP")
         else:
             return client.V1ContainerPort(container_port=port)
 
