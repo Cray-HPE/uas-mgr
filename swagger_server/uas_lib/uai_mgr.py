@@ -350,7 +350,7 @@ class UaiManager(object):
             svc_type = self.uas_cfg.get_svc_type('ssh') 
             if svc_type['svc_type'] == "LoadBalancer":
                 uai.uai_ip = srv_resp.status.load_balancer.ingress[0].ip
-                uai.uai_port = self.uas_cfg.get_default_port()
+                uai.uai_port = 22
             else:
                 uai.uai_ip = self.uas_cfg.get_external_ip()
                 for srv_port in srv_resp.spec.ports:
