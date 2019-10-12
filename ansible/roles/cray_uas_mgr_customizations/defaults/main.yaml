@@ -1,0 +1,14 @@
+# Copyright 2019, Cray Inc. All Rights Reserved.
+---
+ports:
+  - 30123
+uas_ssh_type: "NodePort"
+uas_ssh_lb_pool: "customer-access"
+
+# macvlan setttings
+uai_macvlan_network: 10.252.200.0/23
+uai_macvlan_dhcp_start: 10.252.200.10
+uai_macvlan_dhcp_end: 10.252.201.244
+
+# UAI images
+uas_default_img: "cray/cray-uas-sles15:latest"

@@ -1,0 +1,21 @@
+# Custom cray-uas-mgr chart values
+---
+uasConfig:
+{% if gwn_ipv4 is defined %}
+  ip: "{{ gwn_ipv4 }}"
+{% endif %}
+{% if uas_default_img is defined %}
+  images:
+    defaultImage: "{{ uas_default_img }}"
+    images:
+      - "{{ uas_default_img }}"
+{% endif %}
+  uas_ssh_type: "{{ uas_ssh_type }}"
+  uas_ssh_lb_pool: "{{ uas_ssh_lb_pool }}"
+  uai_macvlan_network: "{{ uai_macvlan_network }}"
+  uai_macvlan_dhcp_start: "{{ uai_macvlan_dhcp_start }}"
+  uai_macvlan_dhcp_end: "{{ uai_macvlan_dhcp_end }}"
+{% if uai_macvlan_mtn_network is defined %}
+  uai_macvlan_mtn_network: "{{ uai_macvlan_mtn_network }}"
+  uai_macvlan_mtn_gateway: "{{ uai_macvlan_mtn_gateway }}"
+{% endif %}

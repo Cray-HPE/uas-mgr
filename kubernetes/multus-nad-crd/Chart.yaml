@@ -1,0 +1,4 @@
+apiVersion: v1
+description: "Multus Network Attachment Definition CRD"
+name: "multus-nad-crd"
+version: 0.0.1

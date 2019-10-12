@@ -13,8 +13,17 @@ spec:
       "mode": "bridge",
       "ipam": {
         "type": "host-local",
-        "subnet": "10.2.0.0/16",
-        "rangeStart": "10.2.200.100",
-        "rangeEnd": "10.2.200.200"
+        "subnet": "{{ .Values.uasConfig.uai_macvlan_network }}",
+        "rangeStart": "{{ .Values.uasConfig.uai_macvlan_dhcp_start }}",
+        "rangeEnd": "{{ .Values.uasConfig.uai_macvlan_dhcp_end }}"
+{{- if .Values.uasConfig.uai_macvlan_mtn_network }}
+         ,
+         "routes": [
+                {
+                    "dst": "{{ .Values.uasConfig.uai_macvlan_mtn_network }}",
+                    "gw": "{{ .Values.uasConfig.uai_macvlan_mtn_gateway }}"
+                } 
+        ]
+{{- end }}
       }
     }'

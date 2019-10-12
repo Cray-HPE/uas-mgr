@@ -1,15 +1,24 @@
 # Please https://stash.us.cray.com/projects/CLOUD/repos/cray-charts/browse/stable/cray-service/values.yaml?at=refs%2Fheads%2Fmaster
-# for more info on values you can set/override
-
+# for more info on values you can set/override.
 uasConfig:
-  ip: "" # API gateway IP that can be set at install/upgrade time, likely some UAS work to move to a more service-discovery approach for what this value serves
   ports:
     - 30123
+  uas_ssh_type: "NodePort"
+  uas_ssh_lb_pool: "customer-access"
+
+# macvlan setttings
+  uai_macvlan_network: 10.252.200.0/23
+  uai_macvlan_dhcp_start: 10.252.200.10
+  uai_macvlan_dhcp_end: 10.252.201.244
+
+# UAI images
   images:
-    # Must also appear in 'images' below
+  # Default image must also be in 'images'
     defaultImage: "cray/cray-uas-sles15:latest"
     images:
       - "cray/cray-uas-sles15:latest"
+
+# UAI volume mounts
   volumeMounts:
     - name: lustre
       mount_path: /lus
@@ -18,9 +27,6 @@ uasConfig:
       mount_path: /etc/localtime
       host_path: /etc/localtime
       type: FileOrCreate
-  uas_ssh_type: "NodePort"
-  uas_ssh_lb_pool: "customer"
-
 
 cray-service:
   type: Deployment
