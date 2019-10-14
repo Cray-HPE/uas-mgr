@@ -31,13 +31,13 @@ data:
     # This section defines the service types that the UAS instance will use for
     # user ssh and UAI service I/O.
     # uas_ssh_type: defines the service type for user ssh access to the UAI.
-    uas_ssh_type: "{{ .Values.uasConfig.ssh_type }}"
+    uas_ssh_type: "{{ .Values.uasConfig.uas_ssh_type }}"
 
     # UAS Service Load Balancer Pools
     # This section defines the service load balancer IP pools that the UAS
     # instance will use for user ssh and UAI service I/O.
     # uas_ssh_lb_pool: defines the service load balancer IP pool for user ssh access to the UAI.
-    uas_ssh_lb_pool: "{{ .Values.uasConfig.ssh_lb_pool }}"
+    uas_ssh_lb_pool: "{{ .Values.uasConfig.uas_ssh_lb_pool }}"
 
     # Volume mounts.
     # This section defines which filesystems will be volume mounted from the
@@ -64,3 +64,5 @@ data:
       {{- range .Values.uasConfig.images.images }}
         - "{{ include "cray-service.image-prefix" $baseChartValues }}{{ . }}"
       {{- end }}
+
+    uai_namespace: "{{ .Values.uasConfig.uai_namespace }}"

@@ -4,6 +4,7 @@ kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: cray-uas-mgr
+  namespace: {{ .Values.Namespace }}
 rules:
   - apiGroups: ["extensions"]
     resources: ["deployments"]
@@ -19,6 +20,7 @@ kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: cray-uas-mgr
+  namespace: {{ .Values.uai_namespace }}
 subjects:
   - kind: ServiceAccount
     name: cray-uas-mgr
