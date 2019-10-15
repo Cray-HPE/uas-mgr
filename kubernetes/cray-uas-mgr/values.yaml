@@ -18,9 +18,9 @@ uasConfig:
 # UAI images
   images:
   # Default image must also be in 'images'
-    defaultImage: "cray/cray-uas-sles15:latest"
+    defaultImage: "sms.local:5000/cray/cray-uas-sles15:latest"
     images:
-      - "cray/cray-uas-sles15:latest"
+      - "sms.local:5000/cray/cray-uas-sles15:latest"
 
 # UAI volume mounts
   volumeMounts:

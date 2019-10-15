@@ -59,10 +59,10 @@ data:
     #     - 'repo:port/cray-uas-img:latest'
     #
     uas_images:
-      default_image: "{{ include "cray-service.image-prefix" $baseChartValues }}{{ .Values.uasConfig.images.defaultImage }}"
+      default_image: "{{ .Values.uasConfig.images.defaultImage }}"
       images:
       {{- range .Values.uasConfig.images.images }}
-        - "{{ include "cray-service.image-prefix" $baseChartValues }}{{ . }}"
+        - "{{ . }}"
       {{- end }}
 
     uai_namespace: "{{ .Values.uasConfig.uai_namespace }}"
