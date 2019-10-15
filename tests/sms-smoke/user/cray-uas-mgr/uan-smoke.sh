@@ -61,6 +61,38 @@ do
         echo "WARNING: man page does not work for standard Linux/Unix commands on $i_uan. It is due to a known bug, SKERN-2206. Skipping check..."
         EXIT_CODE=123
     fi
+
+    TEST_CASE_HEADER "Verify that Lustre file system works well on $i_uan"
+    # An environment variable, SHARED_FS, must be defined in /opt/cray/tests/bin/ct-uan-create.
+    if [[ -n $SHARED_FS ]] ; then
+        echo "ssh $i_uan ls -l $SHARED_FS"
+        ssh $i_uan ls -l $SHARED_FS
+        if [[ $? == 0 ]]; then
+            echo ""
+            echo "ssh $i_uan ls -l $MOUNT_FILE"
+            ssh $i_uan ls -l $MOUNT_FILE
+            if [[ $? == 0 ]]; then
+                echo ""
+                echo "ssh $i_uan grep -qs $SHARED_FS $MOUNT_FILE"
+                ssh $i_uan grep -qs $SHARED_FS $MOUNT_FILE
+                if [[ $? == 0 ]]; then
+                    echo "SUCCESS: Lustre file system, $SHARED_FS, is mounted on $i_uan"
+                else
+                    echo "FAIL: Lustre file system, $SHARED_FS, is not mounted on $i_uan" >> $RESULT_TEST
+                    EXIT_CODE=1
+                fi
+            else
+                echo "FAIL: /proc/mounts does not exit on $i_uan" >> $RESULT_TEST
+                EXIT_CODE=1
+            fi
+        else
+            echo "FAIL: Lustre file system, $SHARED_FS, is not available on $i_uan" >> $RESULT_TEST
+            EXIT_CODE=1
+        fi
+    else
+        echo "WARNING: An environment variable, SHARED_FS, is not set. Skipping check..."
+        EXIT_CODE=123
+    fi
 done
 
 # Check a final result
