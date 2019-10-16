@@ -4,10 +4,11 @@
 # Copyright 2019 Cray Inc. All Rights Reserved.
 
 # Global variables
-FN_COMMON="uas-common-lib"
 EXIT_CODE=0
-TEST_CASE=0
+FN_COMMON="uas-common-lib"
 MAX_TRY=5
+MOUNT_FILE="/proc/mounts"
+TEST_CASE=0
 
 # Test case header
 function TEST_CASE_HEADER {
@@ -84,10 +85,10 @@ function GET_NID_LIST {
     echo "Running get_node tool"
     get_node
     if [[ $? == 0 ]]; then
-        echo "SUCCESS: [$FN_COMMON] Compute nodes are available on the system:"
+        echo "SUCCESS: [$FN_COMMON] HSN and Compute nodes are available on the system:"
         echo "$nid_list"
     else
-        echo "FAIL: [$FN_COMMON] Compute nodes are not available on the system."
+        echo "FAIL: [$FN_COMMON] HSN and Compute nodes are not available on the system."
         exit 1
     fi
 }
