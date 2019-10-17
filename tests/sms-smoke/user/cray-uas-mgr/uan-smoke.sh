@@ -45,10 +45,25 @@ do
     fi
 
     TEST_CASE_HEADER "Verify that ping outside of cray network works well on $i_uan"
-    ssh $i_uan ping -c 1 www.hpe.com
-    if [[ $? == 0 ]]; then
-        echo "SUCCESS: ping outside of cray network works well on $i_uan"
-    else
+    # When trying to do ping -c 1 www.hpe.com on UANs,
+    # it returns destination unreachable: No route error randomly.
+    # To avoid getting the random failure, need to retry in ping
+    max_try=20
+    for ((try = 1; try <= $max_try; try++))
+    do
+        echo "ssh $i_uan ping -c 1 www.hpe.com"
+
+        ssh $i_uan ping -c 1 www.hpe.com
+        if [[ $? == 0 ]]; then
+            echo "Try: $try"
+            echo "SUCCESS: ping outside of cray network works well on $i_uan"
+            break;
+        fi
+    done
+
+    if ((try > max_try))
+    then
+        echo "Try: $try"
         echo "FAIL: Cannot ping outside of cray network on $i_uan" >> $RESULT_TEST
         EXIT_CODE=1
     fi
@@ -64,6 +79,7 @@ do
 
     TEST_CASE_HEADER "Verify that Lustre file system works well on $i_uan"
     # An environment variable, SHARED_FS, must be defined in /opt/cray/tests/bin/ct-uan-create.
+    echo "SHARED_FS: $SHARED_FS"
     if [[ -n $SHARED_FS ]] ; then
         echo "ssh $i_uan ls -l $SHARED_FS"
         ssh $i_uan ls -l $SHARED_FS
