@@ -1,3 +1,3 @@
-# Kubernetes Resources for uas-mgr & multis-nad-crd
+# Kubernetes Resources for uas-mgr
 
-* Helm Chart(s)
+* Helm Chart for cray-uas-mgr
