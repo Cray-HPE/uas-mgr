@@ -22,6 +22,14 @@
     uai_macvlan_bridge_if: "{{ item.macvlan_bridge_if | default( uai_macvlan_bridge_vlan ) }}"
   loop: "{{ uai_macvlan }}"
 
+- name: Create uai_namespace if needed
+  shell: >
+    kubectl create namespace {{ uai_namespace }}
+  register: k8s_result
+  changed_when: k8s_result.stdout.find('created') != -1
+  failed_when: k8s_result.rc != 0 and k8s_result.stdout.find('AlreadyExists') != -1
+  delegate_to: "{{ groups['bis'][0] }}"
+
 - name: Create cray-uas-mgr helm customizations file
   delegate_to: "{{ groups['bis']|first }}"
   run_once: true

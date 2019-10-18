@@ -6,22 +6,7 @@ configured to do so.
 
 To start User Access Instances (UAIs), a label of 'uas:true' must be
 assigned to one or more worker nodes. For detailed instructions on adding
-worker nodes and labels, consult the kubernetes-installer documentation. For
-each worker node intended to be eligible to run UAS, define a labels.yml
-file using the directory structure and contents shown below.
-
-```
-host_vars/
-└── ssn-01.craydev.com
-    └── labels.yml
-```
-
-labels.yml:
-```
----
-kubernetes_tnl_labels:
-  - {key: uas, value: true}
-```
+worker nodes as UAI hosts, consult the Cray UAS administration documentation.
 
 If a label of 'uas:true' does not exist for a node, User Access Instances will remain
 in a status of "Pending".
