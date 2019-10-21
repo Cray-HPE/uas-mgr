@@ -15,19 +15,6 @@ else
     exit 123
 fi
 
-# Get WLM version
-function GET_WLM_VERSION {
-    TEST_CASE_HEADER "Test WLM version"
-
-    WLM_Version=$(rpm -qa | egrep -i "$1")
-    if [[ $? == 0 ]]; then
-        echo "SUCCESS: $1 version, $WLM_Version"
-    else
-        echo "FAIL: Cannot get $1 version."
-        exit 1
-    fi
-}
-
 TEST_CASE_HEADER "Checking that DNS pods are running"
 # check_pod_status is defined in /opt/cray/tests/sms-resources/bin
 check_pod_status coredns
@@ -105,22 +92,16 @@ else
 fi
 
 TEST_CASE_HEADER "Verify that at least one of WLM pods is running on the system"
-# Verify that slurm pod is running on the system
-# check_pod_status is defined in /opt/cray/tests/ncn-resources/bin/
-check_pod_status slurm
-rc_slurm_pod=$?
+# Check that WLM is running on the system
+FIND_WLM
 
-# Verify that pbs pod is running on the system
-check_pod_status pbs
-rc_pbs_pod=$?
-
-if [[ $rc_slurm_pod == 0 && $rc_pbs_pod == 0 ]]; then
+if [[ $RC_SLURM_POD == 0 && $RC_PBS_POD == 0 ]]; then
     echo "SUCCESS: Both SLURM and PBS pods are running on the system."
 
     # Test WLM version
     GET_WLM_VERSION "SLURM|PBS"
 
-elif [[ $rc_slurm_pod == 0 ]]; then
+elif [[ $RC_SLURM_POD == 0 ]]; then
     echo "SUCCESS: SLURM pod is running on the system"
 
     # Test SLURM version
@@ -131,9 +112,9 @@ elif [[ $rc_slurm_pod == 0 ]]; then
 
     # SLURM smoke test
     # It is defined in $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh
-    SLURM_SMOKE_TEST
+    SLURM_SMOKE_TEST UAI
 
-elif [[ $rc_pbs_pod == 0 ]]; then
+elif [[ $RC_PBS_POD == 0 ]]; then
     echo "SUCCESS: PBS pod is running on the system"
 
     # Test PBS vesion
@@ -144,7 +125,7 @@ elif [[ $rc_pbs_pod == 0 ]]; then
 
     # PBS smoke test
     # It is defined in $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh
-    PBS_SMOKE_TEST
+    PBS_SMOKE_TEST UAI
 
 else
     echo "FAIL: No WLM pod is running on the system."

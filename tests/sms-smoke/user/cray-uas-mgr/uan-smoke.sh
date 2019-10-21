@@ -109,6 +109,76 @@ do
         echo "WARNING: An environment variable, SHARED_FS, is not set. Skipping check..."
         EXIT_CODE=123
     fi
+
+TEST_CASE_HEADER "Verify that at least one of WLM pods is running on the system"
+# Check that WLM is running on the system
+FIND_WLM
+
+if [[ $RC_SLURM_POD == 0 && $RC_PBS_POD == 0 ]]; then
+    echo "SUCCESS: Both SLURM and PBS pods are running on the system."
+
+    # Test WLM version
+    GET_WLM_VERSION "SLURM|PBS"
+
+    # SLURM smoke test
+    SLURM_SMOKE_TEST UAN
+
+    # SLURM functional test
+    SLURM_FUNCTIONAL_TEST UAN "srun -N 1 hostname"
+
+    SLURM_FUNCTIONAL_TEST UAN "salloc -N 1 hostname"
+
+    SLURM_FUNCTIONAL_TEST UAN "squeue"
+
+    SLURM_FUNCTIONAL_TEST UAN "sacct"
+
+    SLURM_FUNCTIONAL_TEST UAN "sacctmgr list account"
+
+    # PBS smoke test
+    PBS_SMOKE_TEST UAN
+
+elif [[ $RC_SLURM_POD == 0 ]]; then
+    echo "SUCCESS: SLURM pod is running on the system"
+
+    # Test SLURM version
+    GET_WLM_VERSION SLURM
+
+    # Check that a default UAS image is SLURM
+    CHECK_DEFAULT_UAS_IMAGE SLURM
+
+    # SLURM smoke test
+    # It is defined in $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh
+    SLURM_SMOKE_TEST UAN
+
+    # SLURM functional test
+    SLURM_FUNCTIONAL_TEST UAN "srun -N 1 hostname"
+
+    SLURM_FUNCTIONAL_TEST UAN "salloc -N 1 hostname"
+
+    SLURM_FUNCTIONAL_TEST UAN "squeue"
+
+    SLURM_FUNCTIONAL_TEST UAN "sacct"
+
+    SLURM_FUNCTIONAL_TEST UAN "sacctmgr list account"
+
+elif [[ $RC_PBS_POD == 0 ]]; then
+    echo "SUCCESS: PBS pod is running on the system"
+
+    # Test PBS vesion
+    GET_WLM_VERSION PBS
+
+    # Check that a default UAS image is PBS
+    CHECK_DEFAULT_UAS_IMAGE PBS
+
+    # PBS smoke test
+    # It is defined in $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh
+    PBS_SMOKE_TEST UAN
+
+else
+    echo "FAIL: No WLM pod is running on the system." >> $RESULT_TEST
+    EXIT_CODE=1
+fi
+
 done
 
 # Check a final result
