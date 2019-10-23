@@ -1,11 +1,7 @@
-# Copyright 2018, Cray Inc. All Rights Reserved.
+# Copyright 2019, Cray Inc. All Rights Reserved.
 ---
 dependencies:
-  #@DEP@- docker
-  #@DEP@- kubernetes_master
-  #@DEP@- kong
-  #@DEP@- configmap_ca_certificate
-  #@DEP@- cray_node_discovery
+  #@DEP@- loftsman-init
 
 # NOTE: Ansible is very inefficent at handling complex
 #       recursive dependencies.  So rather than depending on

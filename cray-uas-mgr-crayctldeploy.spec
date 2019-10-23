@@ -47,6 +47,7 @@ cp -R tests %{buildroot}%{test_dir}
 
 install -D -m 644 ansible/customer_runbooks/uas-mgr.yml %{buildroot}%{cme_premium_plays_dir}/uas-mgr.yml
 install -D -m 644 ansible/customer_runbooks/uai-hosts.yml %{buildroot}%{cme_premium_plays_dir}/uai-hosts.yml
+install -D -m 644 ansible/customer_runbooks/cray-uas-mgr-customizations.yaml %{buildroot}%{cme_premium_plays_dir}/cray-uas-mgr-customizations.yaml
 mkdir -p %{buildroot}%{cme_premium_roles_dir}
 cp -R ansible/roles/cray_* %{buildroot}%{cme_premium_roles_dir}
 

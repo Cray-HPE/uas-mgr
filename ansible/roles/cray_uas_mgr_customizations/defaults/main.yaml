@@ -1,0 +1,20 @@
+# Copyright 2019, Cray Inc. All Rights Reserved.
+---
+# UAS manager default ports and ssh access parameters.
+ports:
+  - 30123
+uas_ssh_type: "NodePort"
+uas_ssh_lb_pool: "customer-access"
+
+# The default namespace for UAIs. Do not change on a running
+# system or you will lose track of the running UAIs.
+# If this is changed - slurm and pbs ansible will also need to change.
+uai_namespace: "user"
+
+# macvlan setttings
+uai_macvlan_network: 10.252.200.0/23
+uai_macvlan_dhcp_start: 10.252.200.10
+uai_macvlan_dhcp_end: 10.252.201.244
+
+# UAI images
+uas_default_img: "cray/cray-uas-sles15:latest"

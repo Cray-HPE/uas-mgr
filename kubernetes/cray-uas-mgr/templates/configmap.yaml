@@ -1,0 +1,68 @@
+{{- $root := . -}}
+{{- $baseChartValues := index .Values "cray-service" -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cray-uas-mgr-cfgmap
+data:
+  cray-uas-mgr.yaml: |
+    #
+    # Copyright 2019, Cray Inc.  All Rights Reserved.
+    #
+    # Cray User Access Instance Manager Configuration file.
+    #
+    # This file provides the configuration data for the user access instance
+    # manager.
+    #
+    ---
+    # UAS Instance IP/hostname.
+    # This section defines the external IP/hostname that UAS instance access
+    # will use.
+    uas_ip: "{{ .Values.uasConfig.ip }}"
+
+    # UAS Ports
+    # This section defines the ports that the UAS instance services will expose
+    # for user access.
+    uas_ports:
+      {{- toYaml .Values.uasConfig.ports | nindent 6 }}
+
+    # UAS Service Types
+    # This section defines the service types that the UAS instance will use for
+    # user ssh and UAI service I/O.
+    # uas_ssh_type: defines the service type for user ssh access to the UAI.
+    uas_ssh_type: "{{ .Values.uasConfig.uas_ssh_type }}"
+
+    # UAS Service Load Balancer Pools
+    # This section defines the service load balancer IP pools that the UAS
+    # instance will use for user ssh and UAI service I/O.
+    # uas_ssh_lb_pool: defines the service load balancer IP pool for user ssh access to the UAI.
+    uas_ssh_lb_pool: "{{ .Values.uasConfig.uas_ssh_lb_pool }}"
+
+    # Volume mounts.
+    # This section defines which filesystems will be volume mounted from the
+    # host to the UAS instance.
+    #   name: name of the mount
+    #   mount_path: absolute path where the UAS instance should mount this volume.
+    #   host_path: absolute path on the host system of the volume to mount.
+    #
+    volume_mounts:
+      {{- toYaml .Values.uasConfig.volumeMounts | nindent 6 }}
+
+    # UAS Images
+    # The following list contains the supported images a user may choose for
+    # their UAS instance.  Image names must be quoted if they contain special
+    # characters such as ':'.
+    #
+    #   default_image: default image name to use if none are selected.
+    #   images:
+    #     - 'repo:port/cray-uas-img:latest'
+    #
+    uas_images:
+      default_image: "{{ .Values.uasConfig.images.defaultImage }}"
+      images:
+      {{- range .Values.uasConfig.images.images }}
+        - "{{ . }}"
+      {{- end }}
+
+    uai_namespace: "{{ .Values.uasConfig.uai_namespace }}"

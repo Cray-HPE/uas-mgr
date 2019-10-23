@@ -1,0 +1,29 @@
+---
+# Based on https://github.com/intel/multus-cni/blob/master/examples/macvlan-conf.yml
+# Macvlan definition for UAS on the node management network
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: macvlan-uas-nmn-conf
+spec:
+  config: '{
+      "cniVersion": "0.3.0",
+      "type": "macvlan",
+      "master": "mac0",
+      "mode": "bridge",
+      "ipam": {
+        "type": "host-local",
+        "subnet": "{{ .Values.uasConfig.uai_macvlan_network }}",
+        "rangeStart": "{{ .Values.uasConfig.uai_macvlan_dhcp_start }}",
+        "rangeEnd": "{{ .Values.uasConfig.uai_macvlan_dhcp_end }}"
+{{- if .Values.uasConfig.uai_macvlan_mtn_network }}
+         ,
+         "routes": [
+                {
+                    "dst": "{{ .Values.uasConfig.uai_macvlan_mtn_network }}",
+                    "gw": "{{ .Values.uasConfig.uai_macvlan_mtn_gateway }}"
+                } 
+        ]
+{{- end }}
+      }
+    }'

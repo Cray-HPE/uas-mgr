@@ -1,0 +1,98 @@
+# Please https://stash.us.cray.com/projects/CLOUD/repos/cray-charts/browse/stable/cray-service/values.yaml?at=refs%2Fheads%2Fmaster
+# for more info on values you can set/override.
+uasConfig:
+  ip: 192.0.2.1
+  ports:
+    - 30123
+  uas_ssh_type: "NodePort"
+  uas_ssh_lb_pool: "customer-access"
+
+# UAI namespace
+  uai_namespace: "user"
+
+# macvlan setttings
+  uai_macvlan_network: 10.252.200.0/23
+  uai_macvlan_dhcp_start: 10.252.200.10
+  uai_macvlan_dhcp_end: 10.252.201.244
+
+# UAI images
+  images:
+  # Default image must also be in 'images'
+    defaultImage: "sms.local:5000/cray/cray-uas-sles15:latest"
+    images:
+      - "sms.local:5000/cray/cray-uas-sles15:latest"
+
+# UAI volume mounts
+  volumeMounts:
+    - name: lustre
+      mount_path: /lus
+      host_path: /lus
+      type: DirectoryOrCreate
+    - name: timezone
+      mount_path: /etc/localtime
+      host_path: /etc/localtime
+      type: FileOrCreate
+
+cray-service:
+  type: Deployment
+  replicaCount: 2
+  nameOverride: cray-uas-mgr
+  serviceAccountName: "cray-uas-mgr"
+
+  volumes:
+    - name: cray-uas-mgr-cfgmap
+      configMap:
+        name: cray-uas-mgr-cfgmap
+    - name: ca-vol
+      configMap:
+        name: cray-configmap-ca-public-key
+
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 50
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app
+              operator: In
+              values:
+              - cray-uas-mgr
+          topologyKey: kubernetes.io/hostname
+
+  service:
+    ports:
+    - port: 8088
+      name: http
+      protocol: TCP
+      targetPort: http
+
+  containers:
+    - name: cray-uas-mgr
+      image:
+        repository: cray/cray-uas-mgr
+      ports:
+        - name: http
+          containerPort: 8088
+      livenessProbe:
+        httpGet:
+          port: 8088
+          path: /v1/mgr-info
+        initialDelaySeconds: 5
+        periodSeconds: 3
+      readinessProbe:
+        httpGet:
+          port: 8088
+          path: /v1/mgr-info
+        initialDelaySeconds: 5
+        periodSeconds: 3
+      volumeMounts:
+        - name: cray-uas-mgr-cfgmap
+          mountPath: /etc/uas
+        - name: ca-vol
+          mountPath: /mnt/ca-vol
+
+  ingress:
+    enabled: true
+    prefix: /apis/uas-mgr/
+    uri: /

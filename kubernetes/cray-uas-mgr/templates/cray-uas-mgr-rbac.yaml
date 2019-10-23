@@ -1,10 +1,10 @@
-# Copyright 2018, Cray Inc. All Rights Reserved.
+# Copyright 2019, Cray Inc. All Rights Reserved.
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: cray-uas-mgr
-  namespace: {{ uai_namespace }}
+  namespace: {{ .Values.Namespace }}
 rules:
   - apiGroups: ["extensions"]
     resources: ["deployments"]
@@ -20,11 +20,11 @@ kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: cray-uas-mgr
-  namespace: {{ uai_namespace }}
+  namespace: {{ .Values.uai_namespace }}
 subjects:
   - kind: ServiceAccount
     name: cray-uas-mgr
-    namespace: services
+    namespace: {{ .Release.Namespace }}
 roleRef:
   kind: Role
   name: cray-uas-mgr

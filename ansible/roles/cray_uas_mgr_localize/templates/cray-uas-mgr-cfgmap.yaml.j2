@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cray-uas-mgr-cfgmap
+data:
+  cray-uas-mgr.yaml: |
+    {{ cfgmap_data.stdout | regex_replace('^\"\"|\"\"$', '') | indent(4) }}
+
