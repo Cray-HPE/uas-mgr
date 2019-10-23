@@ -5,4 +5,5 @@
 # cray-uas-mgr reads config data from a Kubernetes configmap.
 
 cray_uas_mgr_configmap: "cray-uas-mgr-cfgmap"
+cray_uas_mgr_configmap_data: "/root/k8s/cray-uas-mgr-cfgmap-data.yaml"
 cray_uas_mgr_configmap_file: "/root/k8s/cray-uas-mgr-cfgmap.yaml"
