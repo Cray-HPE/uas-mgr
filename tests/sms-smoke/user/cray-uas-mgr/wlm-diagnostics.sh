@@ -15,6 +15,12 @@ else
     exit 123
 fi
 
+RESULT_TEST="$PWD/output_${@}$$.txt"
+touch $RESULT_TEST
+
+echo "WLM diagnostics test" >> $RESULT_TEST
+echo "" >> $RESULT_TEST
+
 TEST_CASE_HEADER "Checking that DNS pods are running"
 # check_pod_status is defined in /opt/cray/tests/sms-resources/bin
 check_pod_status coredns
@@ -101,6 +107,20 @@ if [[ $RC_SLURM_POD == 0 && $RC_PBS_POD == 0 ]]; then
     # Test WLM version
     GET_WLM_VERSION "SLURM|PBS"
 
+    # Get a default UAS image
+    GET_DEFAULT_UAS_IMAGE
+    if [[ $DEFAULT_UAS_IMAGE == SLURM ]]; then
+        # SLURM smoke test
+        # It is defined in $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh
+        SLURM_SMOKE_TEST UAI
+    fi
+
+    if [[ $DEFAULT_UAS_IMAGE == PBS ]]; then
+        # PBS smoke test
+        # It is defined in $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh
+        PBS_SMOKE_TEST UAI
+    fi
+
 elif [[ $RC_SLURM_POD == 0 ]]; then
     echo "SUCCESS: SLURM pod is running on the system"
 
@@ -132,4 +152,5 @@ else
     exit 1
 fi
 
-exit 0
+# Check a final result
+CHECK_FINAL_RESULT

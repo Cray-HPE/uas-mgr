@@ -10,6 +10,7 @@ LOGIN_NODE=""
 MAX_TRY=5
 MOUNT_FILE="/proc/mounts"
 TEST_CASE=0
+PBS_JOB_ID=""
 
 # Test case header
 function TEST_CASE_HEADER {
@@ -65,8 +66,8 @@ function SLURM_SMOKE_TEST {
     if ((try > MAX_TRY))
     then
         echo "Try: $try"
-        echo "FAIL: [$FN_COMMON] sinfo doesn't work."
-        exit 1
+        echo "FAIL: [$FN_COMMON] sinfo doesn't work." >> $RESULT_TEST
+        EXIT_CODE=1
     fi
 }
 
@@ -103,8 +104,8 @@ function PBS_SMOKE_TEST {
     if ((try > MAX_TRY))
     then
         echo "Try: $try"
-        echo "FAIL: [$FN_COMMON] qstat doesn't work."
-        exit 1
+        echo "FAIL: [$FN_COMMON] qstat doesn't work." >> $RESULT_TEST
+        EXIT_CODE=1
     fi
 }
 
@@ -207,6 +208,21 @@ function GET_WLM_VERSION {
     fi
 }
 
+# Get default uas image
+function GET_DEFAULT_UAS_IMAGE {
+    # Check that default uas image is SLURM
+    cray uas images list | grep default | grep -i slurm
+    if [[ $? == 0 ]]; then
+        DEFAULT_UAS_IMAGE="SLURM"
+    fi
+
+    # Check that default uas image is PBS
+    cray uas images list | grep default | grep -i pbs
+    if [[ $? == 0 ]]; then
+        DEFAULT_UAS_IMAGE="PBS"
+    fi
+}
+
 # SLURM functional test
 function SLURM_FUNCTIONAL_TEST {
 
@@ -246,6 +262,147 @@ function SLURM_FUNCTIONAL_TEST {
     else
         echo "WARNING: No second argument, SLURM commands, supplied. Skipping check..."
         exit 123
+    fi
+}
+
+# PBS functional test
+function PBS_FUNCTIONAL_TEST {
+
+    # First argument is for UAN/UAI
+    if [[ $1 == UAI ]]; then
+        # Make sure that UAI is available.
+        # If it is unavailable, skipping check.
+        source need_uai
+
+        LOGIN_NODE="$UAI"
+    elif [[ $1 == UAN ]]; then
+        LOGIN_NODE="$i_uan"
+    else
+        echo "WARNING: No first argument, UAN/UAI, supplied. Skipping check..."
+        exit 123
+    fi
+
+    if [[ -n $SHARED_FS ]] ; then
+        cd $SHARED_FS
+    else
+        echo "WARNING: An environment variable, SHARED_FS, is not set. Skipping check..."
+        exit 123
+    fi
+
+    # Second argument is for PBS job script name
+    if [[ $2 != "" ]]; then
+        PBS_JOB_SCRIPT_NAME="$2"
+        PBS_JOB_SCRIPT="$RESOURCES/user/cray-uas-mgr/$PBS_JOB_SCRIPT_NAME"
+    else
+        echo "WARNING: No second argument, PBS job script name, supplied. Skipping check..."
+        exit 123
+    fi
+
+    # Submits PBS job
+    TEST_CASE_HEADER "Test qsub <job script> on $LOGIN_NODE"
+    ssh $LOGIN_NODE which qsub
+    if [[ $? == 0 ]]; then
+        if [[ -f $PBS_JOB_SCRIPT ]]; then
+            echo "[$FN_COMMON]: Found $PBS_JOB_SCRIPT"
+
+            # rsync PBS job script to shared file system in UAN/UAI
+            echo "rsync -rz $PBS_JOB_SCRIPT $LOGIN_NODE:$SHARED_FS"
+            rsync -rz $PBS_JOB_SCRIPT $LOGIN_NODE:$SHARED_FS
+
+            # Make sure that PBS job script exists in UAN/UAI
+            ssh $LOGIN_NODE ls -l $SHARED_FS/$PBS_JOB_SCRIPT_NAME
+            if [[ $? == 0 ]]; then
+                # qsub PBS job script
+                CMD="qsub $SHARED_FS/$PBS_JOB_SCRIPT_NAME"
+                echo "ssh $LOGIN_NODE $CMD"
+
+                # Get job ID
+                PBS_JOB_ID=$(ssh $LOGIN_NODE $CMD)
+                if [[ $? == 0 ]]; then
+                    echo "SUCCESS: [$FN_COMMON] Job id is $PBS_JOB_ID for $CMD on $LOGIN_NODE."
+                else
+                    echo "FAIL: [$FN_COMMON] No job id found for $CMD on $LOGIN_NODE." >> $RESULT_TEST
+                    EXIT_CODE=1
+                fi
+            else
+                echo "FAIL: [$FN_COMMON] $SHARED_FS/$PBS_JOB_SCRIPT_NAME doesn't exist on $LOGIN_NODE. Skipping check..."
+                exit 123
+            fi
+        else
+            echo "FAIL: [$FN_COMMON] $PBS_JOB_SCRIPT doesn't exist. Skipping check..."
+            exit 123
+        fi
+    else
+        echo "FAIL: [$FN_COMMON] qsub doesn't exist on $LOGIN_NODE." >> $RESULT_TEST
+        EXIT_CODE=1
+    fi
+
+    # Shows the status of PBS jobs
+    TEST_CASE_HEADER "Test qstat -f <job id> on $LOGIN_NODE"
+    if [[ -n $PBS_JOB_ID ]]; then
+        # Test qstat -f
+        CMD="qstat -f $PBS_JOB_ID"
+
+        # Get job state
+        CMD_JOB_STATE="qstat -f $PBS_JOB_ID | grep job_state | awk '{print \$3}'"
+        echo "ssh $LOGIN_NODE $CMD"
+        ssh $LOGIN_NODE $CMD
+        if [[ $? == 0 ]]; then
+            echo "SUCCESS: [$FN_COMMON] $CMD works well on $LOGIN_NODE"
+            for ((try = 1; try <= $MAX_TRY; try++))
+            do
+                # Make sure that job state is R
+                # R means a job is running
+                echo "ssh $LOGIN_NODE $CMD_JOB_STATE"
+                JOB_STATE=$(ssh $LOGIN_NODE $CMD_JOB_STATE)
+                if [[ $JOB_STATE == "R" ]]; then
+                    echo "Try: $try"
+                    echo "SUCCESS: [$FN_COMMON] $PBS_JOB_ID is running state, $JOB_STATE"
+                    break;
+                fi
+            done
+
+            if ((try > MAX_TRY))
+            then
+                echo "Try: $try"
+                echo "FAIL: [$FN_COMMON] $PBS_JOB_ID is not running state, Job State: $JOB_STATE" >> $RESULT_TEST
+                EXIT_CODE=1
+            fi
+        else
+            echo "FAIL: [$FN_COMMON] $CMD doesn't work on $LOGIN_NODE" >> $RESULT_TEST
+            EXIT_CODE=1
+        fi
+    else
+        echo "FAIL: [$FN_COMMON] No job id found for $CMD on $LOGIN_NODE." >> $RESULT_TEST
+        EXIT_CODE=1
+    fi
+
+    # Deletes PBS job
+    TEST_CASE_HEADER "Test qdel <job id> on $LOGIN_NODE"
+    CMD="qdel $PBS_JOB_ID"
+    echo "ssh $LOGIN_NODE $CMD"
+    ssh $LOGIN_NODE $CMD
+    if [[ $? == 0 ]]; then
+        for ((try = 1; try <= $MAX_TRY; try++))
+        do
+            # Verify that job state is not R anymore after deleting the job
+            JOB_STATE=$(ssh $LOGIN_NODE $CMD_JOB_STATE)
+            if [[ $JOB_STATE != "R" ]]; then
+                echo "Try: $try"
+                echo "SUCCESS: [$FN_COMMON] $PBS_JOB_ID is deleted by $CMD. Job State: $JOB_STATE"
+                break;
+            fi
+        done
+
+        if ((try > MAX_TRY))
+        then
+            echo "Try: $try"
+            echo "FAIL: [$FN_COMMON] $PBS_JOB_ID is not deleted by $CMD" >> $RESULT_TEST
+            EXIT_CODE=1
+        fi
+    else
+        echo "FAIL: [$FN_COMMON] $CMD doesn't work on $LOGIN_NODE" >> $RESULT_TEST
+        EXIT_CODE=1
     fi
 }
 
