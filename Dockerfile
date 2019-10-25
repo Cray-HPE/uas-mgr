@@ -17,9 +17,8 @@ RUN apk update && apk add $BASE_PACKAGES && apk add $DEBUG_PACKAGES
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
-COPY setup.py requirements.txt .version /usr/src/app/
-COPY api/ swagger_server/ /usr/src/app/swagger_server/
 
+COPY requirements.txt /usr/src/app/
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 #########################
@@ -28,6 +27,11 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 FROM base as coverage
 COPY test-requirements.txt .coveragerc /usr/src/app/
 RUN pip3 install --no-cache-dir -r test-requirements.txt
+
+# Copy the code into the container
+COPY setup.py .version /usr/src/app/
+COPY api/ swagger_server/ /usr/src/app/swagger_server/
+
 RUN ./swagger_server/test/version-check.sh
 RUN mkdir -p /var/run/secrets/kubernetes.io/
 COPY serviceaccount/ /var/run/secrets/kubernetes.io/serviceaccount/
@@ -37,13 +41,22 @@ ENTRYPOINT pytest --cov swagger_server --cov-fail-under 67
 ### API Tests
 #########################
 FROM base as testing
+
+# Copy the code into the container
+COPY setup.py .version /usr/src/app/
+COPY api/ swagger_server/ /usr/src/app/swagger_server/
 COPY api_test.sh api_test.sh
+
 ENTRYPOINT ["./api_test.sh"]
 
 #########################
 ### Application
 #########################
 FROM base as application
+
+# Copy the code into the container
+COPY setup.py .version /usr/src/app/
+COPY api/ swagger_server/ /usr/src/app/swagger_server/
 
 EXPOSE 8088
 ENTRYPOINT ["python3"]
