@@ -47,10 +47,9 @@ class UasAuth(object):
         self.attributes = [self.uid, self.gid, self.username, self.name,
                            self.home, self.shell]
 
-    def authError(self, err, type, e):
-
-        UAS_AUTH_LOGGER.error('UasAuth %s:%s', type, e)
-        abort(err, 'UasAuth %s: %s' % (type, e))
+    def authError(self, status_code, exc):
+        UAS_AUTH_LOGGER.error('UasAuth %s:%s', exc.__class__.__name__, exc)
+        abort(status_code, 'An error was encountered while accessing Keycloak')
 
     def createPasswd(self, userinfo):
 
@@ -76,21 +75,20 @@ class UasAuth(object):
         try:
             response = requests.post(self.endpoint, verify=self.cacert,
                                      headers=headers)
-        except requests.exceptions.HTTPError as e:
-            self.authError(e.response.status_code, 'HTTPError', e)
-        except requests.exceptions.ConnectionError as e:
-            self.authError(500, 'ConnectionError', e)
-        except requests.exceptions.Timeout as e:
-            self.authError(500, 'Timeout', e)
+            response.raise_for_status()  # raise exception for 4XX and 5XX errors
         except requests.exceptions.RequestException as e:
-            self.authError(500, 'RequestException', e)
+            UAS_AUTH_LOGGER.error("%r %r", type(e), e)
+            status_code = e.response.status_code if e.response else 500
+            self.authError(status_code, e)
+        except Exception as e:
+            self.authError(500, e)
 
         try:
             userinfo = response.json()
-        except json.decoder.JSONDecodeError:
-            self.authError(500, 'json', 'Failed to decode /userinfo response')
+        except json.decoder.JSONDecodeError as e:
+            self.authError(500, e)
 
         if self.username in userinfo:
-            UAS_AUTH_LOGGER.info("UasAuth lookup complete for user %s" %
+            UAS_AUTH_LOGGER.info("UasAuth lookup complete for user %s",
                                  userinfo[self.username])
         return userinfo
