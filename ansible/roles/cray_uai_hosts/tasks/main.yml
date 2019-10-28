@@ -50,8 +50,7 @@
 
 - name: Gather mountain network facts
   set_fact:
-    uai_macvlan_mtn_network: "{{ item.network | default(omit) }}"
-    uai_macvlan_mtn_gateway: "{{ item.gateway | default(omit) }}"
+    uai_macvlan_mtn: "{{ item.subnets | selectattr('label', 'equalto', 'uai_macvlan') | list }}"
   loop: "{{ networks.node_management.blocks.ipv4 | selectattr('label', 'equalto', 'mountain') | list }}"
 
 - name: Set UAI macvlan facts
@@ -62,6 +61,12 @@
     uai_macvlan_dhcp_end: "{{ item.dhcp.end }}"
     uai_macvlan_bridge_if: "{{ item.macvlan_bridge_if | default( uai_macvlan_bridge_vlan ) }}"
   loop: "{{ uai_macvlan }}"
+
+- name: Set UAI mountain macvlan facts
+  set_fact:
+    uai_macvlan_mtn_network: "{{ item.network }}"
+    uai_macvlan_mtn_gateway: "{{ item.gateway }}"
+  loop: "{{ uai_macvlan_mtn }}"
 
 - name: Translate UAI macvlan network attachment definition
   template:
