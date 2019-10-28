@@ -3,6 +3,16 @@
 # uas-smoke.sh - UAS Manager Smoke
 # Copyright 2019 Cray Inc. All Rights Reserved.
 
+# UAS common functions to test
+# $RESOURCES is set to /opt/cray/tests/ncn-resources
+if [[ -f $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh ]]; then
+    echo "source $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh"
+    source $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh
+else
+    echo "FAIL: Cannot find uas-common-lib.sh. Skipping check..."
+    exit 123
+fi
+
 set -x
 set -e
 
@@ -31,7 +41,7 @@ fi
 export CRAY_CONFIG_DIR=$(mktemp -d)
 
 cray init --hostname https://api-gw-service-nmn.local --no-auth
-cray auth login --username uastest --password uastestpwd
+cray auth login --username $COMMON_USER_NAME --password $COMMON_USER_PW
 
 cray uas mgr-info list
 

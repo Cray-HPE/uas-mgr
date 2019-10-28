@@ -4,9 +4,6 @@
 #PBS -l nodes=1
 
 echo start job $(date)
-export CRAY_CONFIG_DIR=$(mktemp -d)
-cray init --no-auth --overwrite --hostname https://api-gw-service-nmn.local
-cray auth login --username uastest --password uastestpwd
 
 echo "cray mpiexec hostname"
 cray mpiexec hostname

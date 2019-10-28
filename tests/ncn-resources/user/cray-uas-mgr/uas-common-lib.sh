@@ -4,6 +4,8 @@
 # Copyright 2019 Cray Inc. All Rights Reserved.
 
 # Global variables
+CRAY_INIT_UAS_SCRIPT_NAME="cray-init-uas.sh"
+CRAY_INIT_UAS_SCRIPT="$RESOURCES/user/cray-uas-mgr/$CRAY_INIT_UAS_SCRIPT_NAME"
 EXIT_CODE=0
 FN_COMMON="uas-common-lib"
 LOGIN_NODE=""
@@ -11,6 +13,9 @@ MAX_TRY=5
 MOUNT_FILE="/proc/mounts"
 TEST_CASE=0
 PBS_JOB_ID=""
+CT_SHARED_FS="$SHARED_FS/CT"
+COMMON_USER_NAME="uastest"
+COMMON_USER_PW="uastestpwd"
 
 # Test case header
 function TEST_CASE_HEADER {
@@ -268,27 +273,6 @@ function SLURM_FUNCTIONAL_TEST {
 # PBS functional test
 function PBS_FUNCTIONAL_TEST {
 
-    # First argument is for UAN/UAI
-    if [[ $1 == UAI ]]; then
-        # Make sure that UAI is available.
-        # If it is unavailable, skipping check.
-        source need_uai
-
-        LOGIN_NODE="$UAI"
-    elif [[ $1 == UAN ]]; then
-        LOGIN_NODE="$i_uan"
-    else
-        echo "WARNING: No first argument, UAN/UAI, supplied. Skipping check..."
-        exit 123
-    fi
-
-    if [[ -n $SHARED_FS ]] ; then
-        cd $SHARED_FS
-    else
-        echo "WARNING: An environment variable, SHARED_FS, is not set. Skipping check..."
-        exit 123
-    fi
-
     # Second argument is for PBS job script name
     if [[ $2 != "" ]]; then
         PBS_JOB_SCRIPT_NAME="$2"
@@ -298,22 +282,88 @@ function PBS_FUNCTIONAL_TEST {
         exit 123
     fi
 
+    # First argument is for UAN/UAI
+    if [[ $1 == UAI ]]; then
+        # Make sure that UAI is available.
+        # If it is unavailable, skipping check.
+        source need_uai
+
+        LOGIN_NODE="$UAI"
+        # rsync Cray init script to shared file system in UAI
+        if [[ -f $CRAY_INIT_UAS_SCRIPT ]]; then
+            # rsync cray-init-uas.sh to shared file system in UAI
+            echo "rsync -rze ssh -p $UAI_PORT $CRAY_INIT_UAS_SCRIPT $UAI_IP:$CT_SHARED_FS"
+            rsync -rze "ssh -p $UAI_PORT" $CRAY_INIT_UAS_SCRIPT "$UAI_IP:$CT_SHARED_FS"
+        else
+            echo "WARNING: Cannot find $CRAY_INIT_UAS_SCRIPT. Skipping check..."
+            exit 123
+        fi
+
+        # rsync PBS job script to shared file system in UAN
+        if [[ -f $PBS_JOB_SCRIPT ]]; then
+            echo "rsync -rze ssh -p $UAI_PORT $PBS_JOB_SCRIPT $UAI_IP:$CT_SHARED_FS"
+            rsync -rze "ssh -p $UAI_PORT" $PBS_JOB_SCRIPT "$UAI_IP:$CT_SHARED_FS"
+        else
+            echo "WARNING: Cannot find $PBS_JOB_SCRIPT. Skipping check..."
+            exit 123
+        fi
+
+    elif [[ $1 == UAN ]]; then
+        LOGIN_NODE="$i_uan"
+        # rsync Cray init script to shared file system in UAN
+        if [[ -f $CRAY_INIT_UAS_SCRIPT ]]; then
+            # rysnc cray-init-uas.sh to shared file system in UAN
+            echo "rsync -rz $CRAY_INIT_UAS_SCRIPT $LOGIN_NODE:$CT_SHARED_FS"
+            rsync -rz $CRAY_INIT_UAS_SCRIPT $LOGIN_NODE:$CT_SHARED_FS
+        else
+            echo "WARNING: Cannot find $CRAY_INIT_UAS_SCRIPT. Skipping check..."
+            exit 123
+        fi
+
+        # rsync PBS job script to shared file system in UAN
+        if [[ -f $PBS_JOB_SCRIPT ]]; then
+            echo "rsync -rz $PBS_JOB_SCRIPT $LOGIN_NODE:$CT_SHARED_FS"
+            rsync -rz $PBS_JOB_SCRIPT $LOGIN_NODE:$CT_SHARED_FS
+        else
+            echo "WARNING: Cannot find $PBS_JOB_SCRIPT. Skipping check..."
+            exit 123
+        fi
+    else
+        echo "WARNING: No first argument, UAN/UAI, supplied. Skipping check..."
+        exit 123
+    fi
+
     # Submits PBS job
     TEST_CASE_HEADER "Test qsub <job script> on $LOGIN_NODE"
     ssh $LOGIN_NODE which qsub
     if [[ $? == 0 ]]; then
         if [[ -f $PBS_JOB_SCRIPT ]]; then
             echo "[$FN_COMMON]: Found $PBS_JOB_SCRIPT"
-
-            # rsync PBS job script to shared file system in UAN/UAI
-            echo "rsync -rz $PBS_JOB_SCRIPT $LOGIN_NODE:$SHARED_FS"
-            rsync -rz $PBS_JOB_SCRIPT $LOGIN_NODE:$SHARED_FS
+            if [[ -f $CRAY_INIT_UAS_SCRIPT ]]; then
+                # Make sure that cray-init-uas.sh exists in UAN/UAI
+                ssh $LOGIN_NODE ls -l $CT_SHARED_FS/$CRAY_INIT_UAS_SCRIPT_NAME
+                if [[ $? == 0 ]]; then
+                    echo "ssh $LOGIN_NODE source $CT_SHARED_FS/$CRAY_INIT_UAS_SCRIPT_NAME $COMMON_USER_NAME $COMMON_USER_PW"
+                    ssh $LOGIN_NODE source $CT_SHARED_FS/$CRAY_INIT_UAS_SCRIPT_NAME $COMMON_USER_NAME $COMMON_USER_PW
+                    if [[ $? == 0 ]]; then
+                        echo "SUCCESS: [$FN_COMMON] cray init works well"
+                    else
+                        echo "FAIL: [$FN_COMMON] cray init failed"
+                        exit 1
+                    fi
+                else
+                    echo "WARNING: Cannot find $CRAY_INIT_UAS_SCRIPT_NAME on $LOGIN_NODE"
+                fi
+            else
+                echo "WARNING: Cannot find $CRAY_INIT_UAS_SCRIPT. Skipping check..."
+                exit 123
+            fi
 
             # Make sure that PBS job script exists in UAN/UAI
-            ssh $LOGIN_NODE ls -l $SHARED_FS/$PBS_JOB_SCRIPT_NAME
+            ssh $LOGIN_NODE ls -l $CT_SHARED_FS/$PBS_JOB_SCRIPT_NAME
             if [[ $? == 0 ]]; then
                 # qsub PBS job script
-                CMD="qsub $SHARED_FS/$PBS_JOB_SCRIPT_NAME"
+                CMD="qsub $CT_SHARED_FS/$PBS_JOB_SCRIPT_NAME"
                 echo "ssh $LOGIN_NODE $CMD"
 
                 # Get job ID
@@ -325,7 +375,7 @@ function PBS_FUNCTIONAL_TEST {
                     EXIT_CODE=1
                 fi
             else
-                echo "FAIL: [$FN_COMMON] $SHARED_FS/$PBS_JOB_SCRIPT_NAME doesn't exist on $LOGIN_NODE. Skipping check..."
+                echo "FAIL: [$FN_COMMON] $CT_SHARED_FS/$PBS_JOB_SCRIPT_NAME doesn't exist on $LOGIN_NODE. Skipping check..."
                 exit 123
             fi
         else
@@ -358,6 +408,8 @@ function PBS_FUNCTIONAL_TEST {
                 if [[ $JOB_STATE == "R" ]]; then
                     echo "Try: $try"
                     echo "SUCCESS: [$FN_COMMON] $PBS_JOB_ID is running state, $JOB_STATE"
+                    echo "ssh $LOGIN_NODE qstat"
+                    ssh $LOGIN_NODE qstat
                     break;
                 fi
             done
@@ -379,11 +431,12 @@ function PBS_FUNCTIONAL_TEST {
 
     # Deletes PBS job
     TEST_CASE_HEADER "Test qdel <job id> on $LOGIN_NODE"
+    local_max_try=25
     CMD="qdel $PBS_JOB_ID"
     echo "ssh $LOGIN_NODE $CMD"
     ssh $LOGIN_NODE $CMD
     if [[ $? == 0 ]]; then
-        for ((try = 1; try <= $MAX_TRY; try++))
+        for ((try = 1; try <= $local_max_try; try++))
         do
             # Verify that job state is not R anymore after deleting the job
             JOB_STATE=$(ssh $LOGIN_NODE $CMD_JOB_STATE)
@@ -394,10 +447,12 @@ function PBS_FUNCTIONAL_TEST {
             fi
         done
 
-        if ((try > MAX_TRY))
+        if ((try > local_max_try))
         then
             echo "Try: $try"
             echo "FAIL: [$FN_COMMON] $PBS_JOB_ID is not deleted by $CMD" >> $RESULT_TEST
+            echo "ssh $LOGIN_NODE qstat"
+            ssh $LOGIN_NODE qstat
             EXIT_CODE=1
         fi
     else
