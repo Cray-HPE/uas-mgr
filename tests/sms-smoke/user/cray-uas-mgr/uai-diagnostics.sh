@@ -51,7 +51,7 @@ fi
 echo "... OK"
 
 echo "Ensuring that all host filesystems are mounted on all nodes labeled with UAS=true"
-HOSTFS=$(kubectl describe cm -n services cray-uas-mgr-cfgmap | grep host_path | grep -v ^# | awk '{ print $2 }')
+HOSTFS=$(kubectl describe cm -n services cray-uas-mgr-cfgmap | grep host_path | grep -v ^# | awk '{ print $3 }')
 for NODE in "${NODES[@]}"
 do
     echo "Checking filesystems on $NODE"
