@@ -119,6 +119,9 @@ if [[ $RC_SLURM_POD == 0 && $RC_PBS_POD == 0 ]]; then
         # PBS smoke test
         # It is defined in $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh
         PBS_SMOKE_TEST UAI
+
+        # PBS functional test in a UAI
+        PBS_FUNCTIONAL_TEST UAI pbs_uas_test.sh
     fi
 
 elif [[ $RC_SLURM_POD == 0 ]]; then
@@ -146,6 +149,9 @@ elif [[ $RC_PBS_POD == 0 ]]; then
     # PBS smoke test
     # It is defined in $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh
     PBS_SMOKE_TEST UAI
+
+    # PBS functional test in a UAI
+    PBS_FUNCTIONAL_TEST UAI pbs_uas_test.sh
 
 else
     echo "FAIL: No WLM pod is running on the system."

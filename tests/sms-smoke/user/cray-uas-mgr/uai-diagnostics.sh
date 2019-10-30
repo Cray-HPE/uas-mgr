@@ -10,6 +10,16 @@
 # networking, or post-install config. They may not be indicative
 # of a UAS service issue.
 
+# UAS common functions to test
+# $RESOURCES is set to /opt/cray/tests/ncn-resources
+if [[ -f $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh ]]; then
+    echo "source $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh"
+    source $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh
+else
+    echo "FAIL: Cannot find uas-common-lib.sh. Skipping check..."
+    exit 123
+fi
+
 set -e
 
 error() {
@@ -31,7 +41,7 @@ echo "... OK"
 echo "Checking that default image is set"
 export CRAY_CONFIG_DIR=$(mktemp -d)
 cray init --hostname https://api-gw-service-nmn.local --no-auth
-cray auth login --username uastest --password uastestpwd
+cray auth login --username $COMMON_USER_NAME --password $COMMON_USER_PW
 DEFAULT_IMAGE=$(cray uas images list | grep ^default_image | awk '{ print $3 }' | sed 's/"//g')
 if [ -z "$DEFAULT_IMAGE" ]; then
     echo "No default image found in images list output"
