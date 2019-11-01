@@ -94,6 +94,19 @@ do
     echo "... OK"
 done
 
+echo "Validating subnet entries are valid in networks.yml"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+for NODE in "${NODES[@]}"
+do
+    FILENAME="/etc/ansible/hosts/group_vars/all/networks.yml"
+    echo "Validating subnet entries are valid in networks.yml on $NODE"
+    ssh $NODE "cat $FILENAME" | python3 $SCRIPT_DIR/network-config-check.py
+    if [ $? -ne 0 ]; then
+        echo "subnet entries in networks.yml are misconfigured"
+        exit 1
+    fi
+done
+
 echo "Checking that keycloak pods are Running"
 kubectl get pods -n services -l app=keycloak-database | grep Running
 if [ $? -ne 0 ]; then

@@ -22,6 +22,7 @@ Requires: cray-crayctl
 Requires: sms-crayctldeploy
 Requires: kubernetes-crayctldeploy
 Requires: cray-ct-driver-crayctldeploy
+Requires: python3-PyYAML
 
 %description
 This package provides an ansible role and playbook for deploying the User Access
