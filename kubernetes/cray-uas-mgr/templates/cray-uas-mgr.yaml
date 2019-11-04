@@ -1,0 +1,7 @@
+# Copyright 2018, Cray Inc. All Rights Reserved.
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: cray-uas-mgr
+  namespace: services
