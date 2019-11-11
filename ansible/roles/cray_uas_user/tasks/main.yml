@@ -3,7 +3,7 @@
 ---
 - name: Get keycloak pod name
   shell: >
-    kubectl get pods -n services -l app=keycloak --no-headers |
+    kubectl get pods -n services -l app.kubernetes.io/name=keycloak --no-headers |
     awk '{print $1}' | head -1
   register: get_pod
   run_once: true
