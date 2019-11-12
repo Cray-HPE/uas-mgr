@@ -118,7 +118,7 @@
 
 - name: Adding UAS volume mounts (host_path defined)
   lineinfile:
-    regexp: '^ {2}- host_path: {{ item.host_path }}'
+    regexp: '^ {2}- host_path: {{ item.host_path }}$'
     line: '  - host_path: {{ item.host_path }}'
     dest: "{{ cray_uas_mgr_configmap_data }}"
     insertafter: "^volume_mounts:"
@@ -128,27 +128,27 @@
 
 - name: Adding UAS volume mounts (add mount_path if host_path defined)
   lineinfile:
-    regexp: '^ {4}mount_path: {{ item.mount_path }}'
+    regexp: '^ {4}mount_path: {{ item.mount_path }}$'
     line: '    mount_path: {{ item.mount_path }}'
     dest: "{{ cray_uas_mgr_configmap_data }}"
-    insertafter: "  - host_path: {{ item.host_path }}"
+    insertafter: "  - host_path: {{ item.host_path }}$"
   loop: "{{ add_uas_volume_mounts }}"
   when: item is defined and item.mount_path is defined and item.host_path is defined
   run_once: True
 
 - name: Adding UAS volume mounts (add mount name if host_path defined)
   lineinfile:
-    regexp: '^ {4}name: {{ item.name }}'
+    regexp: '^ {4}name: {{ item.name }}$'
     line: '    name: {{ item.name }}'
     dest: "{{ cray_uas_mgr_configmap_data }}"
-    insertafter: "    mount_path: {{ item.mount_path }}"
+    insertafter: "    mount_path: {{ item.mount_path }}$"
   loop: "{{ add_uas_volume_mounts }}"
   when: item is defined and item.name is defined and item.host_path is defined
   run_once: True
 
 - name: Adding UAS volume mounts (host_path undefined)
   lineinfile:
-    regexp: '^ {2}- name: {{ item.name }}'
+    regexp: '^ {2}- name: {{ item.name }}$'
     line: '  - name: {{ item.name }}'
     dest: "{{ cray_uas_mgr_configmap_data }}"
     insertafter: "^volume_mounts:"
@@ -158,70 +158,40 @@
 
 - name: Adding UAS volume mounts (add mount_path if host_path undefined)
   lineinfile:
-    regexp: '^ {4}mount_path: {{ item.mount_path }}'
+    regexp: '^ {4}mount_path: {{ item.mount_path }}$'
     line: '    mount_path: {{ item.mount_path }}'
     dest: "{{ cray_uas_mgr_configmap_data }}"
-    insertafter: "  - name: {{ item.name }}"
+    insertafter: "  - name: {{ item.name }}$"
   loop: "{{ add_uas_volume_mounts }}"
   when: item is defined and item.mount_path is defined and item.host_path is undefined
   run_once: True
 
 - name: Adding UAS volume mounts (add configmap)
   lineinfile:
-    regexp: '^ {4}config_map: {{ item.config_map }}'
+    regexp: '^ {4}config_map: {{ item.config_map }}$'
     line: '    config_map: {{ item.config_map }}'
     dest: "{{ cray_uas_mgr_configmap_data }}"
-    insertafter: "    mount_path: {{ item.mount_path }}"
+    insertafter: "    mount_path: {{ item.mount_path }}$"
   loop: "{{ add_uas_volume_mounts }}"
   when: item is defined and item.config_map is defined
   run_once: True
 
 - name: Adding UAS volume mounts (add secret_name)
   lineinfile:
-    regexp: '^ {4}secret_name: {{ item.secret_name }}'
+    regexp: '^ {4}secret_name: {{ item.secret_name }}$'
     line: '    secret_name: {{ item.secret_name }}'
     dest: "{{ cray_uas_mgr_configmap_data }}"
-    insertafter: "    mount_path: {{ item.mount_path }}"
+    insertafter: "    mount_path: {{ item.mount_path }}$"
   loop: "{{ add_uas_volume_mounts }}"
   when: item is defined and item.secret_name is defined
   run_once: True
 
 - name: Adding UAS volume mounts (add type)
   lineinfile:
-    regexp: '^ {4}type: {{ item.type }} # type for {{ item.name }}'
+    regexp: '^ {4}type: {{ item.type }} # type for {{ item.name }}$'
     line: '    type: {{ item.type }} # type for {{ item.name }}'
     dest: "{{ cray_uas_mgr_configmap_data }}"
-    insertafter: "    mount_path: {{ item.mount_path }}"
-  loop: "{{ add_uas_volume_mounts }}"
-  when: item is defined and item.type is defined
-  run_once: True
-
-- name: Adding UAS volume mounts (add configmap)
-  lineinfile:
-    regexp: '^ {4}config_map: {{ item.config_map }}'
-    line: '    config_map: {{ item.config_map }}'
-    dest: "{{ cray_uas_mgr_configmap_data }}"
-    insertafter: "    mount_path: {{ item.mount_path }}"
-  loop: "{{ add_uas_volume_mounts }}"
-  when: item is defined and item.config_map is defined
-  run_once: True
-
-- name: Adding UAS volume mounts (add secret_name)
-  lineinfile:
-    regexp: '^ {4}secret_name: {{ item.secret_name }}'
-    line: '    secret_name: {{ item.secret_name }}'
-    dest: "{{ cray_uas_mgr_configmap_data }}"
-    insertafter: "    mount_path: {{ item.mount_path }}"
-  loop: "{{ add_uas_volume_mounts }}"
-  when: item is defined and item.secret_name is defined
-  run_once: True
-
-- name: Adding UAS volume mounts (add type)
-  lineinfile:
-    regexp: '^ {4}type: {{ item.type }} # type for {{ item.name }}'
-    line: '    type: {{ item.type }} # type for {{ item.name }}'
-    dest: "{{ cray_uas_mgr_configmap_data }}"
-    insertafter: "    name: {{ item.name }}"
+    insertafter: "    mount_path: {{ item.mount_path }}$"
   loop: "{{ add_uas_volume_mounts }}"
   when: item is defined and item.type is defined
   run_once: True
