@@ -57,11 +57,28 @@ function COMPILE_TEST_APP {
     # $1 is for a test application
     APP=$1
 
+    # $2 is for a test application type
+    APP_TYPE=$2
+
     # Make sure that a test application exists in $TEST_DIR
-    if [[ -f $TEST_DIR/$APP.c ]]; then
+    if [[ -f $TEST_DIR/$APP.$APP_TYPE ]]; then
+        if [[ $APP_TYPE == c ]]; then
+            COMPILER="cc"
+            COMPILER_OPTION="-dynamic"
+        elif [[ $APP_TYPE == cc ]]; then
+            COMPILER="CC"
+            COMPILER_OPTION="-dynamic"
+        elif [[ $APP_TYPE == f ]]; then
+            COMPILER="ftn"
+            COMPILER_OPTION=""
+        else
+            echo "WARNING: No support compiler type, $APP_TYPE. Skipping check..."
+            exit 123
+        fi
+
         # Compile a test application with the dynamic link option
-        echo "cc -dynamic -o $TEST_DIR/$APP $TEST_DIR/$APP.c"
-        cc -dynamic -o $TEST_DIR/$APP $TEST_DIR/$APP.c
+        echo "$COMPILER $COMPILER_OPTION -o $TEST_DIR/$APP $TEST_DIR/$APP.$APP_TYPE"
+        $COMPILER $COMPILER_OPTION -o $TEST_DIR/$APP $TEST_DIR/$APP.$APP_TYPE
 
         # Verify that a test application is compiled successfully
         if [[ -x $TEST_DIR/$APP ]]; then
@@ -71,7 +88,7 @@ function COMPILE_TEST_APP {
             exit 1
         fi
     else
-        echo "WARNING: $TEST_DIR/$APP.c doesn't exist. Skipping check..."
+        echo "WARNING: $TEST_DIR/$APP.$APP_TYPE doesn't exist. Skipping check..."
         exit 123
     fi
 }

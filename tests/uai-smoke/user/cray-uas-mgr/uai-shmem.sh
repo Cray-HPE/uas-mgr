@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# uai-mpi.sh - Compile/launch MPI application
+# uai-shmem.sh - Compile/launch SHMEM application
 # Copyright 2019 Cray Inc. All Rights Reserved.
 
 # UAS common functions to test
@@ -13,41 +13,40 @@ else
     exit 123
 fi
 
-TEST_CASE_HEADER "Verify that Cray MPI is installed on a UAI"
-module is-loaded cray-mpich
+TEST_CASE_HEADER "Verify that Cray openshmemx is installed"
+# According to https://connect.us.cray.com/jira/browse/PE-25775, 
+# we need to do module load cray-openshmemx
+echo "module load cray-openshmemx"
+module load cray-openshmemx
+
+echo "module is-loaded cray-openshmemx"
+module is-loaded cray-openshmemx
 if [[ $? == 0 ]]; then
     echo ""
-    echo "SUCCESS: Cray MPI is installed on a UAI."
+    echo "SUCCESS: Cray openshmemx is installed"
 else
     echo ""
-    echo "FAIL: Cray MPI is not installed on a UAI."
+    echo "FAIL: Cray openshmemx is not installed."
     exit 1
 fi
 
 # Test auth Initialization
 AUTH_INIT
 
-# If PBS is running on the system, need to do module load cray-pmi
-if [[ $WLM_NAME == "pbs" ]]; then
-    echo "PBS: module load cray-pmi; module load cray-pmi-lib"
-    module load cray-pmi
-    module load cray-pmi-lib
-fi
-
-# Compile MPI application by C compiler
-COMPILE_TEST_APP mpi_hello c
+# Compile SHMEM application by C compiler
+COMPILE_TEST_APP shmem_hello c
 
 # WLM_NAME is defined in $RESOURCES/user/cray-uas-mgr/uai-common-lib.sh
 if [[ $WLM_NAME == "slurm" ]]; then
 
     # Run a test appliation by sbatch
     # TEST_BATCH_JOB <name of job script> <expected output> <expected number of nodes to run> 
-    TEST_BATCH_JOB slurm_mpi_test.sh Hello 2
+    TEST_BATCH_JOB slurm_shmem_test.sh Hello 2
 
 elif [[ $WLM_NAME == "pbs" ]]; then
 
     # TEST_BATCH_JOB <name of job script> <expected output> <expected number of nodes to run>
-    TEST_BATCH_JOB pbs_mpi_test.sh Hello 2
+    TEST_BATCH_JOB pbs_shmem_test.sh Hello 2
 
 else
     echo "WARNING: Cannot find WLM on a UAI. Skipping check..."
