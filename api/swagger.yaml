@@ -45,7 +45,7 @@ info:
 
     ## Workflows
 
-    ### Single user workflow
+    ### Single User Workflow
 
     As an individual user, create a UAI for your own use and delete it when
     no longer needed.
@@ -71,7 +71,7 @@ info:
 
     Cleanup your own UAI.  This operation is restricted to owner of the UAI.
 
-    ### Admin workflow
+    ### Admin Workflow
 
     As an administrator,
     establish the system-wide configuration,
