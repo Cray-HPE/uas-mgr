@@ -18,6 +18,7 @@ info:
 
     ## Resources
 
+    
     ### /images
 
     An image, identified by its *imagename*, is a UAI container image.
@@ -44,6 +45,7 @@ info:
     duration of the UAI.
 
     ## Workflows
+
 
     ### Single User Workflow
 
