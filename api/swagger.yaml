@@ -5,31 +5,75 @@ openapi: "3.0.2"
 info:
   title: "User Access Service"
   description: |
-    The User Access Service (UAS) creates and deletes User Access Instances (UAIs).
-    A user may ssh or login to a UAI running on an NCN,
-    to build, run, and debug applications.
+    The User Access Service (UAS) creates and deletes
+    User Access Instances (UAIs). The UAI is a containerized
+    SSHd environment, built using a specific OS as a base, and
+    contains libraries, commands, and utilities necessary for application
+    development.
+
+    A user may ssh to a UAI in order to build, run, and debug applications.
+    The available images and volumes are configured by a system administrator.
+    The UAI runs on a non-compute node.
 
 
-      ## Single user workflow
+    ## Resources
 
-      As an individual user, create a UAI for your own use and delete it when
-      no longer needed.
+    
+    ### /images
 
-      * GET /uas - Get the list of available, user-specific UAIs.
+    An image, identified by its *imagename*, is a UAI container image.
+    There is potential for different containerized images to be available, 
+    each built using different components/versions.
+    
+    ### /mgr-info
 
-      * POST /uas - Request to create a new User Access Instance (UAI).
-      When an authenticated user requests a new UAI, the User Access
-      Service returns status and connection information for the newly
-      created UAI, which will be available via ssh.
-      Most properties of UAI are static for the life of a UAI.
-      UAIs are not shared - they do not have multiple owners.
+    Return the version of this service.
 
-      * ssh to the new UAI.
+    ### /uas
 
-      * DELETE /uas - Cleanup your own UAI.  This operation is restricted to owner of the UAI.
+    Create, delete, or list the User Access Instance(s).
+    When a user requests a new UAI, the UAS service returns status and
+    connection information to the newly created UAI.
+
+    ### /uais
+
+    List or delete User Access Instance(s).
+
+    ### /volumes
+
+    Volumes are mounted within the UAI for user access for the 
+    duration of the UAI.
+
+    ## Workflows
 
 
-      ## Admin workflow
+    ### Single User Workflow
+
+    As an individual user, create a UAI for your own use and delete it when
+    no longer needed.
+
+    #### GET /uas
+
+    Get the list of available, user-specific UAIs.
+
+    #### POST /uas
+
+    Request to create a new User Access Instance (UAI).
+    When an authenticated user requests a new UAI, the User Access
+    Service returns status and connection information for the newly
+    created UAI, which will be available via ssh.
+    Most properties of UAI are static for the life of a UAI.
+    UAIs are not shared - they do not have multiple owners.
+
+    #### ssh to the new UAI
+
+    Build, run, debug applications.
+
+    #### DELETE /uas
+
+    Cleanup your own UAI.  This operation is restricted to owner of the UAI.
+
+    ### Admin Workflow
 
     As an administrator,
     establish the system-wide configuration,
@@ -44,26 +88,42 @@ info:
     These system wide APIs which manage the /images, /volumes, and /ports resources
     are not yet implemented.
 
+    #### GET /uas
 
+    Get a list of all available UAIs on the system
 
-      * GET /uas - Get a list of all available UAIs on the system
+    #### GET /images
 
-      * GET /images - Get a list of images available for use by a UAI
+    Get a list of images available for use by a UAI
 
-      * GET /volumes - Get a list of volumes available for use by UAIs
+    #### GET /volumes
 
-      * GET /ports - Get a list of available ports
+    Get a list of volumes available for use by UAIs
 
-      * POST /volumes - Adds a volume to the list of volumes that will be mounted in new UAIs
+    #### GET /ports
 
-      * POST /images - Add image name to list of valid images
+    Get a list of available ports
 
-      * POST /ports - Add port to list of valid ports
+    #### POST /volumes
 
-      * POST /uas - Request to create new UAI, having the specified image.  All volumes listed in the configuration are assigned to a new
-      UAI, but only the specified ports from allowed ports are assigned.
+    Add a volume to the list of volumes that will be mounted in new UAIs
 
-      * DELETE /uas - Cleanup
+    #### POST /images
+
+    Add image name to list of valid images
+
+    #### POST /ports 
+
+    Add port to list of valid ports
+
+    #### POST /uas
+
+    Request to create new UAI, having the specified image.  All volumes listed in the configuration are assigned to a new
+    UAI, but only the specified ports from allowed ports are assigned.
+
+    #### DELETE /uas
+
+    Cleanup
 
 
   version: "1.0.2"
