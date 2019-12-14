@@ -355,7 +355,7 @@ class UaiManager(object):
                 uai.uai_ip = self.uas_cfg.get_external_ip()
                 for srv_port in srv_resp.spec.ports:
                     if srv_port.port in self.uas_cfg.get_valid_optional_ports():
-                        uai.uai_portmap[srv_port.port] = srv_port.target_port
+                        uai.uai_portmap[srv_port.port] = srv_port.node_port
                     else:
                         uai.uai_port = srv_port.node_port
 
