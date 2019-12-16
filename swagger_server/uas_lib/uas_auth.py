@@ -32,8 +32,7 @@ class UasAuth(object):
     """
 
     def __init__(self, cacert='/mnt/ca-vol/certificate_authority.crt',
-                 endpoint='https://api-gw-service-nmn.local/'
-                          'keycloak/realms/shasta/protocol/'
+                 endpoint='/keycloak/realms/shasta/protocol/'
                           'openid-connect/userinfo'):
 
         self.cacert = cacert
@@ -69,11 +68,12 @@ class UasAuth(object):
 
         return list(set(self.attributes).difference(userinfo))
 
-    def userinfo(self, token):
+    def userinfo(self, host, token):
 
         headers = {'Authorization': token}
+        url = 'https://' + host + self.endpoint
         try:
-            response = requests.post(self.endpoint, verify=self.cacert,
+            response = requests.post(url, verify=self.cacert,
                                      headers=headers)
             response.raise_for_status()  # raise exception for 4XX and 5XX errors
         except requests.exceptions.RequestException as e:
