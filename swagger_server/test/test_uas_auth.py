@@ -13,6 +13,7 @@ import werkzeug
 
 from swagger_server.uas_lib.uas_auth import UasAuth
 
+host = 'shasta.grapenehi.dev.cray.com'
 
 class TestUasAuth(unittest.TestCase):
 
@@ -58,11 +59,11 @@ class TestUasAuth(unittest.TestCase):
     def test_user_info(self):
         auth = UasAuth(endpoint='http://localhost', cacert='/foo')
         with self.assertRaises(werkzeug.exceptions.InternalServerError):
-            auth.userinfo("myawesometoken")
+            auth.userinfo(host=host, token="myawesometoken")
         with self.assertRaises(werkzeug.exceptions.InternalServerError):
-            auth.userinfo(token=None)
+            auth.userinfo(host=host, token=None)
         with self.assertRaises(werkzeug.exceptions.InternalServerError):
-            auth.userinfo(token="")
+            auth.userinfo(host=host, token="")
 
 
 @mock.patch("swagger_server.uas_lib.uas_auth.UAS_AUTH_LOGGER")
@@ -76,7 +77,7 @@ class TestKeycloakErrorLogging(unittest.TestCase):
             endpoint="https://sms-1.craydev.com/apis/keycloak", cacert="/foo"
         )
         with self.assertRaises(werkzeug.exceptions.InternalServerError):
-            auth.userinfo(token="")
+            auth.userinfo(host=host,token="")
         mock_logger.error.assert_called_with(mock.ANY, "Timeout", mock_post.side_effect)
 
     def test_connection_error(self, mock_post, mock_logger):
@@ -87,7 +88,7 @@ class TestKeycloakErrorLogging(unittest.TestCase):
             endpoint="https://sms-1.craydev.com/apis/keycloak", cacert="/foo"
         )
         with self.assertRaises(werkzeug.exceptions.InternalServerError):
-            auth.userinfo(token="")
+            auth.userinfo(host=host,token="")
         mock_logger.error.assert_called_with(
             mock.ANY, "ConnectionError", mock_post.side_effect
         )
@@ -134,7 +135,7 @@ class TestKeycloakErrorLogging(unittest.TestCase):
             endpoint="https://sms-1.craydev.com/apis/keycloak", cacert="/foo"
         )
         with self.assertRaises(werkzeug.exceptions.InternalServerError):
-            auth.userinfo(token="")
+            auth.userinfo(host=host, token="")
         mock_logger.error.assert_called_with(mock.ANY, "HTTPError", mock.ANY)
         assert isinstance(
             mock_logger.error.call_args[0][-1], requests.exceptions.HTTPError
@@ -152,7 +153,7 @@ class TestKeycloakErrorLogging(unittest.TestCase):
             endpoint="https://sms-1.craydev.com/apis/keycloak", cacert="/foo"
         )
         with self.assertRaises(werkzeug.exceptions.InternalServerError):
-            auth.userinfo(token="")
+            auth.userinfo(host=host, token="")
         mock_logger.error.assert_called_with(mock.ANY, "HTTPError", mock.ANY)
         assert isinstance(
             mock_logger.error.call_args[0][-1], requests.exceptions.HTTPError
@@ -168,7 +169,7 @@ class TestKeycloakErrorLogging(unittest.TestCase):
             endpoint="https://sms-1.craydev.com/apis/keycloak", cacert="/foo"
         )
         with self.assertRaises(werkzeug.exceptions.InternalServerError):
-            auth.userinfo(token="")
+            auth.userinfo(host=host, token="")
         mock_logger.error.assert_called_with(mock.ANY, "JSONDecodeError", mock.ANY)
         assert isinstance(
             mock_logger.error.call_args[0][-1], json.decoder.JSONDecodeError

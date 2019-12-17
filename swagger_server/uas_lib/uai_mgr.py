@@ -52,7 +52,7 @@ class UaiManager(object):
     def check_authorization(self):
 
         if 'Authorization' in request.headers:
-            self.userinfo = self.uas_auth.userinfo(request.headers['Authorization'])
+            self.userinfo = self.uas_auth.userinfo(request.headers['Host'], request.headers['Authorization'])
             if self.uas_auth.validUserinfo(self.userinfo):
                 self.passwd = self.uas_auth.createPasswd(self.userinfo)
                 self.username = self.userinfo[self.uas_auth.username]
