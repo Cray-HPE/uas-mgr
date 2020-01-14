@@ -374,9 +374,11 @@ class UaiManager(object):
         :type uai: uai
         :return: uai:
         """
-        return "ssh %s@%s -p %s -i ~/.ssh/id_rsa" % (uai.username,
+        port_string = " -p " + str(uai.uai_port) if uai.uai_port != 22 else ""
+
+        return "ssh %s@%s%s -i ~/.ssh/id_rsa" % (uai.username,
                                                      uai.uai_ip,
-                                                     uai.uai_port)
+                                                     port_string)
 
     def gen_labels(self, deployment_name):
         return {"app": deployment_name,

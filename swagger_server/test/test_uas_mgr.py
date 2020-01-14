@@ -42,6 +42,16 @@ class TestUasMgr(unittest.TestCase):
         self.assertEqual("ssh testuser@1.2.3.4 -p 12345 -i ~/.ssh/id_rsa",
                          uai.uai_connect_string)
 
+    def test_gen_connection_string_no_port(self):
+        uai = UAI()
+        uai.username = "testuser"
+        uai.uai_port = 22
+        uai.uai_ip = "1.2.3.4"
+        uai.uai_connect_string = self.uas_mgr.gen_connection_string(uai)
+
+        self.assertEqual("ssh testuser@1.2.3.4 -i ~/.ssh/id_rsa",
+                         uai.uai_connect_string)
+
     def test_create_image(self):
         self.assertRaises(TypeError, self.uas_mgr.create_image, "test123")
         with self.assertRaises(werkzeug.exceptions.NotImplemented):
