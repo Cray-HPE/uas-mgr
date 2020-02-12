@@ -49,6 +49,15 @@ cray uas images list
 
 cray uas uais list
 
+echo "INFO: kubectl describe -n services cm/cray-uas-mgr-cfgmap"
+kubectl describe -n services cm/cray-uas-mgr-cfgmap
+
+echo "INFO: kubectl describe -n services cm/slurm-map"
+kubectl describe -n services cm/slurm-map
+
+echo "INFO: kubectl describe -n user cm/slurm-map"
+kubectl describe -n user cm/slurm-map
+
 rm -r $CRAY_CONFIG_DIR
 
 exit 0
