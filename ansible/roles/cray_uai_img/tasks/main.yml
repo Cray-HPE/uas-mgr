@@ -1,0 +1,45 @@
+# Copyright 2020 HPE All Rights Reserved
+---
+- name: Check if docker image being created already exists
+  shell: |
+    docker images -q {{ uai_image_name }}
+  register: uai_exists
+  delegate_to: "{{ groups['bis'][0] }}"
+  run_once: true
+
+- name: Set fact for make_uai_img
+  set_fact:
+    make_uai_img: "{{ uai_exists.stdout | length == 0 }}"
+
+- name: Find a compute tar to create a uai image from
+  shell: |
+    find {{ compute_tar_prefix }} -name {{ compute_image_filter }} -type f -print -quit
+  register: compute_tar_path
+  delegate_to: "{{ groups['bis'][0] }}"
+  run_once: true
+  when: make_uai_img
+
+- name: Transfer gen-uai-img.sh utility
+  copy:
+    src: gen-uai-img.sh
+    dest: /tmp
+    mode: 0700
+  delegate_to: "{{ groups['bis'][0] }}"
+  run_once: true
+  when: make_uai_img
+
+- name: Run gen-uai-img.sh 
+  shell: |
+    /tmp/gen-uai-img.sh {{ compute_tar_path.stdout }} {{ uai_image_name }}
+  register: compute_tar_path
+  delegate_to: "{{ groups['bis'][0] }}"
+  run_once: true
+  when: make_uai_img
+
+- name: Remove gen-uai-img.sh utility
+  file:
+    path: /tmp/gen-uai-img.sh
+    state: absent
+  delegate_to: "{{ groups['bis'][0] }}"
+  run_once: true
+  when: make_uai_img

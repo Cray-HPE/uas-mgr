@@ -5,7 +5,13 @@
   gather_facts: no
   vars_files:
     - "customer_var.yml"
+ # Uncomment vars and cray_uai_img to 
+ # generate a UAI image
+ # vars:
+ #   add_uas_imgs:
+ #   - "{{ uai_image_name }}"
   roles:
+ #   - cray_uai_img
     - cray_uas_mgr_localize
     - cray_uas_user
 

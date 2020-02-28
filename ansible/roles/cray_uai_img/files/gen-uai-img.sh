@@ -6,6 +6,7 @@
 
 TARBALL=$1
 TAG=$2
+SLES=sles15sp1
 
 BASE_IMG="uai_base_img:latest"
 
@@ -37,9 +38,14 @@ workspace=$(mktemp -d)
 echo "Created temporary workspace $workspace"
 pushd $workspace > /dev/null
 
+cp /usr/share/pki/trust/anchors/*.crt .
+
 cat << EOF > Dockerfile
 FROM $BASE_IMG
-RUN zypper --non-interactive --no-gpg-checks install cray-uai-util
+ADD *.crt /usr/share/pki/trust/anchors/
+RUN update-ca-certificates; \
+    zypper addrepo https://api-gw-service-nmn.local/repositories/cray-$SLES-ncn cray-$SLES-ncn; \
+    zypper --non-interactive --gpg-auto-import-keys --no-gpg-checks install cray-uai-util
 RUN rm /etc/security/limits.d/99-cray-network.conf
 ENTRYPOINT /usr/bin/uai-ssh.sh
 EOF
@@ -52,7 +58,6 @@ if ! docker build -t $TAG .; then
   rm -r $workspace
   exit 1
 fi
-
 
 echo "Pushing the image. This could take awhile..."
 echo "docker push $TAG"
