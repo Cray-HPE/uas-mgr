@@ -27,6 +27,13 @@ fi
 # Test auth Initialization
 AUTH_INIT
 
+# If PBS is running on the system, need to do module load cray-pmi
+if [[ $WLM_NAME == "pbs" ]]; then
+    echo "PBS: module load cray-pmi; module load cray-pmi-lib"
+    module load cray-pmi
+    module load cray-pmi-lib
+fi
+
 # Compile C application
 COMPILE_TEST_APP C_hello c
 

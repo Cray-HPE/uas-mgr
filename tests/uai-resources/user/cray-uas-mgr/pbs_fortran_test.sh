@@ -5,7 +5,11 @@
 
 echo start job $(date)
 
-echo "cray mpiexec -n 2 -ppn 1 $RESOURCES/user/cray-uas-mgr/fortran_hello"
-cray mpiexec -n 2 -ppn 1 $RESOURCES/user/cray-uas-mgr/fortran_hello
+echo "################"
+echo "PWD: $PWD"
+echo "################"
+
+echo "cray mpiexec -n 2 -ppn 1 --transfer -wdir /tmp ./fortran_hello"
+cray mpiexec -n 2 -ppn 1 --transfer  -wdir /tmp ./fortran_hello
 
 echo end job $(date)
