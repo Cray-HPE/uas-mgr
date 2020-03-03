@@ -33,6 +33,13 @@ fi
 # Test auth Initialization
 AUTH_INIT
 
+# If PBS is running on the system, need to do module load cray-pmi
+if [[ $WLM_NAME == "pbs" ]]; then
+    echo "PBS: module load cray-pmi; module load cray-pmi-lib"
+    module load cray-pmi
+    module load cray-pmi-lib
+fi
+
 # Compile SHMEM application by C compiler
 COMPILE_TEST_APP shmem_hello c
 

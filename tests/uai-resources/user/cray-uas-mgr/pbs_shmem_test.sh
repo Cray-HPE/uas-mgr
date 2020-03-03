@@ -7,7 +7,11 @@ echo start job $(date)
 
 module load cray-openshmemx
 
-echo "cray mpiexec -n 2 -ppn 1 $RESOURCES/user/cray-uas-mgr/shmem_hello"
-cray mpiexec -n 2 -ppn 1 $RESOURCES/user/cray-uas-mgr/shmem_hello
+echo "################"
+echo "PWD: $PWD"
+echo "################"
+
+echo "cray mpiexec -n 2 -ppn 1 --transfer -wdir /tmp ./shmem_hello"
+cray mpiexec -n 2 -ppn 1 --transfer  -wdir /tmp ./shmem_hello
 
 echo end job $(date)
