@@ -8,7 +8,11 @@ echo "module load cray-pmi; module load cray-pmi-lib"
 module load cray-pmi
 module load cray-pmi-lib
 
-echo "cray mpiexec -n 2 -ppn 1 $RESOURCES/user/cray-uas-mgr/mpi_hello"
-cray mpiexec -n 2 -ppn 1 $RESOURCES/user/cray-uas-mgr/mpi_hello
+echo "################"
+echo "PWD: $PWD"
+echo "################"
+
+echo "cray mpiexec -n 2 -ppn 1 --transfer -wdir /tmp ./mpi_hello"
+cray mpiexec -n 2 -ppn 1 --transfer  -wdir /tmp ./mpi_hello
 
 echo end job $(date)

@@ -53,6 +53,7 @@ function AUTH_INIT {
 function COMPILE_TEST_APP {
 
     TEST_CASE_HEADER "Compile and run a MPI application"
+    USER_NAME=$(whoami)
 
     # $1 is for a test application
     APP=$1
@@ -83,6 +84,14 @@ function COMPILE_TEST_APP {
         # Verify that a test application is compiled successfully
         if [[ -x $TEST_DIR/$APP ]]; then
             echo "SUCCESS: $TEST_DIR/$APP is compiled successfully"
+            echo "cp -f $TEST_DIR/$APP $SHARED_FS/$USER_NAME/."
+            cp -f $TEST_DIR/$APP $SHARED_FS/$USER_NAME/.
+            if [[ -x $SHARED_FS/$USER_NAME/$APP ]]; then
+                echo "SUCCESS: $SHARED_FS/$USER_NAME/$APP exists"
+            else
+                echo "FAIL: $SHARED_FS/$USER_NAME/$APP doesn't exist. Skipping check..."
+                exit 123
+            fi
         else
             echo "FAIL: $TEST_DIR/$APP is not compiled"
             exit 1

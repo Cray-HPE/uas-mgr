@@ -5,7 +5,11 @@
 
 echo start job $(date)
 
-echo "cray mpiexec -n 2 -ppn 1 $RESOURCES/user/cray-uas-mgr/C_hello"
-cray mpiexec -n 2 -ppn 1 $RESOURCES/user/cray-uas-mgr/C_hello
+echo "################"
+echo "PWD: $PWD"
+echo "################"
+
+echo "cray mpiexec -n 2 -ppn 1 --transfer -wdir /tmp ./C_hello"
+cray mpiexec -n 2 -ppn 1 --transfer  -wdir /tmp ./C_hello
 
 echo end job $(date)
