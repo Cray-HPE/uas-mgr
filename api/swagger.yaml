@@ -18,13 +18,13 @@ info:
 
     ## Resources
 
-    
+
     ### /images
 
     An image, identified by its *imagename*, is a UAI container image.
-    There is potential for different containerized images to be available, 
+    There is potential for different containerized images to be available,
     each built using different components/versions.
-    
+
     ### /mgr-info
 
     Return the version of this service.
@@ -41,7 +41,7 @@ info:
 
     ### /volumes
 
-    Volumes are mounted within the UAI for user access for the 
+    Volumes are mounted within the UAI for user access for the
     duration of the UAI.
 
     ## Workflows
@@ -112,7 +112,7 @@ info:
 
     Add image name to list of valid images
 
-    #### POST /ports 
+    #### POST /ports
 
     Add port to list of valid ports
 
@@ -126,7 +126,7 @@ info:
     Cleanup
 
 
-  version: "1.2.0"
+  version: "1.2.1"
 
 servers:
   - url: "/apis/uas-mgr/v1"

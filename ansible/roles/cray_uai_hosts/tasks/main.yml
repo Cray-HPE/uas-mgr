@@ -203,3 +203,15 @@
     "{{ mac0_list }}"
   when: inventory_hostname == item.uai_host
   delegate_to: "{{ inventory_hostname }}"
+
+- name: Add macvlan tmpfiles.d configuration on UAI hosts
+  copy:
+    src: macvlan.tmpfiles.conf
+    dest: /usr/lib/tmpfiles.d/macvlan.conf
+    mode: 0644
+    owner: root
+    group: root
+  loop:
+    "{{ mac0_list }}"
+  when: inventory_hostname == item.uai_host
+  delegate_to: "{{ inventory_hostname }}"
