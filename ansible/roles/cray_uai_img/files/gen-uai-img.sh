@@ -6,7 +6,7 @@
 
 TARBALL=$1
 TAG=$2
-SLES=sles15sp1
+REPO=cray-sles15-sp1-cn
 
 BASE_IMG="uai_base_img:latest"
 
@@ -44,7 +44,7 @@ cat << EOF > Dockerfile
 FROM $BASE_IMG
 ADD *.crt /usr/share/pki/trust/anchors/
 RUN update-ca-certificates; \
-    zypper addrepo https://api-gw-service-nmn.local/repositories/cray-$SLES-ncn cray-$SLES-ncn; \
+    zypper addrepo https://api-gw-service-nmn.local/repositories/$REPO $REPO; \
     zypper --non-interactive --gpg-auto-import-keys --no-gpg-checks install cray-uai-util
 RUN rm /etc/security/limits.d/99-cray-network.conf
 ENTRYPOINT /usr/bin/uai-ssh.sh
