@@ -60,7 +60,8 @@ else
 fi
 echo "... OK"
 
-echo "Ensuring that all host filesystems are mounted on all nodes labeled with UAS=true"
+echo "Scan filesystem on all nodes labeled with UAS=true"
+echo "Paths that are not present are treated as warnings"
 HOSTFS=$(kubectl describe cm -n services cray-uas-mgr-cfgmap | grep host_path | grep -v ^# | awk '{ print $3 }')
 for NODE in "${NODES[@]}"
 do
@@ -68,7 +69,7 @@ do
     for FS in ${HOSTFS}
     do
         echo "Looking for ${FS} on $NODE"
-        ssh $NODE "ls ${FS}"
+        ssh $NODE "ls ${FS} | true"
     done
     echo "... OK"
 done
@@ -77,7 +78,7 @@ echo "Checking that the ${DEFAULT_IMAGE} is available on all nodes labeled with 
 for NODE in "${NODES[@]}"
 do
     echo "Checking for Docker image ${DEFAULT_IMAGE} on $NODE"
-    ssh $NODE "docker images ${DEFAULT_IMAGE} | grep -v ^REPOSITORY"
+    ssh $NODE "crictl pull ${DEFAULT_IMAGE}"
     echo "... OK"
 done
 
