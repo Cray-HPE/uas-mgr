@@ -37,12 +37,17 @@ fi
 workspace=$(mktemp -d)
 echo "Created temporary workspace $workspace"
 pushd $workspace > /dev/null
+mkdir certs cmds
 
-cp /usr/share/pki/trust/anchors/*.crt .
+cp /usr/share/pki/trust/anchors/*.crt certs
+if [ -f /usr/bin/kubectl ]; then
+  cp /usr/bin/kubectl cmds
+fi
 
 cat << EOF > Dockerfile
 FROM $BASE_IMG
-ADD *.crt /usr/share/pki/trust/anchors/
+COPY certs/*.crt /usr/share/pki/trust/anchors/
+COPY cmds/* /usr/bin
 RUN update-ca-certificates; \
     zypper addrepo https://api-gw-service-nmn.local/repositories/$REPO $REPO; \
     zypper --non-interactive --gpg-auto-import-keys --no-gpg-checks install cray-uai-util
