@@ -3,16 +3,6 @@
 # uas-smoke.sh - UAS Manager Smoke
 # Copyright 2019 Cray Inc. All Rights Reserved.
 
-# UAS common functions to test
-# $RESOURCES is set to /opt/cray/tests/ncn-resources
-if [[ -f $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh ]]; then
-    echo "source $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh"
-    source $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh
-else
-    echo "FAIL: Cannot find uas-common-lib.sh. Skipping check..."
-    exit 123
-fi
-
 set -x
 set -e
 
@@ -36,12 +26,8 @@ else
     exit 1
 fi
 
-# Set a temp directory for the craycli config
-# and auth token
-export CRAY_CONFIG_DIR=$(mktemp -d)
-
-cray init --hostname https://api-gw-service-nmn.local --no-auth
-cray auth login --username $COMMON_USER_NAME --password $COMMON_USER_PW
+# Authorize CLI with /opt/cray/tests/ncn-resources/bin/auth_craycli
+auth_craycli
 
 cray uas mgr-info list
 
@@ -51,13 +37,5 @@ cray uas uais list
 
 echo "INFO: kubectl describe -n services cm/cray-uas-mgr-cfgmap"
 kubectl describe -n services cm/cray-uas-mgr-cfgmap
-
-echo "INFO: kubectl describe -n services cm/slurm-map"
-kubectl describe -n services cm/slurm-map
-
-echo "INFO: kubectl describe -n user cm/slurm-map"
-kubectl describe -n user cm/slurm-map
-
-rm -r $CRAY_CONFIG_DIR
 
 exit 0

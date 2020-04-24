@@ -10,16 +10,6 @@
 # networking, or post-install config. They may not be indicative
 # of a UAS service issue.
 
-# UAS common functions to test
-# $RESOURCES is set to /opt/cray/tests/ncn-resources
-if [[ -f $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh ]]; then
-    echo "source $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh"
-    source $RESOURCES/user/cray-uas-mgr/uas-common-lib.sh
-else
-    echo "FAIL: Cannot find uas-common-lib.sh. Skipping check..."
-    exit 123
-fi
-
 set -e
 
 error() {
@@ -39,15 +29,13 @@ ping -c3 ${UAS_IP}
 echo "... OK"
 
 echo "Checking that default image is set"
-export CRAY_CONFIG_DIR=$(mktemp -d)
-cray init --hostname https://api-gw-service-nmn.local --no-auth
-cray auth login --username $COMMON_USER_NAME --password $COMMON_USER_PW
+# Authorize CLI with /opt/cray/tests/ncn-resources/bin/auth_craycli
+auth_craycli
 DEFAULT_IMAGE=$(cray uas images list | grep ^default_image | awk '{ print $3 }' | sed 's/"//g')
 if [ -z "$DEFAULT_IMAGE" ]; then
     echo "No default image found in images list output"
     exit 1
 fi
-rm -r $CRAY_CONFIG_DIR
 echo "... OK"
 
 echo "Checking to see whether any hosts are labeled and ready to run UAIs"
@@ -93,19 +81,6 @@ do
         exit 1
     fi
     echo "... OK"
-done
-
-echo "Validating subnet entries are valid in networks.yml"
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-for NODE in "${NODES[@]}"
-do
-    FILENAME="/etc/ansible/hosts/group_vars/all/networks.yml"
-    echo "Validating subnet entries are valid in networks.yml on $NODE"
-    ssh $NODE "cat $FILENAME" | python3 $SCRIPT_DIR/network-config-check.py
-    if [ $? -ne 0 ]; then
-        echo "subnet entries in networks.yml are misconfigured"
-        exit 1
-    fi
 done
 
 echo "Checking that keycloak pods are Running"
