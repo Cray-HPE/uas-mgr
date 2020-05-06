@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.6] - 2020-05-05
+### Changed
+- CASMUAS-100: Fix pod restart label
+
 ## [1.2.5] - 2020-04-28
 ### Changed
 - CASMUAS-90: Add a changelog and a tool to regenerate the changelog

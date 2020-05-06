@@ -126,7 +126,7 @@ info:
     Cleanup
 
 
-  version: "1.2.5"
+  version: "1.2.6"
 
 servers:
   - url: "/apis/uas-mgr/v1"

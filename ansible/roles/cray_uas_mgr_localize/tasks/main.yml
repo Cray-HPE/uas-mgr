@@ -214,5 +214,5 @@
   run_once: True
 
 - name: Restart cray-uas-mgr pods
-  command: kubectl delete pod -n services -l app=cray-uas-mgr
+  command: kubectl delete pod -n services -l app.kubernetes.io/name=cray-uas-mgr
   run_once: True
