@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.3.0] - 2020-05-18
+- CASMUAS-108: Remove taints and label ansible. Switch to not running on uas=False K8s nodes.
 - CASMUAS-106: Fix pod affinity label
 
 ## [1.2.6] - 2020-05-05
