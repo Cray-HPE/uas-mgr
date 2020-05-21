@@ -12,7 +12,7 @@ import uuid
 from flask import abort, request
 from kubernetes import config, client
 from kubernetes.client import Configuration
-from kubernetes.client.apis import core_v1_api
+from kubernetes.client.api import core_v1_api
 from kubernetes.client.rest import ApiException
 from swagger_server.models import UAI
 from swagger_server.uas_lib.uas_cfg import UasCfg
@@ -41,7 +41,7 @@ class UaiManager(object):
         self.c.assert_hostname = False
         Configuration.set_default(self.c)
         self.api = core_v1_api.CoreV1Api()
-        self.extensions_v1beta1 = client.ExtensionsV1beta1Api()
+        self.apps_v1 = client.AppsV1Api()
         self.uas_cfg = UasCfg()
         self.uas_auth = UasAuth()
         self.userinfo = None
@@ -211,12 +211,13 @@ class UaiManager(object):
                                   affinity=affinity,
                                   volumes=volumes))
         # Create the specification of deployment
-        spec = client.ExtensionsV1beta1DeploymentSpec(
+        spec = client.V1DeploymentSpec(
             replicas=1,
+            selector={'matchLabels': {'app': deployment_name}},
             template=template)
         # Instantiate the deployment object
-        deployment = client.ExtensionsV1beta1Deployment(
-            api_version="extensions/v1beta1",
+        deployment = client.V1Deployment(
+            api_version="apps/v1",
             kind="Deployment",
             metadata=client.V1ObjectMeta(name=deployment_name,
                                          labels=self.gen_labels(deployment_name)),
@@ -229,7 +230,7 @@ class UaiManager(object):
         try:
             UAS_MGR_LOGGER.info("creating deployment %s in namespace %s" %
                                  (deployment.metadata.name, namespace))
-            resp = self.extensions_v1beta1.create_namespaced_deployment(
+            resp = self.apps_v1.create_namespaced_deployment(
                 body=deployment,
                 namespace=namespace)
         except ApiException as e:
@@ -245,7 +246,7 @@ class UaiManager(object):
         try:
             UAS_MGR_LOGGER.info("delete deployment %s in namespace %s" %
                                  (deployment_name, namespace))
-            resp = self.extensions_v1beta1.delete_namespaced_deployment(
+            resp = self.apps_v1.delete_namespaced_deployment(
                 name=deployment_name,
                 namespace=namespace,
                 body=client.V1DeleteOptions(
@@ -275,12 +276,10 @@ class UaiManager(object):
                                                  host))
             if host:
                 pod_resp = self.api.list_namespaced_pod(namespace=namespace,
-                                                        include_uninitialized=True,
                                                         label_selector="app=%s" % deployment_name,
                                                         field_selector="spec.nodeName=%s" % host)
             else:
                 pod_resp = self.api.list_namespaced_pod(namespace=namespace,
-                                                        include_uninitialized=True,
                                                         label_selector="app=%s" % deployment_name)
         except ApiException as e:
             UAS_MGR_LOGGER.error("Failed to get pod info %s: %s" %
@@ -447,7 +446,7 @@ class UaiManager(object):
         try:
             UAS_MGR_LOGGER.info("getting deployment %s in namespace %s" %
                                 (deployment_name, namespace))
-            deploy_resp = self.extensions_v1beta1.read_namespaced_deployment(deployment_name, namespace)
+            deploy_resp = self.apps_v1.read_namespaced_deployment(deployment_name, namespace)
         except ApiException as e:
             if e.status != 404:
                 UAS_MGR_LOGGER.error("Failed to create deployment %s: %s" %
@@ -509,9 +508,8 @@ class UaiManager(object):
         try:
             UAS_MGR_LOGGER.info("listing deployments matching: namespace %s,"
                                 " label %s" % (namespace, label))
-            resp = self.extensions_v1beta1.list_namespaced_deployment(namespace=namespace,
-                                                label_selector=label,
-                                                include_uninitialized=True)
+            resp = self.apps_v1.list_namespaced_deployment(namespace=namespace,
+                                                label_selector=label)
 
         except ApiException as e:
             if e.status != 404:
