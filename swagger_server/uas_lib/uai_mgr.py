@@ -193,9 +193,11 @@ class UaiManager(object):
         # Create and configure affinity
         node_selector_terms = [
             client.V1NodeSelectorTerm(match_expressions=[
+                client.V1NodeSelectorRequirement(key='node-role.kubernetes.io/master',
+                                                 operator='DoesNotExist'),
                 client.V1NodeSelectorRequirement(key='uas',
-                                                 operator='In',
-                                                 values=['True', 'true', 'TRUE'])
+                                                 operator='NotIn',
+                                                 values=['False', 'false', 'FALSE'])
                                                  ])]
         node_selector = client.V1NodeSelector(node_selector_terms)
         node_affinity = client.V1NodeAffinity(required_during_scheduling_ignored_during_execution=node_selector)

@@ -148,12 +148,6 @@ info:
 
     #### DELETE /admin/config/volumes/{volumename}
 
-    Delete the specified volume from the list of volumes mounted in UAI containers.
-
-    #### DELETE /uas
-
-    Cleanup.
-
   version: "1.3.0"
 
 servers:
