@@ -1,16 +1,18 @@
 #
 # Copyright 2019, Cray Inc.  All Rights Reserved.
 #
+# pylint: disable=missing-docstring
 
 import pprint
 
-import six
 import typing
+import six
 
-T = typing.TypeVar('T')
+T = typing.TypeVar('T')  # pylint: disable=invalid-name
 
 
-class Model(object):
+class Model:
+    # pylint: disable=missing-docstring
     # swaggerTypes: The key is attribute name and the
     # value is attribute type.
     swagger_types = {}

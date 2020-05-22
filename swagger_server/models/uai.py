@@ -2,11 +2,9 @@
 # Copyright 2019, Cray Inc.  All Rights Reserved.
 #
 # coding: utf-8
+# pylint: disable=missing-docstring
 
 from __future__ import absolute_import
-from datetime import date, datetime  # noqa: F401
-
-from typing import List, Dict  # noqa: F401
 
 from swagger_server.models.base_model_ import Model
 
@@ -17,6 +15,7 @@ class UAI(Model):
     Do not edit the class manually.
     """
 
+    # pylint: disable=dangerous-default-value,too-many-arguments
     def __init__(self, uai_name: str = None, username: str = None,
                  publickey: str = None, uai_img: str = None,
                  uai_status: str = None, uai_msg: str = None,

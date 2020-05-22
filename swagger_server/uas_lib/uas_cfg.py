@@ -1,25 +1,28 @@
 #
 # Copyright 2018, Cray Inc.  All Rights Reserved.
 #
-# Description:
-#   Manages Cray User Access Node instances.
-#
+"""
+   Manages Cray User Access Node instances.
+"""
+
 
 import logging
 import re
-import sshpubkeys
-import sshpubkeys.exceptions as sshExceptions
 import sys
-import yaml
-
 from datetime import datetime, timezone
+import yaml
 from flask import abort
-from kubernetes import client
+from kubernetes import client  # pylint: disable=no-name-in-module
+import sshpubkeys  # pylint: disable=import-error
+import sshpubkeys.exceptions as sshExceptions  # pylint: disable=import-error
+
 
 UAS_CFG_LOGGER = logging.getLogger('uas_cfg')
 UAS_CFG_LOGGER.setLevel(logging.INFO)
+# pylint: disable=invalid-name
 handler = logging.StreamHandler(sys.stdout)
 handler.setLevel(logging.INFO)
+# pylint: disable=invalid-name
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s"
                               " - %(message)s")
 handler.setFormatter(formatter)
@@ -29,7 +32,7 @@ UAS_CFG_OPTIONAL_PORTS = [80, 443, 8888]
 UAS_CFG_DEFAULT_UAI_NAMESPACE = "default"
 
 
-class UasCfg(object):
+class UasCfg:
     """
     The UasCfg class provides the site configuration data to the
     User Access Services.
@@ -41,6 +44,7 @@ class UasCfg(object):
     def get_config(self):
         try:
             with open(self.uas_cfg) as uascfg:
+                # pylint: disable=no-member
                 return yaml.load(uascfg, Loader=yaml.FullLoader)
         except (TypeError, IOError):
             abort(404, "configmap %s not found" % self.uas_cfg)
@@ -65,13 +69,9 @@ class UasCfg(object):
 
     def validate_image(self, imagename):
         image_list = self.get_images()
-        if image_list:
-            if imagename in image_list:
-                return True
-            else:
-                return False
-        else:
-            return False
+        if image_list and imagename in image_list:
+            return True
+        return False
 
     def get_external_ip(self):
         """
@@ -100,8 +100,10 @@ class UasCfg(object):
             volume_mounts = []
         for mnt in volume_mounts:
             if mnt:
-                volume_mount_list.append(client.V1VolumeMount(name=mnt['name'],
-                                                        mount_path=mnt['mount_path']))
+                volume_mount_list.append(
+                    client.V1VolumeMount(name=mnt['name'],
+                                         mount_path=mnt['mount_path'])
+                )
         return volume_mount_list
 
     def gen_volumes(self):
@@ -115,41 +117,39 @@ class UasCfg(object):
             volume_mounts = []
         for vol in volume_mounts:
             if vol:
-                # XXX - after we switch volumes to APIs, we can drop
-                # this check here since the API will do the check before it
-                # could even get this far. This also applies to the check
-                # below.
-                if not self.is_valid_volume_name(vol['name']):
-                    abort(400, "Invalid volume name - names must consist of "
-                          " lower case alphanumeric characters or '-', and "
-                          " must start and end with an alphanumeric character."
-                          " Refer to the Kubernetes documentation for more "
-                          " information.")
-
                 if vol.get('host_path', None):
-                    # support for an optional type attribute for host_path mounts
-                    # if this attribute is unset we assume original behavior
-                    # which is DirectoryOrCreate
+                    # support for an optional type attribute for
+                    # host_path mounts if this attribute is unset we
+                    # assume original behavior which is
+                    # DirectoryOrCreate
                     mount_type = vol.get('type', 'DirectoryOrCreate')
-                    if not self.is_valid_host_path_mount_type(mount_type):
-                        abort(400, "%s mount_type is not supported - please "
-                              "refer to the Kubernetes docs for a list of"
-                              " supported host_path mount types")
-                    volume_list.append(client.V1Volume(name=vol['name'],
-                                       host_path=client.V1HostPathVolumeSource(
-                                       path=vol['host_path'],
-                                       type=mount_type
-                                       )))
+                    volume_list.append(
+                        client.V1Volume(
+                            name=vol['name'],
+                            host_path=client.V1HostPathVolumeSource(
+                                path=vol['host_path'],
+                                type=mount_type
+                            )
+                        )
+                    )
                 if vol.get('config_map', None):
-                    volume_list.append(client.V1Volume(name=vol['name'],
-                                       config_map=client.V1ConfigMapVolumeSource(
-                                       name=vol['config_map']
-                                       )))
+                    volume_list.append(
+                        client.V1Volume(
+                            name=vol['name'],
+                            config_map=client.V1ConfigMapVolumeSource(
+                                name=vol['config_map']
+                            )
+                        )
+                    )
                 if vol.get('secret_name', None):
-                    volume_list.append(client.V1Volume(name=vol['name'],
-                                       secret=client.V1SecretVolumeSource(
-                                       secret_name=vol['secret_name']
-                                       )))
+                    volume_list.append(
+                        client.V1Volume(
+                            name=vol['name'],
+                            secret=client.V1SecretVolumeSource(
+                                secret_name=vol['secret_name']
+                            )
+                        )
+                    )
         return volume_list
 
     def gen_port_entry(self, port, service):
@@ -165,14 +165,16 @@ class UasCfg(object):
                                             port=port,
                                             target_port=target_port,
                                             protocol="TCP")
-            else:
-                return client.V1ServicePort(name='port' + str(port),
-                                            port=port,
-                                            protocol="TCP")
-        else:
-            return client.V1ContainerPort(container_port=port)
+            return client.V1ServicePort(name='port' + str(port),
+                                        port=port,
+                                        protocol="TCP")
+        return client.V1ContainerPort(container_port=port)
 
-    def gen_port_list(self, service_type=None, service=False, optional_ports=[]):
+    # pylint: disable=too-many-branches
+    def gen_port_list(self,
+                      service_type=None,
+                      service=False,
+                      optional_ports=None):
         """
         gen_port_list creates a list of kubernetes port entry objects.
         The type of the port entry object depends on whether the service_type
@@ -181,21 +183,30 @@ class UasCfg(object):
 
         :param: service_type: one of either "ssh" or "service"
         :type service_type: str
-        :param service: True creates a ServicePort object, False creates a ContainerPort object
+        :param service: True creates a ServicePort object, False creates a
+                        ContainerPort object
         :type service: bool
-        :param optional_ports: An optional list of ports to project in addition to the port used for SSH to the UAI
+        :param optional_ports: An optional list of ports to project in
+                               addition to the port used for SSH to the UAI
         :type optional_ports: list
         :return port_list: A list of kubernetes port entry objects
         :rtype list
         """
-        UAS_CFG_LOGGER.info("optional_ports: %s" % optional_ports)
+        # Avoid using a default value of [] in the call because that can
+        # result in modification of the empty-list for the call if the
+        # argument is ever modified.
+        if optional_ports is None:
+            optional_ports = []
+        UAS_CFG_LOGGER.info("optional_ports: %s", optional_ports)
         cfg = self.get_config()
         port_list = []
         if not cfg:
             return port_list
         if service_type == "service":
-            # Read the configmap for uas_svc_ports (ports to project to other services)
-            # cfg_port_list is a list of port numbers to be processed into kubernetes port entry objects
+            # Read the configmap for uas_svc_ports (ports to project
+            # to other services) cfg_port_list is a list of port
+            # numbers to be processed into kubernetes port entry
+            # objects
             try:
                 cfg_port_list = cfg['uas_svc_ports']
                 if optional_ports:
@@ -205,8 +216,10 @@ class UasCfg(object):
             except KeyError:
                 cfg_port_list = optional_ports
         else:
-            # Read the configmap for uas_ports (ports to project to the customer network)
-            # cfg_port_list is a list of port numbers to be processed into kubernetes port entry objects
+            # Read the configmap for uas_ports (ports to project to
+            # the customer network) cfg_port_list is a list of port
+            # numbers to be processed into kubernetes port entry
+            # objects
             try:
                 cfg_port_list = cfg['uas_ports']
                 if optional_ports:
@@ -218,18 +231,23 @@ class UasCfg(object):
                     if isinstance(port, str):
                         raise ValueError("uas_ports does not support ranges")
             except KeyError:
-                cfg_port_list = self.get_default_port()
+                cfg_port_list = [self.get_default_port()]
                 if optional_ports:
                     # Add any optional ports to the cfg_port_list
                     for port in optional_ports:
                         cfg_port_list.append(port)
 
-        UAS_CFG_LOGGER.info("cfg_port_list: %s" % cfg_port_list)
+        UAS_CFG_LOGGER.info("cfg_port_list: %s", cfg_port_list)
         for port in cfg_port_list:
             # check if a port range was given
             if isinstance(port, str):
+                # Lint thinks port is an 'int' but we know (because we
+                # checked) that its a string.
+                #
+                # pylint: disable=no-member
                 port_range = port.split(':')
-                # build entries for all ports between port_range[0] and port_range[1]
+                # build entries for all ports between port_range[0]
+                # and port_range[1]
                 for i in range(int(port_range[0]), int(port_range[1])+1):
                     port_list.append(self.gen_port_entry(i, service))
             else:
@@ -254,14 +272,13 @@ class UasCfg(object):
                 svc_type['svc_type'] = cfg.get('uas_ssh_type', 'NodePort')
                 if svc_type['svc_type'] == "LoadBalancer":
                     svc_type['ip_pool'] = cfg.get('uas_ssh_lb_pool', None)
-        if svc_type['svc_type'] in ['NodePort', 'ClusterIP', 'LoadBalancer']:
-            svc_type['valid'] = True
-        else:
-            # Invalid svc_type given
-            svc_type['valid'] = False
+        svc_type['valid'] = svc_type['svc_type'] in ['NodePort',
+                                                     'ClusterIP',
+                                                     'LoadBalancer']
         return svc_type
 
-    def get_default_port(self):
+    @staticmethod
+    def get_default_port():
         """
         getter for the default UAS port
         :return: UAS default port
@@ -286,15 +303,25 @@ class UasCfg(object):
                               period_seconds=3,
                               tcp_socket=socket)
 
-    def is_valid_host_path_mount_type(self, mount_type):
+    @staticmethod
+    def is_valid_host_path_mount_type(mount_type):
         """
         checks whether the mount_type is a valid one or not
         :return: returns True if the passed in mount type
         :rtype bool
         """
-        return mount_type in ("DirectoryOrCreate", "Directory", "FileOrCreate", "File", "Socket", "CharDevice", "BlockDevice")
+        return mount_type in (
+            "DirectoryOrCreate",
+            "Directory",
+            "FileOrCreate",
+            "File",
+            "Socket",
+            "CharDevice",
+            "BlockDevice"
+        )
 
-    def validate_ssh_key(self, ssh_key):
+    @staticmethod
+    def validate_ssh_key(ssh_key):
         """
         checks whether the ssh_key is a valid public key
         ssh_key input is expected to be a string
@@ -307,14 +334,15 @@ class UasCfg(object):
             ssh.parse()
             return True
         except sshExceptions.InvalidKeyError as err:
-            UAS_CFG_LOGGER.error("Unknown key type: ", err)
+            UAS_CFG_LOGGER.error("Unknown key type: %s", err)
         except (NotImplementedError, sshExceptions.MalformedDataError) as err:
-            UAS_CFG_LOGGER.error("Invalid key: ", err)
-        except Exception as err:
-            UAS_CFG_LOGGER.error("Invalid non-key input: ", err)
+            UAS_CFG_LOGGER.error("Invalid key: %s", err)
+        except Exception as err:  # pylint: disable=broad-except
+            UAS_CFG_LOGGER.error("Invalid non-key input: %s", err)
         return False
 
-    def get_valid_optional_ports(self):
+    @staticmethod
+    def get_valid_optional_ports():
         """
         Return list of valid optional ports.
         :return: List of valid optional ports.
@@ -322,7 +350,8 @@ class UasCfg(object):
         """
         return UAS_CFG_OPTIONAL_PORTS
 
-    def is_valid_volume_name(self, volume_name):
+    @staticmethod
+    def is_valid_volume_name(volume_name):
         """
         checks whether the passed in volume name is valid or not
         k8s volume names need to be valid DNS-1123 name, which means
@@ -335,7 +364,8 @@ class UasCfg(object):
         regex = re.compile('^(?![0-9]+$)(?!-)[a-z0-9-]{1,63}(?<!-)$')
         return regex.match(volume_name) is not None
 
-    def get_pod_age(self, start_time):
+    @staticmethod
+    def get_pod_age(start_time):
         """
         given a start time as an RFC3339 datetime object, return the difference
         in time between that time and the current time, in a k8s format
@@ -351,8 +381,8 @@ class UasCfg(object):
         try:
             now = datetime.now(timezone.utc)
             delta = now - start_time
-        except Exception as e:
-            UAS_CFG_LOGGER.warning("Unable to convert pod start time" % e)
+        except Exception as err:  # pylint: disable=broad-except
+            UAS_CFG_LOGGER.warning("Unable to convert pod start time: %s", err)
             return None
 
         # build the output string
