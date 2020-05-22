@@ -1,13 +1,16 @@
 #
 # Copyright 2019, Cray Inc.  All Rights Reserved.
 #
+"""UAS Server Controller
+
+"""
 
 from swagger_server import version
 from swagger_server.uas_lib.uai_mgr import UaiManager
 from swagger_server.uas_lib.uas_cfg import UasCfg
 
 
-uas_cfg = UasCfg()
+uas_cfg = UasCfg()  # pylint: disable=invalid-name
 
 
 def create_uai(publickey=None, imagename=None, ports=None):  # noqa: E501
@@ -39,7 +42,7 @@ def delete_uai_by_name(uai_list):  # noqa: E501
 
     :rtype: UAI
     """
-    if len(uai_list) == 0:
+    if uai_list:
         return "Must provide a list of UAI names to delete."
     uai_mgr = UaiManager()
     uai_resp = uai_mgr.delete_uais(uai_list)

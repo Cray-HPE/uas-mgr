@@ -3,6 +3,7 @@
 #
 # Copyright 2019, Cray Inc.  All Rights Reserved.
 #
+# pylint: disable=missing-docstring
 
 import unittest
 import os
@@ -11,27 +12,31 @@ import flask
 from swagger_server.uas_lib.uai_mgr import UaiManager
 from swagger_server.models.uai import UAI
 
-app = flask.Flask(__name__)
+app = flask.Flask(__name__)  # pylint: disable=invalid-name
 
 
 class TestUasMgr(unittest.TestCase):
+    """Tester for the UasMgr Class
 
+    """
     os.environ["KUBERNETES_SERVICE_PORT"] = "443"
     os.environ["KUBERNETES_SERVICE_HOST"] = "127.0.0.1"
     deployment_name = "hal-234a85"
     with app.test_request_context('/'):
         uas_mgr = UaiManager()
 
+    # pylint: disable=missing-docstring,no-self-use
     def test_uas_mgr_init(self):
         return
 
+    # pylint: disable=missing-docstring
     def test_gen_labels(self):
         labels = self.uas_mgr.gen_labels(self.deployment_name)
         self.assertEqual(labels, {"app": self.deployment_name,
                                   "uas": "managed",
                                   "user": None})
-        return
 
+    # pylint: disable=missing-docstring
     def test_gen_connection_string(self):
         uai = UAI()
         uai.username = "testuser"
@@ -42,6 +47,7 @@ class TestUasMgr(unittest.TestCase):
         self.assertEqual("ssh testuser@1.2.3.4 -p 12345 -i ~/.ssh/id_rsa",
                          uai.uai_connect_string)
 
+    # pylint: disable=missing-docstring
     def test_gen_connection_string_no_port(self):
         uai = UAI()
         uai.username = "testuser"
@@ -52,6 +58,7 @@ class TestUasMgr(unittest.TestCase):
         self.assertEqual("ssh testuser@1.2.3.4 -i ~/.ssh/id_rsa",
                          uai.uai_connect_string)
 
+    # pylint: disable=missing-docstring
     def test_create_image(self):
         self.assertRaises(TypeError, self.uas_mgr.create_image, "test123")
         with self.assertRaises(werkzeug.exceptions.NotImplemented):
@@ -70,6 +77,7 @@ class TestUasMgr(unittest.TestCase):
         #       - test default false
         #       - test default true
 
+    # pylint: disable=missing-docstring
     def test_update_image(self):
         self.assertRaises(TypeError, self.uas_mgr.update_image, "test123")
         with self.assertRaises(werkzeug.exceptions.NotImplemented):
@@ -89,6 +97,7 @@ class TestUasMgr(unittest.TestCase):
         #       - test default true
         #       - update image not in the list
 
+    # pylint: disable=missing-docstring
     def test_delete_image(self):
         with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.delete_image("colons:and/slashes:5000")
@@ -101,6 +110,7 @@ class TestUasMgr(unittest.TestCase):
         #       - test delete the first image
         #       - test delete all in a loop
 
+    # pylint: disable=missing-docstring
     def test_get_image(self):
         with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.get_image("colons:and/slashes:5000")
@@ -112,6 +122,7 @@ class TestUasMgr(unittest.TestCase):
         #       - test get the first image
         #       - test get all images in a loop
 
+    # pylint: disable=missing-docstring
     def test_create_volume(self):
         with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.create_volume("test123", type='FileOrCreate',
@@ -136,6 +147,7 @@ class TestUasMgr(unittest.TestCase):
         #       - test with empty volume list
         #       - test different types
 
+    # pylint: disable=missing-docstring
     def test_update_volume(self):
         with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.update_volume("test123", type='FileOrCreate',
@@ -160,6 +172,7 @@ class TestUasMgr(unittest.TestCase):
         #       - test with volume not in list
         #       - test different types
 
+    # pylint: disable=missing-docstring
     def test_delete_volume(self):
         with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.delete_volume("volume_that_exists")
@@ -171,6 +184,7 @@ class TestUasMgr(unittest.TestCase):
         #       - test delete the first volume
         #       - test delete all in a loop
 
+    # pylint: disable=missing-docstring
     def test_get_volume(self):
         with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.get_volume("volume_1")
@@ -182,6 +196,7 @@ class TestUasMgr(unittest.TestCase):
         #       - test get the first volume
         #       - test get all volumes in a loop
 
+    # pylint: disable=missing-docstring
     def test_get_volumes(self):
         with self.assertRaises(werkzeug.exceptions.NotImplemented):
             self.uas_mgr.get_volumes()
