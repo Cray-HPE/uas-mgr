@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] - 2020-05-21
+- CASMUAS-114: Update K8s API to support 1.18
+
 ## [1.3.0] - 2020-05-18
 - CASMUAS-108: Remove taints and label ansible. Switch to not running on uas=False K8s nodes.
 - CASMUAS-106: Fix pod affinity label
