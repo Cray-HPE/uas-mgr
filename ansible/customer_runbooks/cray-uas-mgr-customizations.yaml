@@ -1,7 +1,0 @@
-# Copyright 2019, Cray Inc. All Rights Reserved.
----
-- hosts: bis
-  vars_files:
-    - "/opt/cray/crayctl/ansible_framework/customer_runbooks/customer_var.yml"
-  roles:
-    - cray_uas_mgr_customizations
