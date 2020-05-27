@@ -8,6 +8,7 @@
 import unittest
 import os
 import flask
+import werkzeug
 
 import swagger_server.controllers.uas_controller as uas_ctl
 from swagger_server import version
@@ -50,22 +51,26 @@ class TestUasController(unittest.TestCase):
 
     # pylint: disable=missing-docstring
     def test_delete_uas_image(self):
-        resp = uas_ctl.delete_uas_image(None)
-        self.assertEqual(resp, "Must provide imagename to delete.")
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
+            uas_ctl.delete_uas_image_deprecated("fred")
 
     # pylint: disable=missing-docstring
     def test_create_uas_image(self):
-        resp = uas_ctl.create_uas_image(None, None)
-        self.assertEqual(resp, "Must provide imagename to create.")
-        resp = uas_ctl.create_uas_image("fred", None)
-        self.assertEqual(resp, "Must provide true/false for default image.")
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
+            uas_ctl.create_uas_image_deprecated(None, None)
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
+            uas_ctl.create_uas_image_deprecated("fred", None)
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
+            uas_ctl.create_uas_image_deprecated("fred", False)
 
     # pylint: disable=missing-docstring
     def test_update_uas_image(self):
-        resp = uas_ctl.update_uas_image(None, None)
-        self.assertEqual(resp, "Must provide imagename to update.")
-        resp = uas_ctl.update_uas_image("fred", None)
-        self.assertEqual(resp, "Must provide true/false for default image.")
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
+            uas_ctl.update_uas_image_deprecated(None, None)
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
+            uas_ctl.update_uas_image_deprecated("fred", None)
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
+            uas_ctl.update_uas_image_deprecated("fred", False)
 
     # pylint: disable=missing-docstring
     def test_get_uas_image(self):
@@ -74,27 +79,27 @@ class TestUasController(unittest.TestCase):
 
     # pylint: disable=missing-docstring
     def test_delete_uas_volume(self):
-        resp = uas_ctl.delete_uas_volume(None)
-        self.assertEqual(resp, "Must provide volumename to delete.")
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
+            uas_ctl.delete_uas_volume_deprecated(None)
 
     # pylint: disable=missing-docstring
     def test_create_uas_volume(self):
-        resp = uas_ctl.create_uas_volume(None, None)
-        self.assertEqual(resp, "Must provide volumename to create.")
-        resp = uas_ctl.create_uas_volume("fred", None)
-        self.assertEqual(resp, "Must provide type to create.")
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
+            uas_ctl.create_uas_volume_deprecated(None, None)
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
+            uas_ctl.create_uas_volume_deprecated("fred", None)
 
     # pylint: disable=missing-docstring
     def test_update_uas_volume(self):
-        resp = uas_ctl.update_uas_volume(None, None)
-        self.assertEqual(resp, "Must provide volumename to update.")
-        resp = uas_ctl.update_uas_volume("fred", None)
-        self.assertEqual(resp, "Must provide type to update.")
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
+            uas_ctl.update_uas_volume_deprecated(None, None)
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
+            uas_ctl.update_uas_volume_deprecated("fred", None)
 
     # pylint: disable=missing-docstring
     def test_get_uas_volume(self):
-        resp = uas_ctl.get_uas_volume(None)
-        self.assertEqual(resp, "Must provide volumename to get.")
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
+            uas_ctl.get_uas_volume_deprecated(None)
 
 
 if __name__ == '__main__':

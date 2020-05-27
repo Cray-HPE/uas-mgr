@@ -1,2 +1,2 @@
 [MASTER]
-disable=fixme, too-many-instance-attributes
+disable=fixme, too-many-instance-attributes,duplicate-code

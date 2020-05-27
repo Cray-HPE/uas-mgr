@@ -6,9 +6,9 @@
 
 import unittest
 
-from datetime import datetime, timedelta, timezone
-from swagger_server.uas_lib.uas_cfg import UasCfg
 from kubernetes import client  # pylint: disable=no-name-in-module
+from swagger_server.uas_lib.uas_cfg import UasCfg
+from swagger_server.uas_data_model import UAIVolume
 
 class TestUasCfg(unittest.TestCase):
     """Tester for the UasCfg class
@@ -204,11 +204,11 @@ class TestUasCfg(unittest.TestCase):
 
     # pylint: disable=missing-docstring
     def test_is_valid_host_path_mount_type(self):
-        self.assertTrue(self.uas_cfg.is_valid_host_path_mount_type('FileOrCreate'))
-        self.assertTrue(self.uas_cfg.is_valid_host_path_mount_type('DirectoryOrCreate'))
-        self.assertFalse(self.uas_cfg.is_valid_host_path_mount_type('Wrong'))
-        self.assertFalse(self.uas_cfg.is_valid_host_path_mount_type(''))
-        self.assertFalse(self.uas_cfg.is_valid_host_path_mount_type(None))
+        self.assertTrue(UAIVolume.is_valid_host_path_mount_type('FileOrCreate'))
+        self.assertTrue(UAIVolume.is_valid_host_path_mount_type('DirectoryOrCreate'))
+        self.assertFalse(UAIVolume.is_valid_host_path_mount_type('Wrong'))
+        self.assertFalse(UAIVolume.is_valid_host_path_mount_type(''))
+        self.assertFalse(UAIVolume.is_valid_host_path_mount_type(None))
 
     # pylint: disable=missing-docstring
     def test_validate_ssh_key(self):
@@ -243,57 +243,34 @@ class TestUasCfg(unittest.TestCase):
     # pylint: disable=missing-docstring
     def test_is_valid_volume_name(self):
         # Capital letters are bad
-        self.assertFalse(self.uas_cfg.is_valid_volume_name('NoCaps'))
+        self.assertFalse(UAIVolume.is_valid_volume_name('NoCaps'))
         # can't have some of these
         special_chars = ["*", "$", "%", "'", "!"]
         # pylint: disable=invalid-name
         for sc in special_chars:
-            self.assertFalse(self.uas_cfg.is_valid_volume_name(sc+'foo'))
+            self.assertFalse(UAIVolume.is_valid_volume_name(sc+'foo'))
 
         # - is legal
-        self.assertTrue(self.uas_cfg.is_valid_volume_name('my-name-is'))
+        self.assertTrue(UAIVolume.is_valid_volume_name('my-name-is'))
         # numbers are ok
-        self.assertTrue(self.uas_cfg.is_valid_volume_name('jenny8675309'))
+        self.assertTrue(UAIVolume.is_valid_volume_name('jenny8675309'))
         # although I think all numbers are okay with DNS-1123, k8s doesn't
         # allow it
-        self.assertFalse(self.uas_cfg.is_valid_volume_name('8675309'))
+        self.assertFalse(UAIVolume.is_valid_volume_name('8675309'))
         # lower case letters & numbers are ok
-        self.assertTrue(self.uas_cfg.is_valid_volume_name('99something'))
+        self.assertTrue(UAIVolume.is_valid_volume_name('99something'))
         # can't end with a -
-        self.assertFalse(self.uas_cfg.is_valid_volume_name('dashnotatend-'))
+        self.assertFalse(UAIVolume.is_valid_volume_name('dashnotatend-'))
         # can't start with a -
-        self.assertFalse(self.uas_cfg.is_valid_volume_name('-dashnotatstart'))
+        self.assertFalse(UAIVolume.is_valid_volume_name('-dashnotatstart'))
         # has to be <= 63 chars
         self.assertFalse(
-            self.uas_cfg.is_valid_volume_name(
+            UAIVolume.is_valid_volume_name(
                 'mercury-venus-earth-asteroid-belt-mars-jupiter-saturn-uranus-neptune'
             )
         )  # noqa E501
         # 0 length not allowed
-        self.assertFalse(self.uas_cfg.is_valid_volume_name(''))
-
-    # pylint: disable=missing-docstring
-    def test_get_pod_age(self):
-        self.assertEqual(self.uas_cfg.get_pod_age(None), None)
-
-        with self.assertRaises(TypeError):
-            self.assertEqual(self.uas_cfg.get_pod_age("wrong"), None)
-
-        now = datetime.now(timezone.utc)
-        self.assertEqual(self.uas_cfg.get_pod_age(now), "0m")
-        self.assertEqual(self.uas_cfg.get_pod_age(now-timedelta(hours=1)),
-                         "1h0m")
-        self.assertEqual(self.uas_cfg.get_pod_age(now-timedelta(hours=25)),
-                         "1d1h")
-        self.assertEqual(self.uas_cfg.get_pod_age(now-timedelta(minutes=25)),
-                         "25m")
-        self.assertEqual(self.uas_cfg.get_pod_age(now-timedelta(days=89)),
-                         "89d")
-        # for days > 0, don't print minutes
-        self.assertEqual(self.uas_cfg.get_pod_age(now-timedelta(minutes=1442)),
-                         "1d")
-        self.assertEqual(self.uas_cfg.get_pod_age(now-timedelta(minutes=1501)),
-                         "1d1h")
+        self.assertFalse(UAIVolume.is_valid_volume_name(''))
 
     # pylint: disable=missing-docstring
     def test_get_uai_namespace(self):

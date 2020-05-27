@@ -7,6 +7,7 @@
 
 import unittest
 import os
+from datetime import datetime, timezone, timedelta
 import werkzeug
 import flask
 from swagger_server.uas_lib.uai_mgr import UaiManager
@@ -21,6 +22,7 @@ class TestUasMgr(unittest.TestCase):
     """
     os.environ["KUBERNETES_SERVICE_PORT"] = "443"
     os.environ["KUBERNETES_SERVICE_HOST"] = "127.0.0.1"
+    os.environ["ETCD_MOCK_CLIENT"] = "yes"
     deployment_name = "hal-234a85"
     with app.test_request_context('/'):
         uas_mgr = UaiManager()
@@ -58,148 +60,212 @@ class TestUasMgr(unittest.TestCase):
         self.assertEqual("ssh testuser@1.2.3.4 -i ~/.ssh/id_rsa",
                          uai.uai_connect_string)
 
-    # pylint: disable=missing-docstring
-    def test_create_image(self):
-        self.assertRaises(TypeError, self.uas_mgr.create_image, "test123")
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.create_image("test123", default=True)
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.create_image("colons:and/slashes:5000", default=True)
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.create_image("walleye:5000/repo/image:tag",
-                                      default=False)
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.create_image("", default=False)
-        # XXX - to implement after the underlying code works
-        #       - test duplicate image
-        #       - test duplicate with same default setting
-        #       - test with empty list
-        #       - test default false
-        #       - test default true
+    def test_image_lifecycle(self):
+        """Test create_image, get_image, get_images, update_image,
+        delete_image lifecycle to make sure it all works properly.
+        This is intended as a more comprehensive test of images than
+        could be done with individual calls tested separately.
+
+        """
+        img_name = "testimage"
+        # Make the image and verify that the right result is returned
+        expected_result = {'imagename': img_name, 'default': False}
+        img = self.uas_mgr.create_image(img_name, default=None)
+        self.assertEqual(img, expected_result)
+        # Get the image and verify that the right result is returned
+        img = self.uas_mgr.get_image(img_name)
+        self.assertEqual(img, expected_result)
+        # Update the image and verify that the right result is returned
+        expected_result = {'imagename': img_name, 'default': True}
+        img = self.uas_mgr.update_image(img_name, default=True)
+        self.assertEqual(img, expected_result)
+        # Get a list of images and make sure ours is in it
+        imgs = self.uas_mgr.get_images()
+        self.assertIsInstance(imgs, list)
+        self.assertTrue(imgs)
+        names_found = []
+        for img in imgs:
+            self.assertIsInstance(img, dict)
+            self.assertIn('imagename', img)
+            names_found.append(img['imagename'])
+        self.assertIn(img_name, names_found)
+        # Delete the image and make sure the right result is returned
+        img = self.uas_mgr.delete_image(img_name)
+        self.assertEqual(img, expected_result)
+        # Get the list of images and make sure ours is no longer in it
+        imgs = self.uas_mgr.get_images()
+        self.assertIsInstance(imgs, list)
+        names_found = []
+        for img in imgs:
+            self.assertIsInstance(img, dict)
+            self.assertIn('imagename', img)
+            names_found.append(img['imagename'])
+        self.assertNotIn(img_name, names_found)
+
+    # pylint: disable=too-many-arguments
+    def __volume_lifecycle(
+            self,
+            volume_name,
+            mount_path_1,
+            mount_path_2,
+            vol_desc_1,
+            vol_desc_2
+    ):
+        """Common function for testing volume lifecycle operations.  This is
+        more holistic testing of volumes, as opposed to testing each
+        operation in a vaccuum, so that each operation can be tested
+        with actual data behind it and actual results other than "not
+        found".
+
+        """
+        # Set up the expected return
+        expected_result = {
+            'volume_name': volume_name,
+            'mount_path': mount_path_1,
+            'volume_description': vol_desc_1,
+        }
+        # Create the volume and verify we see the expected results...
+        vol = self.uas_mgr.create_volume(
+            volume_name,
+            mount_path=mount_path_1,
+            vol_desc=vol_desc_1
+        )
+        self.assertEqual(vol, expected_result)
+        # Retrieve the volume and verify that we see the same results...
+        vol = self.uas_mgr.get_volume("host_path_volume")
+        self.assertEqual(vol, expected_result)
+        # Modify the mount path with an update and verify we get the
+        # expected result
+        expected_result['mount_path'] = mount_path_2
+        vol = self.uas_mgr.update_volume(
+            volume_name,
+            mount_path=mount_path_2
+        )
+        self.assertEqual(vol, expected_result)
+        # Modify the source description with an update and verify we
+        # get the expected result
+        expected_result['volume_description'] = vol_desc_2
+        vol = self.uas_mgr.update_volume(
+            volume_name,
+            vol_desc=vol_desc_2
+        )
+        self.assertEqual(vol, expected_result)
+        # Get the volume and verify that it contains the most recent state
+        vol = self.uas_mgr.get_volume("host-path-volume")
+        self.assertEqual(vol, expected_result)
+        # List the volumes we have and make sure this one is in it
+        vols = self.uas_mgr.get_volumes()
+        self.assertIsInstance(vols, list)
+        self.assertTrue(vols)  # not empty
+        names_found = []
+        for vol in vols:
+            self.assertIsInstance(vol, dict)
+            self.assertIn('volume_name', vol)
+            names_found.append(vol['volume_name'])
+        self.assertIn(volume_name, names_found)
+        # Delete the volume and verify we get the last known state as a result.
+        vol = self.uas_mgr.delete_volume("host-path-volume")
+        self.assertEqual(vol, expected_result)
+        # Verify that the volume is actually gone from the config
+        with self.assertRaises(werkzeug.exceptions.NotFound):
+            vol = self.uas_mgr.get_volume("host-path-volume")
+        # List the volumes we have and make sure this one is not in it
+        vols = self.uas_mgr.get_volumes()
+        self.assertIsInstance(vols, list)
+        names_found = []
+        for vol in vols:
+            self.assertIsInstance(vol, dict)
+            self.assertIn('volume_name', vol)
+            names_found.append(vol['volume_name'])
+        self.assertNotIn(volume_name, names_found)
 
     # pylint: disable=missing-docstring
-    def test_update_image(self):
-        self.assertRaises(TypeError, self.uas_mgr.update_image, "test123")
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.update_image("test123", default=True)
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.update_image("colons:and/slashes:5000", default=True)
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.update_image("walleye:5000/repo/image:tag",
-                                      default=False)
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.update_image("", default=False)
-        # XXX - to implement after the underlying code works
-        #       - test duplicate image
-        #       - test duplicate with default=True
-        #       - test with empty list
-        #       - test default false
-        #       - test default true
-        #       - update image not in the list
+    def test_host_path_lifecycle(self):
+        host_path_desc_1 = {
+            'host_path': {
+                'type': "DirectoryOrCreate",
+                'path': "/host/var/stuff"
+            }
+        }
+        host_path_desc_2 = {
+            'host_path': {
+                'type': "DirectoryOrCreate",
+                'path': "/host/var/other_stuff"
+            }
+        }
+        self.__volume_lifecycle(
+            "host_path_volume",
+            "/var/mount_1",
+            "/var/mount_2",
+            host_path_desc_1,
+            host_path_desc_2
+        )
 
     # pylint: disable=missing-docstring
-    def test_delete_image(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.delete_image("colons:and/slashes:5000")
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.delete_image("")
-        # XXX - to implement after the underlying code works
-        #       - test delete image not in images list
-        #       - test delete the default image
-        #       - test delete the last image
-        #       - test delete the first image
-        #       - test delete all in a loop
+    def test_config_map_lifecycle(self):
+        configmap_desc_1 = {
+            'config_map': {
+                'name': "my-funny-configmap"
+            }
+        }
+        configmap_desc_2 = {
+            'config_map': {
+                'name': "my-funny-configmap",
+                'default_mode': int("777", 8)
+            }
+        }
+        self.__volume_lifecycle(
+            "config_map_volume",
+            "/var/mount_1",
+            "/var/mount_2",
+            configmap_desc_1,
+            configmap_desc_2
+        )
 
     # pylint: disable=missing-docstring
-    def test_get_image(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.get_image("colons:and/slashes:5000")
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.get_image("")
-        # XXX - to implement after the underlying code works
-        #       - test get image not in images list
-        #       - test get the last image
-        #       - test get the first image
-        #       - test get all images in a loop
+    def test_secret_lifecycle(self):
+        secret_desc_1 = {
+            'secret': {
+                'secret_name': "my-little-secret"
+            }
+        }
+        secret_desc_2 = {
+            'secret': {
+                'secret_name': "my-little-secret",
+                'default_mode': int("777", 8)
+            }
+        }
+        self.__volume_lifecycle(
+            "secret_volume",
+            "/var/mount_1",
+            "/var/mount_2",
+            secret_desc_1,
+            secret_desc_2
+        )
 
     # pylint: disable=missing-docstring
-    def test_create_volume(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.create_volume("test123", type='FileOrCreate',
-                                       mount_path='/var/foobar')
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.create_volume("test124", type='DirectoryOrCreate',
-                                       host_path='/var/foobar')
-        with self.assertRaises(werkzeug.exceptions.BadRequest):
-            self.uas_mgr.create_volume("test123", type='ketchup',
-                                       mount_path='/var/foobar')
-        with self.assertRaises(werkzeug.exceptions.BadRequest):
-            self.uas_mgr.create_volume("test124", type='',
-                                       host_path='/var/foobar')
-        with self.assertRaises(werkzeug.exceptions.BadRequest):
-            self.uas_mgr.create_volume("abadname-", type='DirectoryOrCreate',
-                                       host_path='/var/foobar')
-        with self.assertRaises(werkzeug.exceptions.BadRequest):
-            self.uas_mgr.create_volume("BaDName", type='DirectoryOrCreate',
-                                       host_path='/var/foobar')
-        # XXX - to implement after the underlying code works
-        #       - test duplicate volume
-        #       - test with empty volume list
-        #       - test different types
+    def test_get_pod_age(self):
+        self.assertEqual(UaiManager.get_pod_age(None), None)
 
-    # pylint: disable=missing-docstring
-    def test_update_volume(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.update_volume("test123", type='FileOrCreate',
-                                       mount_path='/var/foobar')
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.update_volume("test124", type='DirectoryOrCreate',
-                                       host_path='/var/foobar')
-        with self.assertRaises(werkzeug.exceptions.BadRequest):
-            self.uas_mgr.update_volume("test123", type='walleye',
-                                       mount_path='/var/foobar')
-        with self.assertRaises(werkzeug.exceptions.BadRequest):
-            self.uas_mgr.update_volume("test124", type='',
-                                       host_path='/var/foobar')
-        with self.assertRaises(werkzeug.exceptions.BadRequest):
-            self.uas_mgr.update_volume("abadname-", type='DirectoryOrCreate',
-                                       host_path='/var/foobar')
-        with self.assertRaises(werkzeug.exceptions.BadRequest):
-            self.uas_mgr.update_volume("BaDName", type='DirectoryOrCreate',
-                                       host_path='/var/foobar')
-        # XXX - to implement after the underlying code works
-        #       - test with empty volume list
-        #       - test with volume not in list
-        #       - test different types
+        with self.assertRaises(TypeError):
+            self.assertEqual(UaiManager.get_pod_age("wrong"), None)
 
-    # pylint: disable=missing-docstring
-    def test_delete_volume(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.delete_volume("volume_that_exists")
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.delete_volume("volume_that_doesnt_exist")
-        # XXX - to implement after the underlying code works
-        #       - test delete volume not in volumes list
-        #       - test delete the last volume
-        #       - test delete the first volume
-        #       - test delete all in a loop
+        now = datetime.now(timezone.utc)
+        self.assertEqual(UaiManager.get_pod_age(now), "0m")
+        self.assertEqual(UaiManager.get_pod_age(now-timedelta(hours=1)),
+                         "1h0m")
+        self.assertEqual(UaiManager.get_pod_age(now-timedelta(hours=25)),
+                         "1d1h")
+        self.assertEqual(UaiManager.get_pod_age(now-timedelta(minutes=25)),
+                         "25m")
+        self.assertEqual(UaiManager.get_pod_age(now-timedelta(days=89)),
+                         "89d")
+        # for days > 0, don't print minutes
+        self.assertEqual(UaiManager.get_pod_age(now-timedelta(minutes=1442)),
+                         "1d")
+        self.assertEqual(UaiManager.get_pod_age(now-timedelta(minutes=1501)),
+                         "1d1h")
 
-    # pylint: disable=missing-docstring
-    def test_get_volume(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.get_volume("volume_1")
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.get_volume("")
-        # XXX - to implement after the underlying code works
-        #       - test get volume not in volumes list
-        #       - test get the last volume
-        #       - test get the first volume
-        #       - test get all volumes in a loop
-
-    # pylint: disable=missing-docstring
-    def test_get_volumes(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            self.uas_mgr.get_volumes()
 
 if __name__ == '__main__':
     unittest.main()

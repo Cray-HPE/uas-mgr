@@ -8,6 +8,8 @@ import pprint
 import typing
 import six
 
+from swagger_server import util
+
 T = typing.TypeVar('T')  # pylint: disable=invalid-name
 
 
@@ -20,6 +22,11 @@ class Model:
     # attributeMap: The key is attribute name and the
     # value is json key in definition.
     attribute_map = {}
+
+    @classmethod
+    def from_dict(cls: typing.Type[T], dikt) -> T:
+        """Returns the dict as a model"""
+        return util.deserialize_model(dikt, cls)
 
     def to_dict(self):
         """Returns the model properties as a dict

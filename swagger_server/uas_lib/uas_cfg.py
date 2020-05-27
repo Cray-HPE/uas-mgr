@@ -7,14 +7,13 @@
 
 
 import logging
-import re
 import sys
-from datetime import datetime, timezone
 import yaml
 from flask import abort
 from kubernetes import client  # pylint: disable=no-name-in-module
 import sshpubkeys  # pylint: disable=import-error
 import sshpubkeys.exceptions as sshExceptions  # pylint: disable=import-error
+from swagger_server.uas_data_model import UAIVolume, UAIImage
 
 
 UAS_CFG_LOGGER = logging.getLogger('uas_cfg')
@@ -37,40 +36,216 @@ class UasCfg:
     The UasCfg class provides the site configuration data to the
     User Access Services.
     """
+    # XXX - maybe we can simplify, but for now disable the complexity reports
+    # pylint: disable=too-many-return-statements,too-many-branches
+    @staticmethod
+    def add_etcd_volume(vol):
+        """Compose and store an ETCD UAIVolume object based on the contents
+        found in the configmap.
+
+        """
+        name = vol.get('name', None)
+        if name is None:
+            UAS_CFG_LOGGER.error(
+                "Volume with no name (skipped): %s",
+                str(vol)
+            )
+            return
+        if not UAIVolume.is_valid_volume_name(name):
+            UAS_CFG_LOGGER.error(
+                "Volume '%s' has invalid name (skipped) "
+                "- Names must consist of "
+                "lower case alphanumeric characters or '-', and "
+                "must start and end with an alphanumeric character. "
+                "Refer to the Kubernetes documentation for more "
+                "information.",
+                name
+            )
+            return
+        mount_path = vol.get('mount_path', None)
+        if mount_path is None:
+            UAS_CFG_LOGGER.error(
+                "Volume '%s' has no mount path (skipped)",
+                name
+            )
+            return
+        volume = None
+        host_path = vol.get('host_path', None)
+        if host_path is not None:
+            mount_type = vol.get('type', None)
+            if mount_type is None:
+                mount_type = 'DirectoryOrCreate'
+            if not UAIVolume.is_valid_host_path_mount_type(mount_type):
+                UAS_CFG_LOGGER.error(
+                    "Volume '%s' has invalid host_path mount type '%s' "
+                    "(skipped) - please refer to the Kubernetes docs for "
+                    "a list of supported host_path mount types",
+                    name,
+                    mount_type
+                )
+                return
+            volume = {
+                'hostPath': client.V1HostPathVolumeSource(
+                    path=host_path,
+                    type=mount_type
+                )
+            }
+        config_map = vol.get('config_map', None)
+        if config_map is not None:
+            if volume is not None:
+                UAS_CFG_LOGGER.error(
+                    "Volume '%s' has multiple kinds of volume mounts "
+                    "(skipped): %s",
+                    name,
+                    str(vol)
+                )
+                return
+            volume = {
+                'configMap': client.V1ConfigMapVolumeSource(name=config_map)
+            }
+        secret_name = vol.get('secret_name', None)
+        if secret_name is not None:
+            if volume is not None:
+                UAS_CFG_LOGGER.error(
+                    "Volume '%s' has multiple kinds of volume mounts "
+                    "(skipped): %s",
+                    name,
+                    str(vol)
+                )
+                return
+            volume = {
+                'secret': client.V1SecretVolumeSource(secret_name=secret_name)
+            }
+        vol_desc = vol.get('vol_desc', None)
+        if vol_desc is not None:
+            if volume is not None:
+                UAS_CFG_LOGGER.error(
+                    "Volume '%s' has multiple kinds of volume mounts "
+                    "(skipped): %s",
+                    name,
+                    str(vol)
+                )
+                return
+            if not vol_desc.keys():
+                UAS_CFG_LOGGER.error(
+                    "Volume '%s' has a malformed free-form volume "
+                    "description - volume source type identifier "
+                    "is not specified as the key in the outer dictionary "
+                    "(skipped) - %s",
+                    name,
+                    str(vol_desc)
+                )
+                return
+            if len(vol_desc.keys()) > 1:
+                UAS_CFG_LOGGER.error(
+                    "Volume '%s' has a malformed free-form volume "
+                    "description - more than one volume source type identifier "
+                    "is specified as the key in the outer dictionary "
+                    "(skipped) - %s",
+                    name,
+                    str(vol_desc)
+                )
+                return
+            if not UAIVolume.is_valid_volume_source_type(vol_desc):
+                UAS_CFG_LOGGER.error(
+                    "Volume '%s' has an unsupported source type '%s'.  See "
+                    "Kubernetes documentation for supported source types "
+                    "(skipped) - %s",
+                    name,
+                    UAIVolume.get_volume_source_type(vol_desc),
+                    str(vol_desc)
+                )
+                return
+            # Already have the volume_description, just pass it through.
+            volume = vol_desc
+        if volume is None:
+            UAS_CFG_LOGGER.error(
+                "Volume '%s' has no host path, configmap name, secret name, "
+                "or volume description (skipped)",
+                name
+            )
+            return
+        UAIVolume(volume_name=name,
+                  mount_path=mount_path,
+                  volume_description=volume).put()
 
     def __init__(self, uas_cfg='/etc/uas/cray-uas-mgr.yaml'):
+        """Constructor
+
+        """
         self.uas_cfg = uas_cfg
 
     def get_config(self):
+        """Load the configuration from the configmap.
+
+        This loads in the UAS Manager configmap to obtain the
+        configuration settings for the UAS Manager.  For items that
+        are managed under ETCD, the configmap is used the first time
+        UAS Manager runs on a new system to load the initial settings
+        into ETCD and then ignored from then on.  For items that are
+        only configured in the configmap, updates to the configmap
+        will be read in each time this is called.
+
+        """
+        cfg = {}
         try:
             with open(self.uas_cfg) as uascfg:
                 # pylint: disable=no-member
-                return yaml.load(uascfg, Loader=yaml.FullLoader)
+                cfg = yaml.load(uascfg, Loader=yaml.FullLoader)
         except (TypeError, IOError):
             abort(404, "configmap %s not found" % self.uas_cfg)
 
+        # We have the configmap contents, now, populate any ETCD
+        # tables that need populating...
+        if UAIImage.get_all() is None:
+            # There are no UAI Image objects in ETCD, populate that
+            # table now.
+            UAIImage.register()
+            uas_imgs = cfg.get('uas_images', {})
+            name = uas_imgs.get('default_image', None)
+            if name is not None:
+                UAIImage(imagename=name, default=True).put()
+            imgs = uas_imgs.get('images', [])
+            for name in imgs:
+                UAIImage(imagename=name, default=False).put()
+        if UAIVolume.get_all() is None:
+            # There are no UAI Volume objects in ETCD, populate that
+            # table now.
+            UAIVolume.register()
+            for vol in cfg.get('volume_mounts', []):
+                UasCfg.add_etcd_volume(vol)
+        return cfg
+
     def get_images(self):
-        cfg = self.get_config()
-        if not cfg:
-            return None
-        try:
-            return cfg['uas_images']['images']
-        except (TypeError, KeyError):
-            return None
+        """ Retrieve a list of image names.
+        """
+        _ = self.get_config()
+        images = []
+        imgs = UAIImage.get_all()
+        for img in imgs:
+            images.append(img.imagename)
+        return images
 
     def get_default_image(self):
-        cfg = self.get_config()
-        if not cfg:
-            return None
-        try:
-            return cfg['uas_images']['default_image']
-        except (TypeError, KeyError):
-            return None
+        """Retrieve the name of the default image.
+
+        """
+        _ = self.get_config()
+        imgs = UAIImage.get_all()
+        for img in imgs:
+            if img.default:
+                return img.imagename
+        return None
 
     def validate_image(self, imagename):
-        image_list = self.get_images()
-        if image_list and imagename in image_list:
-            return True
+        """Determine whether the specified imagename is a known image name.
+
+        """
+        _ = self.get_config()
+        imgs = UAIImage.get_all()
+        for img in imgs:
+            if imagename == img.imagename:
+                return True
         return False
 
     def get_external_ip(self):
@@ -90,70 +265,52 @@ class UasCfg:
         return ext_ip
 
     def gen_volume_mounts(self):
-        cfg = self.get_config()
+        """Generate a list of volume mounts from the configuration.  Return
+        the K8s volume mount for each.
+
+        """
+        _ = self.get_config()
         volume_mount_list = []
-        if not cfg:
-            return volume_mount_list
-        try:
-            volume_mounts = cfg['volume_mounts']
-        except KeyError:
-            volume_mounts = []
+        volume_mounts = UAIVolume.get_all()
         for mnt in volume_mounts:
-            if mnt:
-                volume_mount_list.append(
-                    client.V1VolumeMount(name=mnt['name'],
-                                         mount_path=mnt['mount_path'])
+            volume_mount_list.append(
+                client.V1VolumeMount(
+                    name=mnt.volumename,
+                    mount_path=mnt.mount_path
                 )
+            )
         return volume_mount_list
 
     def gen_volumes(self):
-        cfg = self.get_config()
+        """Generate a list of volumes from the configuration.  Return the K8s
+        volume definitions for each.
+
+        """
+        _ = self.get_config()
         volume_list = []
-        if not cfg:
-            return volume_list
-        try:
-            volume_mounts = cfg['volume_mounts']
-        except KeyError:
-            volume_mounts = []
+        volume_mounts = UAIVolume.get_all()
         for vol in volume_mounts:
-            if vol:
-                if vol.get('host_path', None):
-                    # support for an optional type attribute for
-                    # host_path mounts if this attribute is unset we
-                    # assume original behavior which is
-                    # DirectoryOrCreate
-                    mount_type = vol.get('type', 'DirectoryOrCreate')
-                    volume_list.append(
-                        client.V1Volume(
-                            name=vol['name'],
-                            host_path=client.V1HostPathVolumeSource(
-                                path=vol['host_path'],
-                                type=mount_type
-                            )
-                        )
-                    )
-                if vol.get('config_map', None):
-                    volume_list.append(
-                        client.V1Volume(
-                            name=vol['name'],
-                            config_map=client.V1ConfigMapVolumeSource(
-                                name=vol['config_map']
-                            )
-                        )
-                    )
-                if vol.get('secret_name', None):
-                    volume_list.append(
-                        client.V1Volume(
-                            name=vol['name'],
-                            secret=client.V1SecretVolumeSource(
-                                secret_name=vol['secret_name']
-                            )
-                        )
-                    )
+            # Okay, this is magic, so it requires a bit of
+            # explanation. The 'client.V1Volume()' call takes a long
+            # list of different arguments, one for each supported type
+            # of volume source.  Since our volume storage source is
+            # already encapsulated in a volume description which
+            # identifies the source type and the source parameters,
+            # what we want to do is construct a dictionary using the
+            # top-level key from the volume description (which
+            # identifies the source type) as the name of the argument
+            # to be assigned into, and the name of the volume to be
+            # defined, then pass the dictionary instead of explicit
+            # arguments.
+            volume_args = {}
+            volume_args['name'] = vol.volumename
+            volume_source_key = list(vol.volume_description.keys())[0]
+            volume_args[volume_source_key] = vol.volume_desc[volume_source_key]
+            volume_list.append(client.V1Volume(**volume_args))
         return volume_list
 
     def gen_port_entry(self, port, service):
-        # Generate a port entry for the service object
+        """Generate a port entry for the service object """
         svc_type = self.get_svc_type(service_type="ssh")
         if service:
             if svc_type['svc_type'] == "LoadBalancer":
@@ -255,6 +412,9 @@ class UasCfg:
         return port_list
 
     def get_svc_type(self, service_type=None):
+        """Get the service type for UAIs from the config.
+
+        """
         cfg = self.get_config()
         svc_type = {'svc_type': None, 'ip_pool': None, 'valid': False}
         if not cfg:
@@ -304,23 +464,6 @@ class UasCfg:
                               tcp_socket=socket)
 
     @staticmethod
-    def is_valid_host_path_mount_type(mount_type):
-        """
-        checks whether the mount_type is a valid one or not
-        :return: returns True if the passed in mount type
-        :rtype bool
-        """
-        return mount_type in (
-            "DirectoryOrCreate",
-            "Directory",
-            "FileOrCreate",
-            "File",
-            "Socket",
-            "CharDevice",
-            "BlockDevice"
-        )
-
-    @staticmethod
     def validate_ssh_key(ssh_key):
         """
         checks whether the ssh_key is a valid public key
@@ -349,58 +492,6 @@ class UasCfg:
         :rtype list
         """
         return UAS_CFG_OPTIONAL_PORTS
-
-    @staticmethod
-    def is_valid_volume_name(volume_name):
-        """
-        checks whether the passed in volume name is valid or not
-        k8s volume names need to be valid DNS-1123 name, which means
-        lower case alphanumeric characters or '-', and must start
-        and end with an alphanumeric character.
-
-        :return: returns True if volume name is valid, False if not.
-        :rtype bool
-        """
-        regex = re.compile('^(?![0-9]+$)(?!-)[a-z0-9-]{1,63}(?<!-)$')
-        return regex.match(volume_name) is not None
-
-    @staticmethod
-    def get_pod_age(start_time):
-        """
-        given a start time as an RFC3339 datetime object, return the difference
-        in time between that time and the current time, in a k8s format
-        of dDhHmM - ie: 3d7h5m or 6h9m or 19m
-
-        :return a string representing the delta between pod start and now.
-        :rtype string
-        """
-        # on new UAI start the start_time can be None
-        if start_time is None:
-            return None
-
-        try:
-            now = datetime.now(timezone.utc)
-            delta = now - start_time
-        except Exception as err:  # pylint: disable=broad-except
-            UAS_CFG_LOGGER.warning("Unable to convert pod start time: %s", err)
-            return None
-
-        # build the output string
-        retstr = ""
-        days, remainder = divmod(delta.total_seconds(), 60*60*24)
-        if days != 0:
-            retstr += "{:d}d".format(int(days))
-
-        hours, remainder = divmod(remainder, 60*60)
-        if hours != 0:
-            retstr += "{:d}h".format(int(hours))
-
-        # always show minutes, even if 0, but only if < 1 day old
-        if days == 0:
-            minutes = remainder / 60
-            retstr += "{:d}m".format(int(minutes))
-
-        return retstr
 
     def get_uai_namespace(self):
         """
