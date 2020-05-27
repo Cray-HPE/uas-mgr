@@ -922,28 +922,11 @@ class UaiManager:
             abort(400, "No mount path specified for volume")
         if vol_desc is None:
             abort(400, "No volume description provided for volume")
-        if not vol_desc.keys():
+        err = UAIVolume.vol_desc_errors(vol_desc)
+        if err is not None:
             abort(
                 400,
-                "Volume has a malformed volume description - volume source"
-                "type identifier is not specified as the key in the outer "
-                "dictionary."
-            )
-        if len(vol_desc.keys()) > 1:
-            abort(
-                400,
-                "Volume has a malformed free-form volume description - "
-                "more than one volume source type identifier is "
-                "specified as the key in the outer dictionary."
-            )
-        if not UAIVolume.is_valid_volume_source_type(vol_desc):
-            abort(
-                400,
-                "Volume has an unsupported source type '%s'.  See "
-                "Kubernetes documentation for supported source types " %
-                UAIVolume.get_volume_source_type(
-                    vol_desc
-                )
+                "Volume has a malformed volume description - %s" % err
             )
         if UAIVolume.get(volumename) is not None:
             abort(304, "volume named '%s' already exists" % volumename)
@@ -980,26 +963,11 @@ class UaiManager:
             vol.mount_path = mount_path
             changed = True
         if vol_desc is not None:
-            if not vol_desc.keys():
+            err = UAIVolume.vol_desc_errors(vol_desc)
+            if err is not None:
                 abort(
                     400,
-                    "Volume has a malformed volume description - volume "
-                    "source type identifier is not specified as the key "
-                    "in the outer dictionary."
-                )
-            if len(vol_desc.keys()) > 1:
-                abort(
-                    400,
-                    "Volume has a malformed free-form volume description - "
-                    "more than one volume source type identifier is "
-                    "specified as the key in the outer dictionary."
-                )
-            if not UAIVolume.is_valid_volume_source_type(vol_desc):
-                abort(
-                    400,
-                    "Volume has an unsupported source type '%s'.  See "
-                    "Kubernetes documentation for supported source types " %
-                    UAIVolume.get_volume_source_type(vol_desc)
+                    "Volume has a malformed volume description - %s" % err
                 )
             vol.volume_description = vol_desc
             changed = True

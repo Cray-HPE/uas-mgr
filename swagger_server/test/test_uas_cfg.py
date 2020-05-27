@@ -273,6 +273,120 @@ class TestUasCfg(unittest.TestCase):
         self.assertFalse(UAIVolume.is_valid_volume_name(''))
 
     # pylint: disable=missing-docstring
+    def test_vol_desc_errors(self):
+        # No Source Type Specified
+        err = UAIVolume.vol_desc_errors({})
+        self.assertEqual(
+            err,
+            "Volume Description has no source type (e.g. 'configmap')"
+        )
+        # Invalid source type specified
+        err = UAIVolume.vol_desc_errors(
+            {
+                'no_such_source': {
+                    'not': "happening",
+                    'never': 'will'
+                }
+            }
+        )
+        self.assertIn(
+            "Volume description invalid source type:",
+            err
+        )
+        # Host Path with no path
+        err = UAIVolume.vol_desc_errors(
+            {
+                'host_path': {
+                    'type': "DirectoryOrCreate"
+                }
+            }
+        )
+        self.assertEqual(
+            err,
+            "Host path specification missing required 'path'"
+        )
+        # Host Path with no type
+        err = UAIVolume.vol_desc_errors(
+            {
+                'host_path': {
+                    'path': "/var/mnt"
+                }
+            }
+        )
+        self.assertIn(
+            err,
+            "Host path specification missing required 'type'"
+        )
+        # Host Path with bad type
+        err = UAIVolume.vol_desc_errors(
+            {
+                'host_path': {
+                    'path': "/var/mnt",
+                    'type': "not a valid host path type"
+                }
+            }
+        )
+        self.assertIn(
+            "Host path has invalid mount type:",
+            err
+        )
+        # Configmap with no configmap name
+        err = UAIVolume.vol_desc_errors(
+            {
+                'config_map': {}
+            }
+        )
+        self.assertIn(
+            "Config map specification missing required",
+            err
+        )
+        # Configmap with extra junk
+        err = UAIVolume.vol_desc_errors(
+            {
+                'config_map': {
+                    'name': "my-config-map",
+                    'other': "stuff"
+                }
+            }
+        )
+        self.assertIn(
+            "Config map specification has unrecognized",
+            err
+        )
+        # Secret with no secret name
+        err = UAIVolume.vol_desc_errors(
+            {
+                'secret': {}
+            }
+        )
+        self.assertIn(
+            "Secret specification missing required",
+            err
+        )
+        # Secret with extra junk
+        err = UAIVolume.vol_desc_errors(
+            {
+                'secret': {
+                    'secret_name': "my-little-secret",
+                    'other': "stuff"
+                }
+            }
+        )
+        self.assertIn(
+            "Secret specification has unrecognized",
+            err
+        )
+        # Valid config map
+        err = UAIVolume.vol_desc_errors(
+            {
+                'config_map': {
+                    'name': "my-config-map",
+                }
+            }
+        )
+        self.assertIs(err, None)
+
+    # pylint: disable=missing-docstring
     def test_get_uai_namespace(self):
         self.assertEqual(self.uas_cfg.get_uai_namespace(), "somens")
         self.assertEqual(self.uas_cfg_svc.get_uai_namespace(), "default")

@@ -337,7 +337,7 @@ def get_uas_image_admin(imagename):  # noqa: E501
     :rtype: Image
     """
     if not imagename:
-        return "Must provide imagename to create."
+        return "Must provide imagename to get."
     return UaiManager().get_image(imagename)
 
 
