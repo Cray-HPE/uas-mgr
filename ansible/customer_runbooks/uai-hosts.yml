@@ -1,7 +1,0 @@
-# cray-uas-mgr localization play
-# Copyright 2019, Cray Inc.  All Rights Reserved.
----
-- hosts: uai_hosts
-  gather_facts: no
-  roles:
-    - cray_uai_hosts

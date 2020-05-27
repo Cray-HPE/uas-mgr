@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.2] - 2020-05-26
+- CASMUAS-108: Remove ansible playbooks and roles that aren't used
+
 ## [1.3.1] - 2020-05-21
 - CASMUAS-114: Update K8s API to support 1.18
 
