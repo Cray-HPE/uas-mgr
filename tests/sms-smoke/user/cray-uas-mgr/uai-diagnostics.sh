@@ -38,20 +38,12 @@ if [ -z "$DEFAULT_IMAGE" ]; then
 fi
 echo "... OK"
 
-echo "Checking to see whether any hosts are labeled and ready to run UAIs"
-NODES=(`kubectl get node --show-labels -l uas | grep Ready | awk '{ print $1 }'`)
-if [ "${#NODES[@]}" -eq 0 ]; then
-    echo "No nodes in Ready state with the uas=True label"
-    exit 1
-else
-    echo "UAIs are deployable to nodes: ${NODES[*]}"
-fi
-echo "... OK"
+echo "Get a list of all non-master nodes"
+NODES=$(kubectl get node --selector='!node-role.kubernetes.io/master' -o jsonpath='{.items[*].metadata.name}')
 
-echo "Scan filesystem on all nodes labeled with UAS=true"
 echo "Paths that are not present are treated as warnings"
 HOSTFS=$(kubectl describe cm -n services cray-uas-mgr-cfgmap | grep host_path | grep -v ^# | awk '{ print $3 }')
-for NODE in "${NODES[@]}"
+for NODE in $NODES
 do
     echo "Checking filesystems on $NODE"
     for FS in ${HOSTFS}
@@ -62,8 +54,8 @@ do
     echo "... OK"
 done
 
-echo "Checking that the ${DEFAULT_IMAGE} is available on all nodes labeled with UAS=true"
-for NODE in "${NODES[@]}"
+echo "Checking that the ${DEFAULT_IMAGE} is available on all nodes"
+for NODE in $NODES
 do
     echo "Checking for Docker image ${DEFAULT_IMAGE} on $NODE"
     ssh $NODE "crictl pull ${DEFAULT_IMAGE}"
@@ -71,7 +63,7 @@ do
 done
 
 echo "Checking that the macvlan interface is available and online"
-for NODE in "${NODES[@]}"
+for NODE in $NODES
 do
     echo "Checking that the mac0 interface on $NODE exists"
     OUT=`ssh $NODE "ip a show mac0 up"`

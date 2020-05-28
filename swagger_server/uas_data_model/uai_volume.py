@@ -8,7 +8,7 @@ import re
 from etcd3_model import Etcd3Attr  # pylint: disable=import-error
 from swagger_server import ETCD_PREFIX, version
 from swagger_server.uas_data_model import UASDataModel
-from kubernetes import client  # pylint: disable=no-name-in-module
+from kubernetes import client
 
 
 class UAIVolume(UASDataModel):

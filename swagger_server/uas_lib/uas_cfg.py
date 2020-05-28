@@ -10,7 +10,7 @@ import logging
 import sys
 import yaml
 from flask import abort
-from kubernetes import client  # pylint: disable=no-name-in-module
+from kubernetes import client
 import sshpubkeys  # pylint: disable=import-error
 import sshpubkeys.exceptions as sshExceptions  # pylint: disable=import-error
 from swagger_server.uas_data_model import UAIVolume, UAIImage

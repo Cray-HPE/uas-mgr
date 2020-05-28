@@ -6,7 +6,7 @@ this is generated code, it is not necessarily re-generated code, so it
 is maintained as our own source.
 
 """
-import datetime
+from datetime import date, datetime
 
 import typing
 import six
@@ -28,9 +28,9 @@ def _deserialize(data, klass):
         return _deserialize_primitive(data, klass)
     if klass == object:
         return _deserialize_object(data)
-    if klass == datetime.date:
+    if klass == date:
         return deserialize_date(data)
-    if klass == datetime.datetime:
+    if klass == datetime:
         return deserialize_datetime(data)
     if isinstance(klass, typing.GenericMeta):  # pylint: disable=no-member
         if klass.__extra__ == list:
@@ -80,6 +80,7 @@ def deserialize_date(string):
     :rtype: date
     """
     try:
+        # pylint: disable=import-outside-toplevel
         from dateutil.parser import parse
         return parse(string).date()
     except ImportError:
@@ -97,6 +98,7 @@ def deserialize_datetime(string):
     :rtype: datetime
     """
     try:
+        # pylint: disable=import-outside-toplevel
         from dateutil.parser import parse
         return parse(string)
     except ImportError:
