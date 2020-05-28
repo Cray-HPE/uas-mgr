@@ -4,9 +4,9 @@ Copyright 2020, Cray Inc. All rights reserved.
 
 """
 from __future__ import absolute_import
-from etcd3_model import Etcd3Model  # pylint: disable=import-error
+from etcd3_model import Etcd3Model
 from swagger_server import ETCD_INSTANCE
-from swagger_server.uas_data_model import PopulatedConfig
+from swagger_server.uas_data_model.populated_config import PopulatedConfig
 
 
 class UASDataModel(Etcd3Model):
@@ -66,7 +66,7 @@ class UASDataModel(Etcd3Model):
         """Register a given UASDataModel class as a known class.
 
         """
-        if not cls.is_registered():
+        if not cls._is_registered():
             PopulatedConfig(cls.__name__).put()
 
     # Wrapper methods for Etcd3Model classmethods that work with
@@ -78,7 +78,7 @@ class UASDataModel(Etcd3Model):
         the class is not registered yet.
 
         """
-        if cls.is_registered():
+        if cls._is_registered():
             super().post_event(event)
 
     @classmethod
@@ -87,7 +87,7 @@ class UASDataModel(Etcd3Model):
         the class is not registered yet.
 
         """
-        if not cls.is_registered():
+        if not cls._is_registered():
             return None
         return super().get_all()
 
@@ -97,7 +97,7 @@ class UASDataModel(Etcd3Model):
         registered yet.
 
         """
-        if cls.is_registered():
+        if cls._is_registered():
             super().watch()
 
     @classmethod
@@ -106,7 +106,7 @@ class UASDataModel(Etcd3Model):
         registered yet.
 
         """
-        if cls.is_registered():
+        if cls._is_registered():
             super().learn()
 
     def put(self):
@@ -114,6 +114,6 @@ class UASDataModel(Etcd3Model):
         registered the first time I store an instance from it
 
         """
-        if not self.is_registered():
+        if not self._is_registered():
             self.register()
         super().put()

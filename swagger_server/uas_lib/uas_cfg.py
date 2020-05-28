@@ -10,10 +10,11 @@ import logging
 import sys
 import yaml
 from flask import abort
+import sshpubkeys
+import sshpubkeys.exceptions as sshExceptions
 from kubernetes import client
-import sshpubkeys  # pylint: disable=import-error
-import sshpubkeys.exceptions as sshExceptions  # pylint: disable=import-error
-from swagger_server.uas_data_model import UAIVolume, UAIImage
+from swagger_server.uas_data_model.uai_volume import UAIVolume
+from swagger_server.uas_data_model.uai_image import UAIImage
 
 
 UAS_CFG_LOGGER = logging.getLogger('uas_cfg')
@@ -476,10 +477,10 @@ class UasCfg:
                                     skip_option_parsing=True)
             ssh.parse()
             return True
-        except sshExceptions.InvalidKeyError as err:
-            UAS_CFG_LOGGER.error("Unknown key type: %s", err)
         except (NotImplementedError, sshExceptions.MalformedDataError) as err:
             UAS_CFG_LOGGER.error("Invalid key: %s", err)
+        except sshExceptions.InvalidKeyError as err:
+            UAS_CFG_LOGGER.error("Unknown key type: %s", err)
         except Exception as err:  # pylint: disable=broad-except
             UAS_CFG_LOGGER.error("Invalid non-key input: %s", err)
         return False

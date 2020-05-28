@@ -5,9 +5,9 @@ Copyright 2020, Cray Inc. All rights reserved.
 """
 from __future__ import absolute_import
 import re
-from etcd3_model import Etcd3Attr  # pylint: disable=import-error
+from etcd3_model import Etcd3Attr
 from swagger_server import ETCD_PREFIX, version
-from swagger_server.uas_data_model import UASDataModel
+from swagger_server.uas_data_model.uas_data_model import UASDataModel
 from kubernetes import client
 
 
@@ -69,12 +69,12 @@ class UAIVolume(UASDataModel):
         client.V1Volume() and make sure it is valid.
 
         """
-        tmp_dict = client.V1Volume(name="empty_source")
+        tmp_dict = client.V1Volume(name="empty_source").to_dict()
         # All but one of the elements in the dictionary returned from
         # above is a valid type name / value pair.  Since no source
         # was given, all of the valid type names are keys with a value
         # of None.  The name is a key with a non-None value.
-        valid_types = [key for key in tmp_dict.keys() if tmp_dict[key] is None]
+        valid_types = [key for key in tmp_dict if tmp_dict[key] is None]
         type_under_test = UAIVolume.get_volume_source_type(vol_desc)
         return type_under_test in valid_types
 

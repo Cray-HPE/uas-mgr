@@ -6,7 +6,7 @@
 # pylint: disable=missing-docstring
 
 import unittest
-import connexion  # pylint: disable=import-error
+import connexion
 
 from swagger_server import encoder
 

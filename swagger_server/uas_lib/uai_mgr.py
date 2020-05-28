@@ -19,7 +19,8 @@ from kubernetes.client.rest import ApiException
 from swagger_server.models import UAI
 from swagger_server.uas_lib.uas_cfg import UasCfg
 from swagger_server.uas_lib.uas_auth import UasAuth
-from swagger_server.uas_data_model import UAIImage, UAIVolume
+from swagger_server.uas_data_model.uai_image import UAIImage
+from swagger_server.uas_data_model.uai_volume import UAIVolume
 
 
 UAS_MGR_LOGGER = logging.getLogger('uas_mgr')

@@ -6,9 +6,9 @@
 
 import unittest
 
-from kubernetes import client  # pylint: disable=no-name-in-module
+from kubernetes import client
 from swagger_server.uas_lib.uas_cfg import UasCfg
-from swagger_server.uas_data_model import UAIVolume
+from swagger_server.uas_data_model.uai_volume import UAIVolume
 
 class TestUasCfg(unittest.TestCase):
     """Tester for the UasCfg class

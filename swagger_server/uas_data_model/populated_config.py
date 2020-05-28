@@ -4,7 +4,6 @@ Copyright 2020, Cray Inc. All rights reserved.
 
 """
 from __future__ import absolute_import
-# pylint: disable=import-error
 from etcd3_model import (
     Etcd3Model,
     Etcd3Attr

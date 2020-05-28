@@ -7,7 +7,6 @@
 Main entrypoint for UAS Manager
 """
 
-# pylint: disable=import-error
 import connexion
 
 from swagger_server import encoder
