@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2020-06-01
+CASMUAS-113: Remove cray_uai_hosts tasks and role from playbook
+
 ## [1.3.2] - 2020-05-26
 - CASMUAS-108: Remove ansible playbooks and roles that aren't used
 
