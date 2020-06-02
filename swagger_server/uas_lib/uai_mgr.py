@@ -848,6 +848,8 @@ class UaiManager:
         if UAIImage.get(imagename):
             abort(304, "image named '%s' already exists" % imagename)
         # Create it and store it...
+        if default is None:
+            default = False
         UAIImage(imagename=imagename, default=default).put()
         return {'imagename': imagename, 'default': default}
 

@@ -52,9 +52,13 @@ RUN pip3 install --no-cache-dir \
 COPY setup.py .version /usr/src/app/
 COPY api/ swagger_server/ /usr/src/app/swagger_server/
 
+# Install a test configuration
+COPY swagger_server/test/cray-uas-mgr.yaml /etc/uas/
+
 RUN ./swagger_server/test/version-check.sh
 RUN mkdir -p /var/run/secrets/kubernetes.io/
 COPY serviceaccount/ /var/run/secrets/kubernetes.io/serviceaccount/
+ENV ETCD_MOCK_CLIENT yes
 ENTRYPOINT pytest --cov swagger_server --cov-fail-under 67
 
 #########################

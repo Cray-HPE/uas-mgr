@@ -22,7 +22,6 @@ class TestUasMgr(unittest.TestCase):
     """
     os.environ["KUBERNETES_SERVICE_PORT"] = "443"
     os.environ["KUBERNETES_SERVICE_HOST"] = "127.0.0.1"
-    os.environ["ETCD_MOCK_CLIENT"] = "yes"
     deployment_name = "hal-234a85"
     with app.test_request_context('/'):
         uas_mgr = UaiManager()
@@ -70,14 +69,14 @@ class TestUasMgr(unittest.TestCase):
         img_name = "testimage"
         # Make the image and verify that the right result is returned
         expected_result = {'imagename': img_name, 'default': False}
-        img = self.uas_mgr.create_image(img_name, default=None)
+        img = self.uas_mgr.create_image(imagename=img_name, default=None)
         self.assertEqual(img, expected_result)
         # Get the image and verify that the right result is returned
-        img = self.uas_mgr.get_image(img_name)
+        img = self.uas_mgr.get_image(imagename=img_name)
         self.assertEqual(img, expected_result)
         # Update the image and verify that the right result is returned
         expected_result = {'imagename': img_name, 'default': True}
-        img = self.uas_mgr.update_image(img_name, default=True)
+        img = self.uas_mgr.update_image(imagename=img_name, default=True)
         self.assertEqual(img, expected_result)
         # Get a list of images and make sure ours is in it
         imgs = self.uas_mgr.get_images()
@@ -90,7 +89,7 @@ class TestUasMgr(unittest.TestCase):
             names_found.append(img['imagename'])
         self.assertIn(img_name, names_found)
         # Delete the image and make sure the right result is returned
-        img = self.uas_mgr.delete_image(img_name)
+        img = self.uas_mgr.delete_image(imagename=img_name)
         self.assertEqual(img, expected_result)
         # Get the list of images and make sure ours is no longer in it
         imgs = self.uas_mgr.get_images()
@@ -120,7 +119,7 @@ class TestUasMgr(unittest.TestCase):
         """
         # Set up the expected return
         expected_result = {
-            'volume_name': volume_name,
+            'volumename': volume_name,
             'mount_path': mount_path_1,
             'volume_description': vol_desc_1,
         }
@@ -132,7 +131,7 @@ class TestUasMgr(unittest.TestCase):
         )
         self.assertEqual(vol, expected_result)
         # Retrieve the volume and verify that we see the same results...
-        vol = self.uas_mgr.get_volume("host_path_volume")
+        vol = self.uas_mgr.get_volume(volume_name)
         self.assertEqual(vol, expected_result)
         # Modify the mount path with an update and verify we get the
         # expected result
@@ -151,7 +150,7 @@ class TestUasMgr(unittest.TestCase):
         )
         self.assertEqual(vol, expected_result)
         # Get the volume and verify that it contains the most recent state
-        vol = self.uas_mgr.get_volume("host-path-volume")
+        vol = self.uas_mgr.get_volume(volume_name)
         self.assertEqual(vol, expected_result)
         # List the volumes we have and make sure this one is in it
         vols = self.uas_mgr.get_volumes()
@@ -160,23 +159,23 @@ class TestUasMgr(unittest.TestCase):
         names_found = []
         for vol in vols:
             self.assertIsInstance(vol, dict)
-            self.assertIn('volume_name', vol)
-            names_found.append(vol['volume_name'])
+            self.assertIn('volumename', vol)
+            names_found.append(vol['volumename'])
         self.assertIn(volume_name, names_found)
         # Delete the volume and verify we get the last known state as a result.
-        vol = self.uas_mgr.delete_volume("host-path-volume")
+        vol = self.uas_mgr.delete_volume(volume_name)
         self.assertEqual(vol, expected_result)
         # Verify that the volume is actually gone from the config
         with self.assertRaises(werkzeug.exceptions.NotFound):
-            vol = self.uas_mgr.get_volume("host-path-volume")
+            vol = self.uas_mgr.get_volume(volume_name)
         # List the volumes we have and make sure this one is not in it
         vols = self.uas_mgr.get_volumes()
         self.assertIsInstance(vols, list)
         names_found = []
         for vol in vols:
             self.assertIsInstance(vol, dict)
-            self.assertIn('volume_name', vol)
-            names_found.append(vol['volume_name'])
+            self.assertIn('volumename', vol)
+            names_found.append(vol['volumename'])
         self.assertNotIn(volume_name, names_found)
 
     # pylint: disable=missing-docstring
@@ -194,7 +193,7 @@ class TestUasMgr(unittest.TestCase):
             }
         }
         self.__volume_lifecycle(
-            "host_path_volume",
+            "host-path-volume-uas-mgr",
             "/var/mount_1",
             "/var/mount_2",
             host_path_desc_1,
@@ -215,7 +214,7 @@ class TestUasMgr(unittest.TestCase):
             }
         }
         self.__volume_lifecycle(
-            "config_map_volume",
+            "config-map-volume-uas-mgr",
             "/var/mount_1",
             "/var/mount_2",
             configmap_desc_1,
@@ -236,7 +235,7 @@ class TestUasMgr(unittest.TestCase):
             }
         }
         self.__volume_lifecycle(
-            "secret_volume",
+            "secret-volume-uas-mgr",
             "/var/mount_1",
             "/var/mount_2",
             secret_desc_1,
@@ -246,9 +245,7 @@ class TestUasMgr(unittest.TestCase):
     # pylint: disable=missing-docstring
     def test_get_pod_age(self):
         self.assertEqual(UaiManager.get_pod_age(None), None)
-
-        with self.assertRaises(TypeError):
-            self.assertEqual(UaiManager.get_pod_age("wrong"), None)
+        self.assertEqual(UaiManager.get_pod_age("wrong"), None)
 
         now = datetime.now(timezone.utc)
         self.assertEqual(UaiManager.get_pod_age(now), "0m")

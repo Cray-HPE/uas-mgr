@@ -5,7 +5,6 @@ Copyright 2020, Cray Inc. All rights reserved.
 """
 from __future__ import absolute_import
 from etcd3_model import Etcd3Model
-from swagger_server import ETCD_INSTANCE
 from swagger_server.uas_data_model.populated_config import PopulatedConfig
 
 
@@ -48,10 +47,6 @@ class UASDataModel(Etcd3Model):
       Etcd3Model parent as presented.
 
     """
-    # The following is the same for all UAS Etcd3Model types, so set
-    # it up here.
-    etcd_instance = ETCD_INSTANCE
-
     # Methods for managing ETCD registration of classes
     @classmethod
     def _is_registered(cls):
@@ -59,7 +54,7 @@ class UASDataModel(Etcd3Model):
         known class yet or not.
 
         """
-        return PopulatedConfig.get(cls.__name__) is not None
+        return PopulatedConfig.get(cls.__name__)
 
     @classmethod
     def register(cls):
@@ -67,7 +62,7 @@ class UASDataModel(Etcd3Model):
 
         """
         if not cls._is_registered():
-            PopulatedConfig(cls.__name__).put()
+            PopulatedConfig(config_name=cls.__name__).put()
 
     # Wrapper methods for Etcd3Model classmethods that work with
     # classes to handle registration and cases where classes are not

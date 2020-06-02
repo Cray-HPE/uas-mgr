@@ -52,4 +52,14 @@ else
     echo "Some code is missing copyright, see list above"
 fi
 
+# Run lint on the code in 'swagger_server'.  Note that the
+# invocation is weird here.  This is done this way so that
+# it will run both in a standard python environment and in
+# a python virtual environment.
+echo "Running pylint on swagger_server files"
+if ! python3 -m pylint swagger_server; then
+    echo "Lint failed"
+    FAIL=1
+fi
+
 exit ${FAIL}

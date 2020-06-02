@@ -490,7 +490,7 @@ def update_uas_volume_admin(volumename, mount_path=None,
 
     """
     if not volumename:
-        return "Must provide volumename to get."
+        return "Must provide volumename to update."
     return UaiManager().update_volume(
         volumename,
         mount_path,

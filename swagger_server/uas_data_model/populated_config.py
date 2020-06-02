@@ -24,9 +24,6 @@ class PopulatedConfig(Etcd3Model):
     etcd_instance = ETCD_INSTANCE
     model_prefix = "%s/%s" % (ETCD_PREFIX, "PopulatedConfig")
 
-    # The Object ID used to locate each Populated Config instance
-    config_name = Etcd3Attr(is_object_id=True)  # Read-only after creation
-
     # The kind of object that the data here represent.  Should always
     # contain "PoulatedConfig".  Protects against stray data types.
     kind = Etcd3Attr(default="PopulatedConfig")  # Read only
@@ -36,3 +33,6 @@ class PopulatedConfig(Etcd3Model):
     # under which the data were stored in ETCD.  Protects against
     # incompatible data.
     api_version = Etcd3Attr(default=version)  # Read only
+
+    # The configuration object name stored in etcd
+    config_name = Etcd3Attr(is_object_id=True)  # Read-only

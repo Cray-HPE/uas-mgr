@@ -37,139 +37,6 @@ class UasCfg:
     The UasCfg class provides the site configuration data to the
     User Access Services.
     """
-    # XXX - maybe we can simplify, but for now disable the complexity reports
-    # pylint: disable=too-many-return-statements,too-many-branches
-    @staticmethod
-    def add_etcd_volume(vol):
-        """Compose and store an ETCD UAIVolume object based on the contents
-        found in the configmap.
-
-        """
-        name = vol.get('name', None)
-        if name is None:
-            UAS_CFG_LOGGER.error(
-                "Volume with no name (skipped): %s",
-                str(vol)
-            )
-            return
-        if not UAIVolume.is_valid_volume_name(name):
-            UAS_CFG_LOGGER.error(
-                "Volume '%s' has invalid name (skipped) "
-                "- Names must consist of "
-                "lower case alphanumeric characters or '-', and "
-                "must start and end with an alphanumeric character. "
-                "Refer to the Kubernetes documentation for more "
-                "information.",
-                name
-            )
-            return
-        mount_path = vol.get('mount_path', None)
-        if mount_path is None:
-            UAS_CFG_LOGGER.error(
-                "Volume '%s' has no mount path (skipped)",
-                name
-            )
-            return
-        volume = None
-        host_path = vol.get('host_path', None)
-        if host_path is not None:
-            mount_type = vol.get('type', None)
-            if mount_type is None:
-                mount_type = 'DirectoryOrCreate'
-            if not UAIVolume.is_valid_host_path_mount_type(mount_type):
-                UAS_CFG_LOGGER.error(
-                    "Volume '%s' has invalid host_path mount type '%s' "
-                    "(skipped) - please refer to the Kubernetes docs for "
-                    "a list of supported host_path mount types",
-                    name,
-                    mount_type
-                )
-                return
-            volume = {
-                'hostPath': client.V1HostPathVolumeSource(
-                    path=host_path,
-                    type=mount_type
-                )
-            }
-        config_map = vol.get('config_map', None)
-        if config_map is not None:
-            if volume is not None:
-                UAS_CFG_LOGGER.error(
-                    "Volume '%s' has multiple kinds of volume mounts "
-                    "(skipped): %s",
-                    name,
-                    str(vol)
-                )
-                return
-            volume = {
-                'configMap': client.V1ConfigMapVolumeSource(name=config_map)
-            }
-        secret_name = vol.get('secret_name', None)
-        if secret_name is not None:
-            if volume is not None:
-                UAS_CFG_LOGGER.error(
-                    "Volume '%s' has multiple kinds of volume mounts "
-                    "(skipped): %s",
-                    name,
-                    str(vol)
-                )
-                return
-            volume = {
-                'secret': client.V1SecretVolumeSource(secret_name=secret_name)
-            }
-        vol_desc = vol.get('vol_desc', None)
-        if vol_desc is not None:
-            if volume is not None:
-                UAS_CFG_LOGGER.error(
-                    "Volume '%s' has multiple kinds of volume mounts "
-                    "(skipped): %s",
-                    name,
-                    str(vol)
-                )
-                return
-            if not vol_desc.keys():
-                UAS_CFG_LOGGER.error(
-                    "Volume '%s' has a malformed free-form volume "
-                    "description - volume source type identifier "
-                    "is not specified as the key in the outer dictionary "
-                    "(skipped) - %s",
-                    name,
-                    str(vol_desc)
-                )
-                return
-            if len(vol_desc.keys()) > 1:
-                UAS_CFG_LOGGER.error(
-                    "Volume '%s' has a malformed free-form volume "
-                    "description - more than one volume source type identifier "
-                    "is specified as the key in the outer dictionary "
-                    "(skipped) - %s",
-                    name,
-                    str(vol_desc)
-                )
-                return
-            if not UAIVolume.is_valid_volume_source_type(vol_desc):
-                UAS_CFG_LOGGER.error(
-                    "Volume '%s' has an unsupported source type '%s'.  See "
-                    "Kubernetes documentation for supported source types "
-                    "(skipped) - %s",
-                    name,
-                    UAIVolume.get_volume_source_type(vol_desc),
-                    str(vol_desc)
-                )
-                return
-            # Already have the volume_description, just pass it through.
-            volume = vol_desc
-        if volume is None:
-            UAS_CFG_LOGGER.error(
-                "Volume '%s' has no host path, configmap name, secret name, "
-                "or volume description (skipped)",
-                name
-            )
-            return
-        UAIVolume(volume_name=name,
-                  mount_path=mount_path,
-                  volume_description=volume).put()
-
     def __init__(self, uas_cfg='/etc/uas/cray-uas-mgr.yaml'):
         """Constructor
 
@@ -195,6 +62,9 @@ class UasCfg:
                 cfg = yaml.load(uascfg, Loader=yaml.FullLoader)
         except (TypeError, IOError):
             abort(404, "configmap %s not found" % self.uas_cfg)
+        # The empty case can be parsed as None, fix that...
+        if cfg is None:
+            cfg = {}
 
         # We have the configmap contents, now, populate any ETCD
         # tables that need populating...
@@ -203,26 +73,30 @@ class UasCfg:
             # table now.
             UAIImage.register()
             uas_imgs = cfg.get('uas_images', {})
-            name = uas_imgs.get('default_image', None)
-            if name is not None:
-                UAIImage(imagename=name, default=True).put()
+            default_name = uas_imgs.get('default_image', None)
+            if default_name is not None:
+                UAIImage(imagename=default_name, default=True).put()
             imgs = uas_imgs.get('images', [])
             for name in imgs:
-                UAIImage(imagename=name, default=False).put()
+                # The default (if any) has already been added, don't duplicate it here.
+                if name != default_name:
+                    UAIImage(imagename=name, default=False).put()
         if UAIVolume.get_all() is None:
             # There are no UAI Volume objects in ETCD, populate that
             # table now.
             UAIVolume.register()
             for vol in cfg.get('volume_mounts', []):
-                UasCfg.add_etcd_volume(vol)
+                UAIVolume.add_etcd_volume(vol)
         return cfg
 
     def get_images(self):
         """ Retrieve a list of image names.
         """
         _ = self.get_config()
-        images = []
         imgs = UAIImage.get_all()
+        if not imgs:
+            return None
+        images = []
         for img in imgs:
             images.append(img.imagename)
         return images
@@ -304,9 +178,10 @@ class UasCfg:
             # defined, then pass the dictionary instead of explicit
             # arguments.
             volume_args = {}
+            print("Generating volume mount for '%s'" % vol.volumename)
             volume_args['name'] = vol.volumename
             volume_source_key = list(vol.volume_description.keys())[0]
-            volume_args[volume_source_key] = vol.volume_desc[volume_source_key]
+            volume_args[volume_source_key] = UAIVolume.get_volume_source(vol.volume_description)
             volume_list.append(client.V1Volume(**volume_args))
         return volume_list
 
