@@ -405,7 +405,7 @@ paths:
     get:
       summary: "Get image info - not implemented"
       description: "Not yet implemented."
-      operationId: "get_uas_image"
+      operationId: "get_uas_image_deprecated"
       tags:
       - "images"
       - "cli_hidden"

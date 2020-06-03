@@ -77,8 +77,8 @@ class TestUasController(unittest.TestCase):
 
     # pylint: disable=missing-docstring
     def test_get_uas_image(self):
-        resp = uas_ctl.get_uas_image(None)
-        self.assertEqual(resp, "Must provide imagename to get.")
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
+            uas_ctl.get_uas_image_deprecated(None)
 
     # pylint: disable=missing-docstring
     def test_delete_uas_volume(self):

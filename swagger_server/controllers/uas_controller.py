@@ -174,7 +174,7 @@ def update_uas_image_deprecated(imagename, default=None):
     abort(501, "Not implemented")
 
 
-def get_uas_image(imagename):
+def get_uas_image_deprecated(imagename):
     """Get UAS image
 
     :param imagename:
@@ -182,9 +182,8 @@ def get_uas_image(imagename):
 
     :rtype: object
     """
-    if not imagename:
-        return "Must provide imagename to get."
-    return UaiManager().get_image(imagename)
+    # This was never implemented at this path and is deprecated
+    abort(501, "Not implemented")
 
 
 # pylint: disable=unused-argument
