@@ -18,11 +18,13 @@ def main():
     """
     app = connexion.App(__name__)
     app.app.json_encoder = encoder.JSONEncoder
-    app.add_api('swagger.yaml',
-                arguments={
-                    'title': 'Cray User Access Service'
-                },
-                base_path='/v1')
+    app.add_api(
+        'swagger.yaml',
+        arguments={
+            'title': 'Cray User Access Service'
+        },
+        base_path='/v1'
+    )
     app.run(port=8088)
 
 
