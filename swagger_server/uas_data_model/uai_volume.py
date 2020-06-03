@@ -400,23 +400,12 @@ class UAIVolume(UASDataModel):
         src_type = UAIVolume.get_volume_source_type(vol_desc)
         return SOURCE_TYPES[src_type][0](**vol_desc[src_type])
 
-    # The orverridden method here has 'object_id' instead of
-    # 'volumename' in the second parameter.  Not something I care about
-    # here (though I see why it might be a problem for KW arg calls).
-    # Silencing the lint warning for that.
-    #
-    # pylint: disable=arguments-differ
     @classmethod
-    def get(cls, volumename):
-        """For volumes, the service wants to look them up by name not by id,
-        and I am okay with that, though it costs a bit here and we
-        aren't using the full power of 'etcd3-model'.  In reality we
-        aren't going to be looking at tens of thousands of volumes, so
-        searching is not too much of a problem.  This overrides the
-        'etcd3-model' get which would be by volume_id, and returns the
-        volume config requested or None.
+    def get_by_name(cls, volumename):
+        """Query volumes by volume name.  If a matching volume is found,
+        return it, if not return None.
 
         """
-        vols = super().get_all()
+        vols = cls.get_all()
         vol_dict = {vol.volumename: vol for vol in vols}
         return vol_dict.get(volumename, None)

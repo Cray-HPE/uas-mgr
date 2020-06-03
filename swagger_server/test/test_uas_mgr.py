@@ -70,13 +70,20 @@ class TestUasMgr(unittest.TestCase):
         # Make the image and verify that the right result is returned
         expected_result = {'imagename': img_name, 'default': False}
         img = self.uas_mgr.create_image(imagename=img_name, default=None)
+        self.assertIn('image_id', img)
+        image_id = img['image_id']
+        expected_result['image_id'] = image_id
         self.assertEqual(img, expected_result)
         # Get the image and verify that the right result is returned
-        img = self.uas_mgr.get_image(imagename=img_name)
+        img = self.uas_mgr.get_image(image_id=image_id)
         self.assertEqual(img, expected_result)
         # Update the image and verify that the right result is returned
-        expected_result = {'imagename': img_name, 'default': True}
-        img = self.uas_mgr.update_image(imagename=img_name, default=True)
+        img = self.uas_mgr.update_image(
+            image_id,
+            imagename=img_name,
+            default=True
+        )
+        expected_result['default'] = True
         self.assertEqual(img, expected_result)
         # Get a list of images and make sure ours is in it
         imgs = self.uas_mgr.get_images()
@@ -89,7 +96,7 @@ class TestUasMgr(unittest.TestCase):
             names_found.append(img['imagename'])
         self.assertIn(img_name, names_found)
         # Delete the image and make sure the right result is returned
-        img = self.uas_mgr.delete_image(imagename=img_name)
+        img = self.uas_mgr.delete_image(image_id=image_id)
         self.assertEqual(img, expected_result)
         # Get the list of images and make sure ours is no longer in it
         imgs = self.uas_mgr.get_images()
@@ -129,28 +136,33 @@ class TestUasMgr(unittest.TestCase):
             mount_path=mount_path_1,
             vol_desc=vol_desc_1
         )
+        self.assertIn('volume_id', vol)
+        volume_id = vol['volume_id']
+        expected_result['volume_id'] = volume_id
         self.assertEqual(vol, expected_result)
         # Retrieve the volume and verify that we see the same results...
-        vol = self.uas_mgr.get_volume(volume_name)
+        vol = self.uas_mgr.get_volume(volume_id)
         self.assertEqual(vol, expected_result)
         # Modify the mount path with an update and verify we get the
         # expected result
-        expected_result['mount_path'] = mount_path_2
         vol = self.uas_mgr.update_volume(
-            volume_name,
+            volume_id=volume_id,
+            volumename=volume_name,
             mount_path=mount_path_2
         )
+        expected_result['mount_path'] = mount_path_2
         self.assertEqual(vol, expected_result)
         # Modify the source description with an update and verify we
         # get the expected result
-        expected_result['volume_description'] = vol_desc_2
         vol = self.uas_mgr.update_volume(
-            volume_name,
+            volume_id=volume_id,
+            volumename=volume_name,
             vol_desc=vol_desc_2
         )
+        expected_result['volume_description'] = vol_desc_2
         self.assertEqual(vol, expected_result)
         # Get the volume and verify that it contains the most recent state
-        vol = self.uas_mgr.get_volume(volume_name)
+        vol = self.uas_mgr.get_volume(volume_id)
         self.assertEqual(vol, expected_result)
         # List the volumes we have and make sure this one is in it
         vols = self.uas_mgr.get_volumes()
@@ -163,11 +175,11 @@ class TestUasMgr(unittest.TestCase):
             names_found.append(vol['volumename'])
         self.assertIn(volume_name, names_found)
         # Delete the volume and verify we get the last known state as a result.
-        vol = self.uas_mgr.delete_volume(volume_name)
+        vol = self.uas_mgr.delete_volume(volume_id)
         self.assertEqual(vol, expected_result)
         # Verify that the volume is actually gone from the config
         with self.assertRaises(werkzeug.exceptions.NotFound):
-            vol = self.uas_mgr.get_volume(volume_name)
+            vol = self.uas_mgr.get_volume(volume_id)
         # List the volumes we have and make sure this one is not in it
         vols = self.uas_mgr.get_volumes()
         self.assertIsInstance(vols, list)

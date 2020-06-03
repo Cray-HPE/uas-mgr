@@ -326,53 +326,56 @@ def get_uas_images_admin():  # noqa: E501
     return UaiManager().get_images()
 
 
-def get_uas_image_admin(imagename):  # noqa: E501
+def get_uas_image_admin(image_id):  # noqa: E501
     """Get image info
 
     Get a description of the named image # noqa: E501
 
-    :param imagename:
-    :type imagename: str
+    :param image_id:
+    :type image_id: str
 
     :rtype: Image
     """
-    if not imagename:
-        return "Must provide imagename to get."
-    return UaiManager().get_image(imagename)
+    if not image_id:
+        return "Must provide image_id to get."
+    return UaiManager().get_image(image_id)
 
 
-def update_uas_image_admin(imagename, default=None):  # noqa: E501
+def update_uas_image_admin(image_id, imagename=None, default=None):
     """Update an image
 
-    Update an image, specifically this can set or unset the 'default'
-    flag. # noqa: E501
+    Update an image, specifically this can set the image name and set
+    or unset the 'default' flag.
 
-    :param imagename: Image to update
+    :param image_id: The ID of the image to update
+    :type image_id: str
+    :param imagename: New Image Name for the Image
     :type imagename: str
     :param default: default image (true/false)
     :type default: bool
 
     :rtype: Image
-    """
-    if not imagename:
-        return "Must provide imagename to update."
-    return UaiManager().update_image(imagename, default)
 
-def delete_uas_image_admin(imagename):  # noqa: E501
+    """
+    if not image_id:
+        return "Must provide image_id to update."
+    return UaiManager().update_image(image_id, imagename, default)
+
+def delete_uas_image_admin(image_id):  # noqa: E501
     """Remove the imagename from set of valid images
 
     Delete the named image from the set of valid UAI container
     images. # noqa: E501
 
-    :param imagename:
-    :type imagename: str
+    :param image_id:
+    :type image_id: str
 
     :rtype: None
 
     """
-    if not imagename:
-        return "Must provide imagename to delete."
-    return UaiManager().delete_image(imagename)
+    if not image_id:
+        return "Must provide image_id to delete."
+    return UaiManager().delete_image(image_id)
 
 # Volumes...
 def create_uas_volume_admin(volumename, mount_path,
@@ -389,8 +392,8 @@ def create_uas_volume_admin(volumename, mount_path,
     :param mount_path: Mount path inside the UAI
     :type mount_path: str
     :param volume_description:
-        JSON description of a Kubernetes volume to be mounted in UAI
-        containers.  This is the JSON equivalent of whatever YAML you
+        Desscription of a Kubernetes volume to be mounted in UAI
+        containers.  This is the equivalent of whatever YAML you
         would normally apply to Kubernetes to attach the kind of
         volume you want to a pod.  There are many kinds of volumes,
         the examples given here illustrate some options:
@@ -438,22 +441,22 @@ def get_uas_volumes_admin():  # noqa: E501
     return UaiManager().get_volumes()
 
 
-def get_uas_volume_admin(volumename):  # noqa: E501
-    """Get volume info for volumename
+def get_uas_volume_admin(volume_id):  # noqa: E501
+    """Get volume info for volume ID
 
-    Get volume info for volumename # noqa: E501
+    Get volume info for volume_id # noqa: E501
 
-    :param volumename:
-    :type volumename: str
+    :param volume_id:
+    :type volume_id: str
 
     :rtype: AdminVolume
     """
-    if not volumename:
-        return "Must provide volumename to get."
-    return UaiManager().get_volume(volumename)
+    if not volume_id:
+        return "Must provide volume_id to get."
+    return UaiManager().get_volume(volume_id)
 
 
-def update_uas_volume_admin(volumename, mount_path=None,
+def update_uas_volume_admin(volume_id, volumename=None, mount_path=None,
                             volume_description=None):  # noqa: E501
     """Update a volume
 
@@ -462,13 +465,15 @@ def update_uas_volume_admin(volumename, mount_path=None,
     it can modify the relationship between future UAI containers and
     the volume.  # noqa: E501
 
-    :param volumename: Volume to update
+    :param volume_id: Volume to update
+    :type volume_id: str
+    :param volumename: New volume name for volume
     :type volumename: str
     :param mount_path: Mount path inside the UAI
     :type mount_path: str
     :param volume_description:
-        JSON description of a Kubernetes volume to be mounted in UAI
-        containers.  This is the JSON equivalent of whatever YAML you
+        Description of a Kubernetes volume to be mounted in UAI
+        containers.  This is the equivalent of whatever YAML you
         would normally apply to Kubernetes to attach the kind of
         volume you want to a pod.  There are many kinds of volumes,
         the examples given here illustrate some options:
@@ -489,28 +494,29 @@ def update_uas_volume_admin(volumename, mount_path=None,
     :rtype: AdminVolume
 
     """
-    if not volumename:
-        return "Must provide volumename to update."
+    if not volume_id:
+        return "Must provide volume_id to update."
     return UaiManager().update_volume(
+        volume_id,
         volumename,
         mount_path,
         volume_description
     )
 
 
-def delete_uas_volume_admin(volumename):  # noqa: E501
+def delete_uas_volume_admin(volume_id):
     """Remove volume from the volume list
 
     Does not affect existing UAIs. Remove the volume from the list of
     valid volumes. The actual volume itself is not affected in any
     way.  # noqa: E501
 
-    :param volumename:
-    :type volumename: str
+    :param volume_id:
+    :type volume_id: str
 
     :rtype: None
 
     """
-    if not volumename:
-        return "Must provide volumename to delete."
-    return UaiManager().delete_volume(volumename)
+    if not volume_id:
+        return "Must provide volume_id to delete."
+    return UaiManager().delete_volume(volume_id)

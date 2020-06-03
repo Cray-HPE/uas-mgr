@@ -7,6 +7,7 @@
 
 import unittest
 import os
+from uuid import uuid4
 import flask
 import werkzeug
 
@@ -118,40 +119,43 @@ class TestUasController(unittest.TestCase):
             self.assertEqual(resp, "Must provide imagename to create.")
             resp = uas_ctl.create_uas_image_admin(imagename="first_image")
             self.assertIsInstance(resp, dict)
-            _ = uas_ctl.delete_uas_image_admin(imagename="first_image")
-            resp = uas_ctl.create_uas_image_admin(imagename="second-image", default=False)
-            _ = uas_ctl.delete_uas_image_admin(imagename="second-image")
+            self.assertIn('image_id', resp)
+            _ = uas_ctl.delete_uas_image_admin(image_id=resp['image_id'])
+            resp = uas_ctl.create_uas_image_admin(imagename="second-image",
+                                                  default=False)
             self.assertIsInstance(resp, dict)
+            self.assertIn('image_id', resp)
+            _ = uas_ctl.delete_uas_image_admin(image_id=resp['image_id'])
 
     # pylint: disable=missing-docstring
     def test_get_uas_image_admin(self):
         with app.test_request_context('/'):
-            resp = uas_ctl.get_uas_image_admin(imagename=None)
-            self.assertEqual(resp, "Must provide imagename to get.")
-            resp = uas_ctl.get_uas_image_admin(imagename="")
-            self.assertEqual(resp, "Must provide imagename to get.")
+            resp = uas_ctl.get_uas_image_admin(image_id=None)
+            self.assertEqual(resp, "Must provide image_id to get.")
+            resp = uas_ctl.get_uas_image_admin(image_id="")
+            self.assertEqual(resp, "Must provide image_id to get.")
             with self.assertRaises(werkzeug.exceptions.NotFound):
-                _ = uas_ctl.get_uas_image_admin(imagename="not-there")
+                _ = uas_ctl.get_uas_image_admin(image_id=str(uuid4()))
 
     # pylint: disable=missing-docstring
     def test_update_uas_image_admin(self):
         with app.test_request_context('/'):
-            resp = uas_ctl.update_uas_image_admin(imagename=None)
-            self.assertEqual(resp, "Must provide imagename to update.")
-            resp = uas_ctl.update_uas_image_admin(imagename="")
-            self.assertEqual(resp, "Must provide imagename to update.")
+            resp = uas_ctl.update_uas_image_admin(image_id=None)
+            self.assertEqual(resp, "Must provide image_id to update.")
+            resp = uas_ctl.update_uas_image_admin(image_id="")
+            self.assertEqual(resp, "Must provide image_id to update.")
             with self.assertRaises(werkzeug.exceptions.NotFound):
-                _ = uas_ctl.update_uas_image_admin(imagename="not-there")
+                _ = uas_ctl.update_uas_image_admin(image_id=str(uuid4()))
 
     # pylint: disable=missing-docstring
     def test_delete_uas_image_admin(self):
         with app.test_request_context('/'):
-            resp = uas_ctl.delete_uas_image_admin(imagename=None)
-            self.assertEqual(resp, "Must provide imagename to delete.")
-            resp = uas_ctl.delete_uas_image_admin(imagename="")
-            self.assertEqual(resp, "Must provide imagename to delete.")
+            resp = uas_ctl.delete_uas_image_admin(image_id=None)
+            self.assertEqual(resp, "Must provide image_id to delete.")
+            resp = uas_ctl.delete_uas_image_admin(image_id="")
+            self.assertEqual(resp, "Must provide image_id to delete.")
             with self.assertRaises(werkzeug.exceptions.NotFound):
-                _ = uas_ctl.delete_uas_image_admin(imagename="not-there")
+                _ = uas_ctl.delete_uas_image_admin(image_id=str(uuid4()))
 
     # pylint: disable=missing-docstring
     def test_get_uas_volumes_admin(self):
@@ -200,32 +204,32 @@ class TestUasController(unittest.TestCase):
     # pylint: disable=missing-docstring
     def test_get_uas_volume_admin(self):
         with app.test_request_context('/'):
-            resp = uas_ctl.get_uas_volume_admin(volumename=None)
-            self.assertEqual(resp, "Must provide volumename to get.")
-            resp = uas_ctl.get_uas_volume_admin(volumename="")
-            self.assertEqual(resp, "Must provide volumename to get.")
+            resp = uas_ctl.get_uas_volume_admin(volume_id=None)
+            self.assertEqual(resp, "Must provide volume_id to get.")
+            resp = uas_ctl.get_uas_volume_admin(volume_id="")
+            self.assertEqual(resp, "Must provide volume_id to get.")
             with self.assertRaises(werkzeug.exceptions.NotFound):
-                _ = uas_ctl.get_uas_volume_admin(volumename="not-there")
+                _ = uas_ctl.get_uas_volume_admin(volume_id=str(uuid4()))
 
     # pylint: disable=missing-docstring
     def test_update_uas_volume_admin(self):
         with app.test_request_context('/'):
-            resp = uas_ctl.update_uas_volume_admin(volumename=None)
-            self.assertEqual(resp, "Must provide volumename to update.")
-            resp = uas_ctl.update_uas_volume_admin(volumename="")
-            self.assertEqual(resp, "Must provide volumename to update.")
+            resp = uas_ctl.update_uas_volume_admin(volume_id=None)
+            self.assertEqual(resp, "Must provide volume_id to update.")
+            resp = uas_ctl.update_uas_volume_admin(volume_id="")
+            self.assertEqual(resp, "Must provide volume_id to update.")
             with self.assertRaises(werkzeug.exceptions.NotFound):
-                _ = uas_ctl.update_uas_volume_admin(volumename="not-there")
+                _ = uas_ctl.update_uas_volume_admin(volume_id=str(uuid4()))
 
     # pylint: disable=missing-docstring
     def delete_uas_volume_admin(self):
         with app.test_request_context('/'):
-            resp = uas_ctl.delete_uas_volume_admin(volumename=None)
-            self.assertEqual(resp, "Must provide volumename to delete.")
-            resp = uas_ctl.delete_uas_volume_admin(volumename="")
-            self.assertEqual(resp, "Must provide volumename to delete.")
+            resp = uas_ctl.delete_uas_volume_admin(volume_id=None)
+            self.assertEqual(resp, "Must provide volume_id to delete.")
+            resp = uas_ctl.delete_uas_volume_admin(volume_id="")
+            self.assertEqual(resp, "Must provide volume_id to delete.")
             with self.assertRaises(werkzeug.exceptions.NotFound):
-                _ = uas_ctl.delete_uas_volume_admin(volumename="not-there")
+                _ = uas_ctl.delete_uas_volume_admin(volume_id=str(uuid4()))
 
 
 if __name__ == '__main__':

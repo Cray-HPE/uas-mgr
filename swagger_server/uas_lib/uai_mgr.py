@@ -829,54 +829,81 @@ class UaiManager:
             resp_list.append(message)
         return resp_list
 
-    def delete_image(self, imagename):
+    def delete_image(self, image_id):
         """Delete a UAI image from the config
 
         """
         self.uas_cfg.get_config()
-        img = UAIImage.get(imagename)
+        img = UAIImage.get(image_id)
         if img is None:
-            abort(404, "image named '%s' does not exist" % imagename)
+            abort(404, "image '%s' does not exist" % image_id)
         img.remove() # don't use img.delete() you actually want it removed
-        return {'imagename': img.imagename, 'default': img.default}
+        return {
+            'image_id': img.image_id,
+            'imagename': img.imagename,
+            'default': img.default
+        }
 
     def create_image(self, imagename, default):
         """Create a new UAI image in the config
 
         """
         self.uas_cfg.get_config()
-        if UAIImage.get(imagename):
+        if UAIImage.get_by_name(imagename):
             abort(304, "image named '%s' already exists" % imagename)
         # Create it and store it...
         if default is None:
             default = False
-        UAIImage(imagename=imagename, default=default).put()
-        return {'imagename': imagename, 'default': default}
+        img = UAIImage(imagename=imagename, default=default)
+        img.put()
+        return {
+            'image_id': img.image_id,
+            'imagename': img.imagename,
+            'default': img.default
+        }
 
 
-    def update_image(self, imagename, default):
+    def update_image(self, image_id, imagename, default):
         """Update a UAI image in the config
 
         """
         self.uas_cfg.get_config()
-        img = UAIImage.get(imagename)
+        img = UAIImage.get(image_id)
         if img is None:
-            abort(404, "image named '%s' does not exist" % imagename)
+            abort(404, "image '%s' does not exist" % image_id)
+        changed = False
+        if imagename is not None:
+            tmp = UAIImage.get_by_name(imagename)
+            if tmp is not None and tmp.image_id != img.image_id:
+                abort(304, "image named '%s' already exists" % imagename)
+            # A value is specified to update...
+            img.imagename = imagename
+            changed = True
         if default is not None:
             # A value is specified to update...
             img.default = default
+            changed = True
+        if changed:
             img.put()
-        return {'imagename': img.imagename, 'default': img.default}
+        return {
+            'image_id': img.image_id,
+            'imagename': img.imagename,
+            'default': img.default
+        }
 
-    def get_image(self, imagename):
+    def get_image(self, image_id):
         """Retrieve a UAI image from the config
 
         """
         self.uas_cfg.get_config()
-        img = UAIImage.get(imagename)
+        img = UAIImage.get(image_id)
         if img is None:
-            abort(404, "image named '%s' does not exist" % imagename)
-        return {'imagename': img.imagename, 'default': img.default}
+            abort(404, "image '%s' does not exist" % image_id)
+        return {
+            'image_id': img.image_id,
+            'imagename': img.imagename,
+            'default': img.default
+        }
 
     def get_images(self):
         """Get the list of UAI images in the config
@@ -884,19 +911,26 @@ class UaiManager:
         """
         self.uas_cfg.get_config()
         imgs = UAIImage.get_all()
-        return [{'imagename': img.imagename, 'default': img.default}
-                for img in imgs]
+        return [
+            {
+                'image_id': img.image_id,
+                'imagename': img.imagename,
+                'default': img.default
+            }
+            for img in imgs
+        ]
 
-    def delete_volume(self, volumename):
+    def delete_volume(self, volume_id):
         """Delete a UAI volume from the config
 
         """
         self.uas_cfg.get_config()
-        vol = UAIVolume.get(volumename)
+        vol = UAIVolume.get(volume_id)
         if vol is None:
-            abort(404, "volume named '%s' does not exist" % volumename)
-        vol.remove() # don't use img.delete() you actually want it removed
+            abort(404, "volume '%s' does not exist" % volume_id)
+        vol.remove() # don't use vol.delete() you actually want it removed
         return {
+            'volume_id': vol.volume_id,
             'volumename': vol.volumename,
             'mount_path': vol.mount_path,
             'volume_description': vol.volume_description
@@ -925,35 +959,51 @@ class UaiManager:
                 400,
                 "Volume has a malformed volume description - %s" % err
             )
-        if UAIVolume.get(volumename) is not None:
+        if UAIVolume.get_by_name(volumename) is not None:
             abort(304, "volume named '%s' already exists" % volumename)
         # Create it and store it...
-        UAIVolume(volumename=volumename,
-                  mount_path=mount_path,
-                  volume_description=vol_desc).put()
+        vol = UAIVolume(
+            volumename=volumename,
+            mount_path=mount_path,
+            volume_description=vol_desc
+        )
+        vol.put()
         return {
-            'volumename': volumename,
-            'mount_path': mount_path,
-            'volume_description': vol_desc
+            'volume_id': vol.volume_id,
+            'volumename': vol.volumename,
+            'mount_path': vol.mount_path,
+            'volume_description': vol.volume_description
         }
 
-    def update_volume(self, volumename, mount_path=None, vol_desc=None):
+    def update_volume(self, volume_id,
+                      volumename=None, mount_path=None, vol_desc=None):
         """Update a UAI volume in the config
 
         """
         self.uas_cfg.get_config()
-        if not UAIVolume.is_valid_volume_name(volumename):
-            abort(
-                400,
-                "Invalid volume name - names must consist of lower case"
-                " alphanumeric characters or '-', and must start and"
-                " end with an alphanumeric character. Refer to the "
-                "Kubernetes documentation for more information."
-            )
-        vol = UAIVolume.get(volumename)
+        vol = UAIVolume.get(volume_id)
         if vol is None:
-            abort(404, "Volume '%s' does not exist" % volumename)
+            abort(
+                404,
+                "Volume %s not found" % volume_id
+            )
         changed = False
+        if volumename is not None:
+            if not volumename:
+                abort(400, "invalid (empty) volume name specified")
+                if not UAIVolume.is_valid_volume_name(volumename):
+                    abort(
+                        400,
+                        "Invalid volume name - names must consist of lower "
+                        "case alphanumeric characters or '-', and must start "
+                        "and end with an alphanumeric character. Refer to the "
+                        "Kubernetes documentation for more information."
+                    )
+            tmp = UAIVolume.get_by_name(volumename)
+            if tmp is not None and tmp.volume_id != vol.volume_id:
+                abort(304, "volume named '%s' already exists" % volumename)
+            vol.volumename = volumename
+            changed = True
         if mount_path is not None:
             if not mount_path:
                 abort(400, "invalid (empty) mount_path specified")
@@ -971,23 +1021,25 @@ class UaiManager:
         if changed:
             vol.put()
         return {
+            'volume_id': vol.volume_id,
             'volumename': vol.volumename,
             'mount_path': vol.mount_path,
             'volume_description': vol.volume_description
         }
 
-    def get_volume(self, volumename):
+    def get_volume(self, volume_id):
         """Get info on a specific volume from the config
 
         """
         self.uas_cfg.get_config()
-        vol = UAIVolume.get(volumename)
+        vol = UAIVolume.get(volume_id)
         if vol is None:
             abort(
                 404,
-                "Unknown volume '%s'" % volumename
+                "Unknown volume '%s'" % volume_id
             )
         return {
+            'volume_id': vol.volume_id,
             'volumename': vol.volumename,
             'mount_path': vol.mount_path,
             'volume_description': vol.volume_description
@@ -1001,6 +1053,7 @@ class UaiManager:
         vols = UAIVolume.get_all()
         return [
             {
+                'volume_id': vol.volume_id,
                 'volumename': vol.volumename,
                 'mount_path': vol.mount_path,
                 'volume_description': vol.volume_description

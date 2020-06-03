@@ -46,13 +46,13 @@ info:
 
     ### /admin/config/images
 
-    This is where an administrator can create or delete UAI entries in
-    the list of available container image names.
+    This is where an administrator can list, create, get or delete UAI
+    image entries in the list of available container image names.
 
     ### /admin/config/volumes
 
-    This is where an administrator can create, modify, or delete
-    entries in the list of available volumes.
+    This is where an administrator can list, create, get, modify, or
+    delete entries in the list of available volumes.
 
     ## Workflows
 
@@ -100,21 +100,29 @@ info:
 
     Get a list of all available UAIs on the system.
 
-    #### GET /images or GET /admin/config/images
+    #### GET /images
 
     Get a list of container images available for use by a UAI.
 
-    #### GET /images/{imagename} or GET /admin/config/images/{imagename}
+    #### GET /images/{imagename}
 
     Get information about a specific UAI container image - not implemented.
 
-    #### GET /volumes or GET /admin/config/volumes
+    #### GET /volumes - not implemented
 
     Get a list of volumes available for use by UAIs.
 
     #### GET /volumes/{volumename} or GET /admin/config/volumes/{volumname}
 
-    Get information about a specific volume available for use by UAIs.
+    Get information about a specific volume available for use by UAIs - not implemented
+
+    #### GET /admin/config/volumes
+
+    Get a list of volumes available for use by UAIs
+
+    #### GET /admin/config/images
+
+    Get a list of images available for creating UAIs
 
     #### POST /admin/config/volumes
 
@@ -131,22 +139,32 @@ info:
     only the specified ports are assigned in addition to the SSH port,
     and then only if they are in the set 80, 443 and 8888.
 
-    #### PATCH /admin/config/images/{imagename}
+    #### GET /admin/config/images/{image_id}
+
+    Get information about a specific image available for making UAIs.
+
+    #### GET /admin/config/volumes/{volume-id}
+
+    Get information about a specific volume used in UAIs
+
+    #### PATCH /admin/config/images/{image_id}
 
     Update the entry for the specified image in the list of UAI
     container images.
 
-    #### PATCH /admin/config/volumes/{volumename}
+    #### PATCH /admin/config/volumes/{volume_id}
 
     Update the entry for the specified volume in the list of volumes
     mounted in UAI containers.
 
-    #### DELETE /admin/config/images/{imagename}
+    #### DELETE /admin/config/images/{image_id}
 
-    Delete the specified image name from the list of available UAI
+    Delete the specified image from the list of available UAI
     container images.
 
-    #### DELETE /admin/config/volumes/{volumename}
+    #### DELETE /admin/config/volumes/{volume_id}
+
+    Delete the specified volume from the list of available volumes.
 
   version: "1.3.2"
 
@@ -280,15 +298,9 @@ paths:
           content:
             application/json:
               schema:
- # ref: ?
-                type: "object"
+                $ref: "#/components/schemas/Image_list"
         404:
           description: "UAS Images not found"
-          content:
-            application/json:
-             schema:
-                type: "object"
- # ref: ?
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     post:
@@ -413,10 +425,6 @@ paths:
                 type: "object"
         404:
           description: "UAS Image {imagename} not found"
-          content:
-            application/json:
-             schema:
-                type: "object"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
   /volumes:
@@ -436,13 +444,9 @@ paths:
               schema:
                 type: "array"
                 items:
-                 $ref: "#/components/schemas/Volume"
+                 type: object
         404:
           description: "UAS Volumes not found"
-          content:
-            application/json:
-             schema:
-                type: "object"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     post:
@@ -472,7 +476,6 @@ paths:
       - name: "mount_path"
         in: "query"
         description: "Mount path inside the UAI"
-# required?
         required: false
         schema:
           type: "string"
@@ -480,7 +483,6 @@ paths:
       - name: "host_path"
         in: "query"
         description: "Mount path on the host"
-# required?
         required: false
         schema:
           type: "string"
@@ -527,7 +529,6 @@ paths:
           description: "Volume removed from list"
         404:
           description: "Failed to delete volume {volume_id}"
-# ref: ? Any cause available? Incorrect volume_id?  Tried and failed?
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     patch:
@@ -575,7 +576,6 @@ paths:
             application/json:
               schema:
                 type: "object"
- # ref:
         304:
           description: "No changes made"
           content:
@@ -610,13 +610,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Volume"
+                type: "object"
         404:
           description: "UAS Volume {volumename} not found"
-          content:
-            application/json:
-             schema:
-                type: "object"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
   /mgr-info:
@@ -705,25 +701,6 @@ paths:
 
   /admin/config/images:
 
-    get:
-      summary: "List UAS images"
-      description: "List all available UAS images."
-      operationId: "get_uas_images_admin"
-      tags:
-      - "images"
-      responses:
-        200:
-          description: "UAS Image List"
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Image"
-        404:
-          description: "UAS Images not found"
-      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
-
     post:
       summary: "Add an image"
       description: |
@@ -732,7 +709,7 @@ paths:
       operationId: "create_uas_image_admin"
       tags:
       - "images"
-      - "cli_hidden"
+      - "config"
       parameters:
       - name: "imagename"
         in: "query"
@@ -764,30 +741,54 @@ paths:
                 type: "string"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
-  /admin/config/images/{imagename}:
-
-    delete:
-      summary: "Remove the imagename from set of valid images"
-      description: "Delete the named image from the set of valid UAI container images."
-      operationId: "delete_uas_image_admin"
+    get:
+      summary: "List UAS images"
+      description: "List all available UAS images."
+      operationId: "get_uas_images_admin"
       tags:
       - "images"
+      - "config"
+      responses:
+        200:
+          description: "UAS Image List"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Image"
+        404:
+          description: "UAS Images not found"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+  /admin/config/images/{image_id}:
+
+    get:
+      summary: "Get image info"
+      description: "Get a description of the named image"
+      operationId: "get_uas_image_admin"
+      tags:
+      - "images"
+      - "config"
       parameters:
-      - name: "imagename"
+      - name: "image_id"
         in: "path"
         required: true
         schema:
           type: "string"
-        example: "node.local/uas-sles15:latest"
+        description: |
+          The image identifier (UUID) of the image to be retrieved from the
+          configuration.
+        example: "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
       responses:
         200:
-          description: "Image removed"
-        404:
-          description: "Failed to delete image {image_id}"
+          description: "UAS Image"
           content:
             application/json:
-              schema:
-                type: "string"
+             schema:
+                $ref: "#/components/schemas/Image"
+        404:
+          description: "UAS Image {image_id} not found"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     patch:
@@ -796,13 +797,25 @@ paths:
       operationId: "update_uas_image_admin"
       tags:
       - "images"
+      - "config"
       parameters:
-      - name: "imagename"
+      - name: "image_id"
         in: "path"
-        description: "Image to update"
         required: true
         schema:
           type: "string"
+        description: |
+          The image identifier (UUID) of the image to be updated in the
+          configuration.
+        example: "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
+      - name: "imagename"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+        description: |
+          The image name to be used by instances based on this UAI
+          instance.
         example: "docker.local/cray/cray-uas-sles15:latest"
       - name: "default"
         in: "query"
@@ -827,62 +840,35 @@ paths:
                 $ref: "#/components/schemas/Image"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
-    get:
-      summary: "Get image info"
-      description: "Get a description of the named image"
-      operationId: "get_uas_image_admin"
+    delete:
+      summary: "Remove the imagename from set of valid images"
+      description: "Delete the named image from the set of valid UAI container images."
+      operationId: "delete_uas_image_admin"
       tags:
       - "images"
+      - "config"
       parameters:
-      - name: "imagename"
+      - name: "image_id"
         in: "path"
         required: true
         schema:
           type: "string"
-        example: "node.local/uas-sles15:latest"
+        description: |
+          The image identifier (UUID) of the image to be updated in the
+          configuration.
+        example: "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
       responses:
         200:
-          description: "UAS Image"
-          content:
-            application/json:
-             schema:
-                $ref: "#/components/schemas/Image"
-        404:
-          description: "UAS Image {imagename} not found"
+          description: "Image removed"
           content:
             application/json:
               schema:
-                type: "string"
+                $ref: "#/components/schemas/Image"
+        404:
+          description: "Failed to delete image {image_id}"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
   /admin/config/volumes:
-
-    get:
-      summary: "List volumes"
-      description: |
-        The volume list in the configuration is used during UAI creation.
-        This list does not necessarily relate to UAIs previously created.
-        This call does not affect the k8s volume itself.
-
-      operationId: "get_uas_volumes_admin"
-      tags:
-      - "volumes"
-      responses:
-        200:
-          description: "UAS Volume list"
-          content:
-            application/json:
-              schema:
-                type: "array"
-                items:
-                  $ref: "#/components/schemas/AdminVolume"
-        404:
-          description: "UAS Volumes not found"
-          content:
-            application/json:
-              schema:
-                type: "string"
-      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     post:
       summary: "Add a volume"
@@ -895,6 +881,7 @@ paths:
       operationId: "create_uas_volume_admin"
       tags:
       - "volumes"
+      - "config"
       parameters:
       - name: "volumename"
         in: "query"
@@ -940,7 +927,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AdminVolume"
+                $ref: "#/components/schemas/Volume"
         304:
           description: "Volume not added"
           content:
@@ -955,35 +942,58 @@ paths:
                 type: "string"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
-  /admin/config/volumes/{volumename}:
-
-    delete:
-      summary: "Remove volume from the volume list"
+    get:
+      summary: "List volumes"
       description: |
-        Does not affect existing UAIs.
-        Remove the volume from the list of valid volumes.
-        The actual volume itself is not affected in any way.
+        The volume list in the configuration is used during UAI creation.
+        This list does not necessarily relate to UAIs previously created.
+        This call does not affect the k8s volume itself.
 
-      operationId: "delete_uas_volume_admin"
+      operationId: "get_uas_volumes_admin"
       tags:
       - "volumes"
-      - "cli_hidden"
-      parameters:
-      - name: "volumename"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-        example: "node.local/uas-sles15:latest"
+      - "config"
       responses:
         200:
-          description: "Volume removed from list"
-        404:
-          description: "Failed to delete volume {volume_id}"
+          description: "UAS Volume list"
           content:
             application/json:
               schema:
-                type: "string"
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Volume"
+        404:
+          description: "UAS Volumes not found"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+  /admin/config/volumes/{volume_id}:
+
+    get:
+      summary: "Get volume info for volume_id"
+      description: "Get volume info for volume_id"
+      operationId: "get_uas_volume_admin"
+      tags:
+      - "volumes"
+      - "config"
+      parameters:
+      - name: "volume_id"
+        in: "path"
+        description: |
+          The volume identifier (UUID) of the volume to retrieve
+          from the configuration.
+        required: true
+        schema:
+          type: "string"
+        example: "e2918379-7df1-4086-92fe-e3ec777a9b2e"
+      responses:
+        200:
+          description: "UAS Volume"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Volume"
+        404:
+          description: "UAS Volume {volumename} not found"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     patch:
@@ -996,18 +1006,31 @@ paths:
       operationId: "update_uas_volume_admin"
       tags:
       - "volumes"
-      - "cli_hidden"
+      - "config"
       parameters:
-      - name: "volumename"
+      - name: "volume_id"
         in: "path"
-        description: "Volume to update"
+        description: |
+          The volume identifier (UUID) of the volume to update
+          in the configuration.
         required: true
+        schema:
+          type: "string"
+        example: "e2918379-7df1-4086-92fe-e3ec777a9b2e"
+      - name: "volumename"
+        in: "query"
+        description: |
+          The name of the volume as it is applied to the UAI
+          Kubernetes pod.  Must conform to Kubernetes volume
+          naming conventions (see Kuberneted documentation for
+          details).
+        required: false
         schema:
           type: "string"
         example: "mymount"
       - name: "mount_path"
         in: "query"
-        description: "Mount path inside the UAI"
+        description: "Mount path for the volume inside the UAI"
         required: false
         schema:
           type: "string"
@@ -1015,8 +1038,8 @@ paths:
       - name: "volume_description"
         in: "query"
         description: |
-          JSON description of a Kubernetes volume to be mounted in UAI
-          containers.  This is the JSON equivalent of whatever YAML
+          An object describing a Kubernetes volume to be mounted in UAI
+          containers.  This is the equivalent of whatever YAML
           you would normally apply to Kubernetes to attach the kind of
           volume you want to a pod.  There are many kinds of volumes,
           the examples given here illustrate some options:
@@ -1041,13 +1064,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AdminVolume"
+                $ref: "#/components/schemas/Volume"
         304:
           description: "No changes made"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AdminVolume"
+                $ref: "#/components/schemas/Volume"
         400:
           description: "Invalid type for host, volume not updated"
           content:
@@ -1056,33 +1079,36 @@ paths:
                 type: "string"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
-    get:
-      summary: "Get volume info for volumename"
-      description: "Get volume info for volumename"
-      operationId: "get_uas_volume_admin"
+    delete:
+      summary: "Remove volume from the volume list"
+      description: |
+        Does not affect existing UAIs.
+        Remove the volume from the list of valid volumes.
+        The actual volume itself is not affected in any way.
+
+      operationId: "delete_uas_volume_admin"
       tags:
       - "volumes"
-      - "cli_hidden"
+      - "config"
       parameters:
-      - name: "volumename"
+      - name: "volume_id"
         in: "path"
+        description: |
+          The volume identifier (UUID) of the volume to delete
+          from the configuration.
         required: true
         schema:
           type: "string"
-        example: "node.local/uas-sles15:latest"
+        example: "e2918379-7df1-4086-92fe-e3ec777a9b2e"
       responses:
         200:
-          description: "UAS Volume"
+          description: "Volume removed from list"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AdminVolume"
+                $ref: "#/components/schemas/Volume"
         404:
-          description: "UAS Volume {volumename} not found"
-          content:
-            application/json:
-              schema:
-                type: "string"
+          description: "Failed to delete volume {volume_id}"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
 components:
@@ -1124,33 +1150,16 @@ components:
     Volume:
       type: "object"
       properties:
-        volumename:
+        volume_id:
           type: "string"
-        type:
-          type: "string"
-        mount_path:
-          type: "string"
-        host_path:
-          type: "string"
-        secret_name:
-          type: "string"
-        config_map:
-          type: "string"
-      example:
-        volumename: "example_mount"
-        type: "DirectoryOrCreate"
-        mount_path: "/opt/test/foo"
-        host_path: "/opt/host/foo"
-    AdminVolume:
-      type: "object"
-      properties:
         volumename:
           type: "string"
         mount_path:
           type: "string"
         volume_description:
-          type: "string"
+          type: "object"
       example:
+        volume_id:  "e2918379-7df1-4086-92fe-e3ec777a9b2e"
         volumename: "example_mount"
         mount_path: "/opt/test/foo"
         volume_description: |
@@ -1158,13 +1167,25 @@ components:
     Image:
       type: "object"
       properties:
+        image_id:
+          type: "string"
         imagename:
           type: "string"
         default:
           type: "boolean"
       example:
+        image_id: "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
         imagename: "node.local/uas-sles15:latest"
         default: false
+    Image_list:
+      type: "object"
+      properties:
+        default_image:
+          type: "string"
+        image_list:
+          type: "array"
+          items:
+            type: "string"
     UAS_mgr_info:
       type: "object"
       properties:
