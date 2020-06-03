@@ -104,3 +104,6 @@ cray-service:
     enabled: true
     prefix: /apis/uas-mgr/
     uri: /
+
+  etcdCluster:
+    enabled: true
