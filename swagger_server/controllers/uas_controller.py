@@ -15,10 +15,10 @@ from swagger_server.uas_lib.uas_cfg import UasCfg
 uas_cfg = UasCfg()  # pylint: disable=invalid-name
 
 
-def create_uai(publickey=None, imagename=None, ports=None):  # noqa: E501
+def create_uai(publickey=None, imagename=None, ports=None):
     """Create a new UAI for user
 
-    Create a new UAI for the user # noqa: E501
+    Create a new UAI for the user
 
     :param publickey: Public ssh key for the user
     :type publickey: werkzeug.datastructures.FileStorage
@@ -33,10 +33,10 @@ def create_uai(publickey=None, imagename=None, ports=None):  # noqa: E501
     return uai_response
 
 
-def delete_uai_by_name(uai_list):  # noqa: E501
+def delete_uai_by_name(uai_list):
     """Delete UAIs in uai_list
 
-    Delete a list of UAIs having names in uai_list. # noqa: E501
+    Delete a list of UAIs having names in uai_list.
 
     :param uai_list:
     :type uai_list: List[str]
@@ -49,10 +49,10 @@ def delete_uai_by_name(uai_list):  # noqa: E501
     return uai_resp
 
 
-def get_uais_for_user():  # noqa: E501
+def get_uais_for_user():
     """List all UAIs for user
 
-    List all available UAIs for user # noqa: E501
+    List all available UAIs for user
 
     :rtype: List[UAI]
     """
@@ -60,10 +60,10 @@ def get_uais_for_user():  # noqa: E501
     return uai_resp
 
 
-def get_uas_images():  # noqa: E501
+def get_uas_images():
     """List available UAS images
 
-    List available UAS images # noqa: E501
+    List available UAS images
 
     :rtype: object
     """
@@ -74,10 +74,10 @@ def get_uas_images():  # noqa: E501
     return uas_img_info
 
 
-def get_uas_mgr_info():  # noqa: E501
+def get_uas_mgr_info():
     """List uas-mgr service info
 
-    List uas-mgr service info # noqa: E501
+    List uas-mgr service info
 
     :rtype: object
     """
@@ -88,7 +88,7 @@ def get_uas_mgr_info():  # noqa: E501
     return uas_mgr_info
 
 
-def get_all_uais(username=None, host=None):  # noqa: E501
+def get_all_uais(username=None, host=None):
     """List all UAIs matching optional parameters
 
     :param username:
@@ -107,7 +107,7 @@ def get_all_uais(username=None, host=None):  # noqa: E501
     return uai_resp
 
 
-def delete_all_uais(username=None):  # noqa: E501
+def delete_all_uais(username=None):
     """Delete all UAIs
 
     :param username: username to delete UAIs for if specified
@@ -125,10 +125,10 @@ def delete_all_uais(username=None):  # noqa: E501
     return uai_resp
 
 # pylint: disable=unused-argument
-def delete_uas_image_deprecated(imagename):  # noqa: E501
+def delete_uas_image_deprecated(imagename):
     """Deprecated and never implemented - see /admin/config/images/{imagename}
 
-    Deprecated and never implemented # noqa: E501
+    Deprecated and never implemented
 
     :param imagename:
     :type imagename: str
@@ -140,10 +140,10 @@ def delete_uas_image_deprecated(imagename):  # noqa: E501
 
 
 # pylint: disable=unused-argument
-def create_uas_image_deprecated(imagename, default=None):  # noqa: E501
+def create_uas_image_deprecated(imagename, default=None):
     """Deprecated and never implemented  - see /admin/config/images
 
-    Deprecated and never implemented # noqa: E501
+    Deprecated and never implemented
 
     :param imagename: Image to create
     :type imagename: str
@@ -158,10 +158,10 @@ def create_uas_image_deprecated(imagename, default=None):  # noqa: E501
 
 
 # pylint: disable=unused-argument
-def update_uas_image_deprecated(imagename, default=None):  # noqa: E501
+def update_uas_image_deprecated(imagename, default=None):
     """Deprecated and never implemented  - see /admin/config/images/{imagename}
 
-    Deprecated and never implemented # noqa: E501
+    Deprecated and never implemented
 
     :param imagename: Image to update
     :type imagename: str
@@ -174,7 +174,7 @@ def update_uas_image_deprecated(imagename, default=None):  # noqa: E501
     abort(501, "Not implemented")
 
 
-def get_uas_image(imagename):  # noqa: E501
+def get_uas_image(imagename):
     """Get UAS image
 
     :param imagename:
@@ -188,10 +188,10 @@ def get_uas_image(imagename):  # noqa: E501
 
 
 # pylint: disable=unused-argument
-def delete_uas_volume_deprecated(volumename):  # noqa: E501
+def delete_uas_volume_deprecated(volumename):
     """Deprecated and never implemented - see /admin/config/volumes/{volumename}
 
-    Deprecated and never implemented # noqa: E501
+    Deprecated and never implemented
 
     :param volumename:
     :type volumename: str
@@ -205,10 +205,10 @@ def delete_uas_volume_deprecated(volumename):  # noqa: E501
 # pylint: disable=unused-argument,redefined-builtin,too-many-arguments
 def create_uas_volume_deprecated(volumename, type=None, mount_path=None,
                                  host_path=None, secret_name=None,
-                                 config_map=None):  # noqa: E501
+                                 config_map=None):
     """Deprecated and never implemented - see /admin/config/volumes
 
-    Deprecated and never implemented # noqa: E501
+    Deprecated and never implemented
 
     :param volumename:
     :type volumename: str
@@ -238,10 +238,10 @@ def create_uas_volume_deprecated(volumename, type=None, mount_path=None,
 # pylint: disable=unused-argument,redefined-builtin,too-many-arguments
 def update_uas_volume_deprecated(volumename, type=None, mount_path=None,
                                  host_path=None, secret_name=None,
-                                 config_map=None):  # noqa: E501
+                                 config_map=None):
     """Deprecated and never implemented - see /admin/config/volumes/{volumename}
 
-    Deprecated and never implemented # noqa: E501
+    Deprecated and never implemented
 
     :param volumename:
     :type volumename: str
@@ -269,7 +269,7 @@ def update_uas_volume_deprecated(volumename, type=None, mount_path=None,
 
 
 # pylint: disable=unused-argument
-def get_uas_volume_deprecated(volumename):  # noqa: E501
+def get_uas_volume_deprecated(volumename):
     """Deprecated and never implemented - see /admin/config/volumes/{volumename}
 
     :param volumename:
@@ -282,7 +282,7 @@ def get_uas_volume_deprecated(volumename):  # noqa: E501
 
 
 # pylint: disable=unused-argument
-def get_uas_volumes_deprecated():  # noqa: E501
+def get_uas_volumes_deprecated():
     """Deprecated and never implemented - see /admin/config/volumes
 
     :rtype: object
@@ -294,11 +294,11 @@ def get_uas_volumes_deprecated():  # noqa: E501
 # Admin API
 #
 # Images...
-def create_uas_image_admin(imagename, default=None):  # noqa: E501
+def create_uas_image_admin(imagename, default=None):
     """Add an image
 
     Add valid image name to configuration. Does not create or upload
-    container image.  Optionally, set default.  # noqa: E501
+    container image.  Optionally, set default.
 
     :param imagename: Image to create
     :type imagename: str
@@ -315,10 +315,10 @@ def create_uas_image_admin(imagename, default=None):  # noqa: E501
     return UaiManager().create_image(imagename, default)
 
 
-def get_uas_images_admin():  # noqa: E501
+def get_uas_images_admin():
     """List UAS images
 
-    List all available UAS images. # noqa: E501
+    List all available UAS images.
 
 
     :rtype: Image
@@ -326,10 +326,10 @@ def get_uas_images_admin():  # noqa: E501
     return UaiManager().get_images()
 
 
-def get_uas_image_admin(image_id):  # noqa: E501
+def get_uas_image_admin(image_id):
     """Get image info
 
-    Get a description of the named image # noqa: E501
+    Get a description of the named image
 
     :param image_id:
     :type image_id: str
@@ -361,11 +361,11 @@ def update_uas_image_admin(image_id, imagename=None, default=None):
         return "Must provide image_id to update."
     return UaiManager().update_image(image_id, imagename, default)
 
-def delete_uas_image_admin(image_id):  # noqa: E501
+def delete_uas_image_admin(image_id):
     """Remove the imagename from set of valid images
 
     Delete the named image from the set of valid UAI container
-    images. # noqa: E501
+    images.
 
     :param image_id:
     :type image_id: str
@@ -379,13 +379,13 @@ def delete_uas_image_admin(image_id):  # noqa: E501
 
 # Volumes...
 def create_uas_volume_admin(volumename, mount_path,
-                            volume_description):  # noqa: E501
+                            volume_description):
     """Add a volume
 
     Add a volume to the volume list in the configuration.  The volume
     list is used during UAI creation, so this request only applies to
     UAIs subsequently created.  Modifying the volume list does not
-    affect existing UAIs.  # noqa: E501
+    affect existing UAIs.
 
     :param volumename: Volume to create
     :type volumename: str
@@ -427,12 +427,12 @@ def create_uas_volume_admin(volumename, mount_path,
     )
 
 
-def get_uas_volumes_admin():  # noqa: E501
+def get_uas_volumes_admin():
     """List volumes
 
     The volume list in the configuration is used during UAI
     creation. This list does not necessarily relate to UAIs previously
-    created. This call does not affect the k8s volume itself.  # noqa: E501
+    created. This call does not affect the k8s volume itself.
 
 
     :rtype: List[AdminVolume]
@@ -441,10 +441,10 @@ def get_uas_volumes_admin():  # noqa: E501
     return UaiManager().get_volumes()
 
 
-def get_uas_volume_admin(volume_id):  # noqa: E501
+def get_uas_volume_admin(volume_id):
     """Get volume info for volume ID
 
-    Get volume info for volume_id # noqa: E501
+    Get volume info for volume_id
 
     :param volume_id:
     :type volume_id: str
@@ -457,13 +457,13 @@ def get_uas_volume_admin(volume_id):  # noqa: E501
 
 
 def update_uas_volume_admin(volume_id, volumename=None, mount_path=None,
-                            volume_description=None):  # noqa: E501
+                            volume_description=None):
     """Update a volume
 
     Update a volume to be mounted in UAS images. This has no effect on
     running UAIs and does not change the volume itself in any way, but
     it can modify the relationship between future UAI containers and
-    the volume.  # noqa: E501
+    the volume.
 
     :param volume_id: Volume to update
     :type volume_id: str
@@ -509,7 +509,7 @@ def delete_uas_volume_admin(volume_id):
 
     Does not affect existing UAIs. Remove the volume from the list of
     valid volumes. The actual volume itself is not affected in any
-    way.  # noqa: E501
+    way.
 
     :param volume_id:
     :type volume_id: str

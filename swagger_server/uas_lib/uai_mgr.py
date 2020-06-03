@@ -424,7 +424,7 @@ class UaiManager:
     def get_pod_info(self,
                      deployment_name,
                      namespace=None,
-                     host=None):  # noqa E501
+                     host=None):
         """Retrieve pod information for a UAI pod from configuration.
 
         """

@@ -340,7 +340,7 @@ class TestUasCfg(unittest.TestCase):
             UAIVolume.is_valid_volume_name(
                 'mercury-venus-earth-asteroid-belt-mars-jupiter-saturn-uranus-neptune'
             )
-        )  # noqa E501
+        )
         # 0 length not allowed
         self.assertFalse(UAIVolume.is_valid_volume_name(''))
 

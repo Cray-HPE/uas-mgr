@@ -24,26 +24,26 @@ class UAI(Model):
                  uai_host: str = None, uai_age: str = None):
         """UAI - a model defined in Swagger
 
-        :param uai_name: The uai_name of this UAI.  # noqa: E501
+        :param uai_name: The uai_name of this UAI.
         :type uai_name: str
-        :param username: The username of this UAI.  # noqa: E501
+        :param username: The username of this UAI.
         :type username: str
-        :param publickey: The publickey of this UAI.  # noqa: E501
+        :param publickey: The publickey of this UAI.
         :type publickey: str
-        :param uai_img: The uai_img of this UAI.  # noqa: E501
+        :param uai_img: The uai_img of this UAI.
         :type uai_img: str
-        :param uai_status: The uai_status of this UAI.  # noqa: E501
+        :param uai_status: The uai_status of this UAI.
         :type uai_status: str
-        :param uai_msg: The uai_msg of this UAI.  # noqa: E501
+        :param uai_msg: The uai_msg of this UAI.
         :type uai_msg: str
         :param uai_connect_string: The uai_connect_string of this
-                                   UAI.  # noqa: E501
+                                   UAI.
         :type uai_connect_string: str
-        :param uai_portmap: The uai_portmap of this UAI.  # noqa: E501
+        :param uai_portmap: The uai_portmap of this UAI.
         :type uai_portmap: Dict[str, int]
-        :param uai_host: The physical host for this UAI.  # noqa: E501
+        :param uai_host: The physical host for this UAI.
         :type uai_host: str
-        :param uai_age: Age of the UAI.  # noqa: E501
+        :param uai_age: Age of the UAI.
         :type uai_age: str
         """
 
@@ -89,7 +89,7 @@ class UAI(Model):
 
         :param dikt: A dict.
         :type: dict
-        :return: The UAI of this UAI.  # noqa: E501
+        :return: The UAI of this UAI.
         :rtype: UAI
         """
         return util.deserialize_model(dikt, cls)

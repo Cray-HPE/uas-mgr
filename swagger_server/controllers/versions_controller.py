@@ -3,10 +3,10 @@
 #
 # pylint: disable=missing-docstring
 
-def root_get():  # noqa: E501
+def root_get():
     """List supported UAS API versions
 
-    Returns supported UAS API versions # noqa: E501
+    Returns supported UAS API versions
 
 
     :rtype: Versions
