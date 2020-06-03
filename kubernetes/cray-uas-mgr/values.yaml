@@ -11,7 +11,7 @@ uasConfig:
   uai_namespace: "user"
 
 # macvlan setttings
-  use_maclan: true
+  use_macvlan: true
   uai_macvlan_network: 10.252.200.0/23
   uai_macvlan_dhcp_start: 10.252.200.10
   uai_macvlan_dhcp_end: 10.252.201.244

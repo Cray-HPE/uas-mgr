@@ -939,7 +939,6 @@ paths:
                         }
                       }
                     }
-                  required: true
                   type: "string"
                   format: "binary"
                   example: "{ \"configMap\": { \"name\": \"my-configmap\" } }"
@@ -1099,7 +1098,6 @@ paths:
                         }
                       }
                     }
-                  required: true
                   type: "string"
                   format: "binary"
                   example: "{ \"configMap\": { \"name\": \"my-configmap\" } }"
