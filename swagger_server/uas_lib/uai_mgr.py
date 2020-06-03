@@ -289,13 +289,16 @@ class UaiManager:
             env=[
                 client.V1EnvVar(
                     name='UAS_NAME',
-                    value=deployment_name + "-ssh"),
+                    value=deployment_name + "-ssh"
+                ),
                 client.V1EnvVar(
                     name='UAS_PASSWD',
-                    value=self.passwd),
+                    value=self.passwd
+                ),
                 client.V1EnvVar(
                     name='UAS_PUBKEY',
-                    value=publickeyStr)
+                    value=publickeyStr
+                )
             ],
             ports=container_ports,
             volume_mounts=self.uas_cfg.gen_volume_mounts(),
@@ -421,10 +424,12 @@ class UaiManager:
         return resp
 
     # pylint: disable=too-many-branches,too-many-statements
-    def get_pod_info(self,
-                     deployment_name,
-                     namespace=None,
-                     host=None):
+    def get_pod_info(
+            self,
+            deployment_name,
+            namespace=None,
+            host=None
+    ):
         """Retrieve pod information for a UAI pod from configuration.
 
         """
@@ -710,7 +715,11 @@ class UaiManager:
 
         # Start the UAI services
         UAS_MGR_LOGGER.info("creating the UAI service %s", uas_ssh_svc_name)
-        svc_resp = self.create_service(uas_ssh_svc_name, uas_ssh_svc, namespace)
+        svc_resp = self.create_service(
+            uas_ssh_svc_name,
+            uas_ssh_svc,
+            namespace
+        )
         if not svc_resp:
             # Clean up the deployment
             UAS_MGR_LOGGER.error(
