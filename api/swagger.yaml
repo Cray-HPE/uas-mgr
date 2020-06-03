@@ -897,30 +897,52 @@ paths:
         schema:
           type: "string"
         example: "/mnt/test"
-      - name: "volume_description"
-        in: "query"
-        description: |
-          JSON description of a Kubernetes volume to be mounted in UAI
-          containers.  This is the JSON equivalent of whatever YAML
-          you would normally apply to Kubernetes to attach the kind of
-          volume you want to a pod.  There are many kinds of volumes,
-          the examples given here illustrate some options:
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: "object"
+              properties:
+                volume_description:
+                  description: |
+                    JSON description of a Kubernetes volume to be
+                    mounted in UAI containers.  This is the JSON
+                    equivalent of whatever YAML you would normally
+                    apply to Kubernetes to attach the kind of volume
+                    you want to a pod.  There are many kinds of
+                    volumes, the examples given here illustrate some
+                    options:
 
-          { "hostPath": { "path": "/data", "type": "DirectoryOrCreate" } }
+                    {
+                      "hostPath": {
+                        "path": "/data",
+                        "type": "DirectoryOrCreate"
+                      }
+                    }
 
-          or
+                    or
 
-          { "secret": { "secretName": "my-secret" } }
+                    {
+                      "secret": {
+                        "secretName": "my-secret"
+                      }
+                    }
 
-          or
+                    or
 
-          { "configMap": { "name": "my-configmap", "items": { "key": "flaps", "path": "flaps" } } }
-
-        required: true
-        schema:
-          type: "string"
-        example: "{ \"configMap\": { \"name\": \"my-configmap\" } }"
-
+                    {
+                      "configMap": {
+                        "name": "my-configmap",
+                        "items": {
+                          "key": "flaps",
+                          "path": "flaps"
+                        }
+                      }
+                    }
+                  required: true
+                  type: "string"
+                  format: "binary"
+                  example: "{ \"configMap\": { \"name\": \"my-configmap\" } }"
       responses:
         201:
           description: "Volume added"
@@ -1035,29 +1057,52 @@ paths:
         schema:
           type: "string"
         example: "/mnt/test"
-      - name: "volume_description"
-        in: "query"
-        description: |
-          An object describing a Kubernetes volume to be mounted in UAI
-          containers.  This is the equivalent of whatever YAML
-          you would normally apply to Kubernetes to attach the kind of
-          volume you want to a pod.  There are many kinds of volumes,
-          the examples given here illustrate some options:
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: "object"
+              properties:
+                volume_description:
+                  description: |
+                    JSON description of a Kubernetes volume to be
+                    mounted in UAI containers.  This is the JSON
+                    equivalent of whatever YAML you would normally
+                    apply to Kubernetes to attach the kind of volume
+                    you want to a pod.  There are many kinds of
+                    volumes, the examples given here illustrate some
+                    options:
 
-          { "hostPath": { "path": "/data", "type": "DirectoryOrCreate" } }
+                    {
+                      "hostPath": {
+                        "path": "/data",
+                        "type": "DirectoryOrCreate"
+                      }
+                    }
 
-          or
+                    or
 
-          { "secret": { "secretName": "my-secret" } }
+                    {
+                      "secret": {
+                        "secretName": "my-secret"
+                      }
+                    }
 
-          or
+                    or
 
-          { "configMap": { "name": "my-configmap", "items": { "key": "flaps", "path": "flaps" } } }
-
-        required: false
-        schema:
-          type: "string"
-        example: "{ \"configMap\": { \"name\": \"my-configmap\" } }"
+                    {
+                      "configMap": {
+                        "name": "my-configmap",
+                        "items": {
+                          "key": "flaps",
+                          "path": "flaps"
+                        }
+                      }
+                    }
+                  required: true
+                  type: "string"
+                  format: "binary"
+                  example: "{ \"configMap\": { \"name\": \"my-configmap\" } }"
       responses:
         201:
           description: "Volume updated"
