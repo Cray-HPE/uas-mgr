@@ -105,6 +105,11 @@ class TestUasController(unittest.TestCase):
             uas_ctl.get_uas_volume_deprecated(None)
 
     # pylint: disable=missing-docstring
+    def test_get_uas_volumes(self):
+        with self.assertRaises(werkzeug.exceptions.NotImplemented):
+            uas_ctl.get_uas_volumes_deprecated()
+
+    # pylint: disable=missing-docstring
     def test_get_uas_images_admin(self):
         with app.test_request_context('/'):
             imgs = uas_ctl.get_uas_images_admin()
