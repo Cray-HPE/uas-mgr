@@ -38,7 +38,6 @@ class TestUasController(unittest.TestCase):
     # pylint: disable=missing-docstring
     def test_get_uas_images(self):
         images = uas_ctl.get_uas_images()
-        print("images = %s" % str(images))
         self.assertEqual(images,
                          {'default_image':
                           'dtr.dev.cray.com:443/cray/cray-uas-sles15:latest',

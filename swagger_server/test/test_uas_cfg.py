@@ -43,12 +43,10 @@ class TestUasCfg(unittest.TestCase):
         imgs = UAIImage.get_all()
         if imgs is not None:
             for img in imgs:
-                print("Reomving image: %s" % img.imagename)
                 img.remove()
         configs = PopulatedConfig.get_all()
         if configs is not None:
             for cfg in configs:
-                print("Reomving config registration: %s" % cfg.config_name)
                 cfg.remove()
 
     # pylint: disable=missing-docstring
@@ -67,7 +65,6 @@ class TestUasCfg(unittest.TestCase):
     def test_get_images(self):
         self.__reset_runtime_config()
         images = self.uas_cfg.get_images()
-        print("images = %s" % str(images))
         self.assertEqual(
             images,
             ['dtr.dev.cray.com:443/cray/cray-uas-sles15:latest']

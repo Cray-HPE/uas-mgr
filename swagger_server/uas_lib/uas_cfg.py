@@ -178,10 +178,11 @@ class UasCfg:
             # defined, then pass the dictionary instead of explicit
             # arguments.
             volume_args = {}
-            print("Generating volume mount for '%s'" % vol.volumename)
             volume_args['name'] = vol.volumename
             volume_source_key = list(vol.volume_description.keys())[0]
-            volume_args[volume_source_key] = UAIVolume.get_volume_source(vol.volume_description)
+            volume_args[volume_source_key] = UAIVolume.get_volume_source(
+                vol.volume_description
+            )
             volume_list.append(client.V1Volume(**volume_args))
         return volume_list
 
