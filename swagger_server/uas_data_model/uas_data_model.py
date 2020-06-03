@@ -13,8 +13,8 @@ class UASDataModel(Etcd3Model):
 
     This provides some common base items for any Etcd3Model in UAS and
     also manages awareness of whether a given class exists in the ETCD
-    persistent data for this UAS.  If it has not, then the following
-    are true:
+    persistent data for this UAS.  If a class does not exist in ETCD,
+    then the following are true:
 
     - A call to put() on an instance of the class will cause the
       instance to be stored (as expected) and the class to be
