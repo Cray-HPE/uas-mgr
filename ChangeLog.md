@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2020-06-04
+CASMUAS-9: Remove creation of uastest user
+
 ## [1.4.0] - 2020-06-01
 CASMUAS-113: Remove cray_uai_hosts tasks and role from playbook
 
