@@ -1,4 +1,4 @@
-{{- if .Values.uasConfig.use_maclan }}
+{{- if .Values.uasConfig.use_macvlan }}
 ---
 # Based on https://github.com/intel/multus-cni/blob/master/examples/macvlan-conf.yml
 # Macvlan definition for UAS on the node management network
