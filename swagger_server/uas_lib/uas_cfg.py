@@ -78,7 +78,8 @@ class UasCfg:
                 UAIImage(imagename=default_name, default=True).put()
             imgs = uas_imgs.get('images', [])
             for name in imgs:
-                # The default (if any) has already been added, don't duplicate it here.
+                # The default (if any) has already been added, don't
+                # duplicate it here.
                 if name != default_name:
                     UAIImage(imagename=name, default=False).put()
         if UAIVolume.get_all() is None:

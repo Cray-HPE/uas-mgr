@@ -699,6 +699,27 @@ paths:
           description: "No UAIs found"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
+  /admin/config:
+
+    delete:
+      summary: "Remove local configuration and revert to default configuration"
+      description: |
+        Remove any locally applied configuration (configuration applied through
+        the admin/config API) and revert to the default configuration that
+        is installed in the system.  This can be used both to reset to
+        factory defaults and to move to a new set of defaults if the existing
+        one is replaced.  All locally applied configuration will be lost if
+        with this request.
+      operationId: "delete_local_config_admin"
+      tags:
+      - "config"
+      - "cli_danger$This will delete all locally applied configuration, Are you sure?"
+
+      responses:
+        200:
+          description: "Local configuration reset to defaults"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
   /admin/config/images:
 
     post:

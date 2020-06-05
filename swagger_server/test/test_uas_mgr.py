@@ -8,6 +8,7 @@
 import unittest
 import os
 from datetime import datetime, timezone, timedelta
+import json
 import werkzeug
 import flask
 from swagger_server.uas_lib.uai_mgr import UaiManager
@@ -134,7 +135,7 @@ class TestUasMgr(unittest.TestCase):
         vol = self.uas_mgr.create_volume(
             volume_name,
             mount_path=mount_path_1,
-            vol_desc=vol_desc_1
+            vol_desc=json.dumps(vol_desc_1)
         )
         self.assertIn('volume_id', vol)
         volume_id = vol['volume_id']
@@ -157,7 +158,7 @@ class TestUasMgr(unittest.TestCase):
         vol = self.uas_mgr.update_volume(
             volume_id=volume_id,
             volumename=volume_name,
-            vol_desc=vol_desc_2
+            vol_desc=json.dumps(vol_desc_2)
         )
         expected_result['volume_description'] = vol_desc_2
         self.assertEqual(vol, expected_result)

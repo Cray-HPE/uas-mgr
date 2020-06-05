@@ -5,6 +5,8 @@
 
 """
 
+import io
+
 from flask import abort
 
 from swagger_server import version
@@ -419,6 +421,15 @@ def create_uas_volume_admin(volumename, mount_path,
         return "Must provide mount_path."
     if not volume_description:
         return "Must provide volume_description."
+    if not isinstance(volume_description, io.BytesIO):
+        if not isinstance(volume_description, str):
+            return (
+                "Volume description must be either a JSON string or a "
+                "request body containing a JSON string"
+            )
+    else:
+        # It is an io.BytesIO, get the value as a string
+        volume_description = volume_description.getvalue()
     return UaiManager().create_volume(
         volumename,
         mount_path,
@@ -495,6 +506,16 @@ def update_uas_volume_admin(volume_id, volumename=None, mount_path=None,
     """
     if not volume_id:
         return "Must provide volume_id to update."
+    if volume_description is not None:
+        if not isinstance(volume_description, io.BytesIO):
+            if not isinstance(volume_description, str):
+                return (
+                    "Volume description must be either a JSON string or a "
+                    "request body containing a JSON string"
+                )
+        else:
+            # It is an io.BytesIO, get the value as a string
+            volume_description = volume_description.getvalue()
     return UaiManager().update_volume(
         volume_id,
         volumename,
@@ -519,3 +540,13 @@ def delete_uas_volume_admin(volume_id):
     if not volume_id:
         return "Must provide volume_id to delete."
     return UaiManager().delete_volume(volume_id)
+
+def delete_local_config_admin():
+    """Remove all local configuration and reset to defaults
+
+    Removes all locally applied configuration, leaving the UAS in its
+    default configuration.
+
+    :rtype: None
+    """
+    return UaiManager().factory_reset()

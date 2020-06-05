@@ -10,6 +10,7 @@ import logging
 import sys
 import time
 import uuid
+import json
 from datetime import datetime, timezone
 from flask import abort, request
 from kubernetes import config, client
@@ -21,6 +22,7 @@ from swagger_server.uas_lib.uas_cfg import UasCfg
 from swagger_server.uas_lib.uas_auth import UasAuth
 from swagger_server.uas_data_model.uai_image import UAIImage
 from swagger_server.uas_data_model.uai_volume import UAIVolume
+from swagger_server.uas_data_model.populated_config import PopulatedConfig
 
 
 UAS_MGR_LOGGER = logging.getLogger('uas_mgr')
@@ -332,6 +334,7 @@ class UaiManager:
         # Create and configure a spec section
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(
+                labels=self.gen_labels(deployment_name)
                 labels=self.gen_labels(deployment_name),
                 annotations={
                     'k8s.v1.cni.cncf.io/networks': 'macvlan-uas-nmn-conf@nmn1'
@@ -962,6 +965,14 @@ class UaiManager:
             abort(400, "No mount path specified for volume")
         if vol_desc is None:
             abort(400, "No volume description provided for volume")
+        # Convert vol_desc from a JSON string to a dictionary
+        try:
+            vol_desc = json.loads(vol_desc)
+        except json.decoder.JSONDecodeError as err:
+            abort(
+                400,
+                "Volume description failed JSON decoding - %s" % str(err)
+            )
         err = UAIVolume.vol_desc_errors(vol_desc)
         if err is not None:
             abort(
@@ -1019,6 +1030,14 @@ class UaiManager:
             vol.mount_path = mount_path
             changed = True
         if vol_desc is not None:
+            # Convert vol_desc from a JSON string to a dictionary
+            try:
+                vol_desc = json.loads(vol_desc)
+            except json.decoder.JSONDecodeError as err:
+                abort(
+                    400,
+                    "Volume description failed JSON decoding - %s" % str(err)
+                )
             err = UAIVolume.vol_desc_errors(vol_desc)
             if err is not None:
                 abort(
@@ -1069,3 +1088,19 @@ class UaiManager:
             }
             for vol in vols
         ]
+
+    def factory_reset(self):
+        """Delete all the local configuration so that the next operation
+        reloads config from the configmap configuration.
+
+        """
+        self.uas_cfg.get_config()
+        vols = UAIVolume.get_all()
+        for vol in vols:
+            vol.remove()
+        imgs = UAIImage.get_all()
+        for img in imgs:
+            img.remove()
+        cfgs = PopulatedConfig.get_all()
+        for cfg in cfgs:
+            cfg.remove()

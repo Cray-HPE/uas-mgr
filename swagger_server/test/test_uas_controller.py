@@ -7,7 +7,9 @@
 
 import unittest
 import os
+import io
 from uuid import uuid4
+import json
 import flask
 import werkzeug
 
@@ -114,6 +116,25 @@ class TestUasController(unittest.TestCase):
             imgs = uas_ctl.get_uas_images_admin()
         self.assertIsInstance(imgs, list)
 
+    def __create_test_image(self, name, default=None):
+        """Create an image with a given name and default setting and return
+        its image_id.
+
+        """
+        resp = uas_ctl.create_uas_image_admin(imagename=name, default=default)
+        self.assertIsInstance(resp, dict)
+        self.assertIn('image_id', resp)
+        return resp['image_id']
+
+    def __delete_test_image(self, image_id):
+        """ Delete an image based on its image ID and verify the result.
+
+        """
+        resp = uas_ctl.delete_uas_image_admin(image_id=image_id)
+        self.assertIsInstance(resp, dict)
+        self.assertIn('image_id', resp)
+        self.assertEqual(image_id, resp['image_id'])
+
     # pylint: disable=missing-docstring
     def test_create_uas_image_admin(self):
         with app.test_request_context('/'):
@@ -121,15 +142,13 @@ class TestUasController(unittest.TestCase):
             self.assertEqual(resp, "Must provide imagename to create.")
             resp = uas_ctl.create_uas_image_admin(imagename="")
             self.assertEqual(resp, "Must provide imagename to create.")
-            resp = uas_ctl.create_uas_image_admin(imagename="first_image")
-            self.assertIsInstance(resp, dict)
-            self.assertIn('image_id', resp)
-            _ = uas_ctl.delete_uas_image_admin(image_id=resp['image_id'])
-            resp = uas_ctl.create_uas_image_admin(imagename="second-image",
-                                                  default=False)
-            self.assertIsInstance(resp, dict)
-            self.assertIn('image_id', resp)
-            _ = uas_ctl.delete_uas_image_admin(image_id=resp['image_id'])
+            image_id = self.__create_test_image("first_image")
+            self.__delete_test_image(image_id)
+            image_id = self.__create_test_image(
+                name="second-image",
+                default=False
+            )
+            self.__delete_test_image(image_id)
 
     # pylint: disable=missing-docstring
     def test_get_uas_image_admin(self):
@@ -167,6 +186,42 @@ class TestUasController(unittest.TestCase):
             vols = uas_ctl.get_uas_volumes_admin()
         self.assertIsInstance(vols, list)
 
+    def __create_test_volume(self):
+        """Create a test volume through the API and make sure that works,
+        return the volume ID so that it can be used for subsequent
+        activities.
+
+        """
+        vol_desc = io.BytesIO()
+        vol_desc.write(
+            bytes(
+                json.dumps(
+                    {
+                        'secret': {
+                            'secret_name': "my-little-secret"
+                        }
+                    }
+                ),
+                encoding='utf8'
+            )
+        )
+        resp = uas_ctl.create_uas_volume_admin(
+            volumename="my-volume",
+            mount_path="/var/mnt",
+            volume_description=vol_desc
+        )
+        self.assertIsInstance(resp, dict)
+        self.assertIn('volume_id', resp)
+        return resp['volume_id']
+
+    def __delete_test_volume(self, volume_id):
+        """Delete a volume by its volume_id and verify the result.
+
+        """
+        resp = uas_ctl.delete_uas_volume_admin(volume_id=volume_id)
+        self.assertIn('volume_id', resp)
+        self.assertEqual(volume_id, resp['volume_id'])
+
     # pylint: disable=missing-docstring
     def test_create_uas_volume_admin(self):
         with app.test_request_context('/'):
@@ -194,16 +249,8 @@ class TestUasController(unittest.TestCase):
                 volume_description=None
             )
             self.assertEqual(resp, "Must provide volume_description.")
-            resp = uas_ctl.create_uas_volume_admin(
-                volumename="my-volume",
-                mount_path="/var/mnt",
-                volume_description={
-                    'secret': {
-                        'secret_name': "my-little-secret"
-                    }
-                }
-            )
-            self.assertIsInstance(resp, dict)
+            volume_id = self.__create_test_volume()
+            self.__delete_test_volume(volume_id)
 
     # pylint: disable=missing-docstring
     def test_get_uas_volume_admin(self):
@@ -224,9 +271,39 @@ class TestUasController(unittest.TestCase):
             self.assertEqual(resp, "Must provide volume_id to update.")
             with self.assertRaises(werkzeug.exceptions.NotFound):
                 _ = uas_ctl.update_uas_volume_admin(volume_id=str(uuid4()))
+            volume_id = self.__create_test_volume()
+            vol_desc = io.BytesIO()
+            vol_desc.write(
+                bytes(
+                    json.dumps(
+                        {
+                            'secret': {
+                                'secret_name': "my-other-little-secret"
+                            }
+                        }
+                    ),
+                    encoding='utf8'
+                )
+            )
+            resp = uas_ctl.update_uas_volume_admin(
+                volume_id=volume_id,
+                volume_description=vol_desc
+            )
+            self.assertIsInstance(resp, dict)
+            self.assertIn('volume_id', resp)
+            self.assertEqual(volume_id, resp['volume_id'])
+            self.assertIn('volume_description', resp)
+            self.assertIn('secret', resp['volume_description'])
+            secret = resp['volume_description']['secret']
+            self.assertIn('secret_name', secret)
+            self.assertEqual(
+                secret['secret_name'],
+                "my-other-little-secret"
+            )
+            self.__delete_test_volume(volume_id)
 
     # pylint: disable=missing-docstring
-    def delete_uas_volume_admin(self):
+    def test_delete_uas_volume_admin(self):
         with app.test_request_context('/'):
             resp = uas_ctl.delete_uas_volume_admin(volume_id=None)
             self.assertEqual(resp, "Must provide volume_id to delete.")
@@ -234,6 +311,24 @@ class TestUasController(unittest.TestCase):
             self.assertEqual(resp, "Must provide volume_id to delete.")
             with self.assertRaises(werkzeug.exceptions.NotFound):
                 _ = uas_ctl.delete_uas_volume_admin(volume_id=str(uuid4()))
+
+    # pylint: disable=missing-docstring
+    def test_delete_local_config_admin(self):
+        with app.test_request_context('/'):
+            # Make sure there is something in the local configuration
+            volume_id = self.__create_test_volume()
+            resp = uas_ctl.get_uas_volume_admin(volume_id=volume_id)
+            self.assertIn('volume_id', resp)
+            self.assertEqual(volume_id, resp['volume_id'])
+            image_id = self.__create_test_image("locally_configured_image")
+            resp = uas_ctl.get_uas_image_admin(image_id=image_id)
+            self.assertIn('image_id', resp)
+            self.assertEqual(image_id, resp['image_id'])
+            resp = uas_ctl.delete_local_config_admin()
+            with self.assertRaises(werkzeug.exceptions.NotFound):
+                _ = uas_ctl.get_uas_volume_admin(volume_id=volume_id)
+            with self.assertRaises(werkzeug.exceptions.NotFound):
+                _ = uas_ctl.get_uas_image_admin(image_id=image_id)
 
 
 if __name__ == '__main__':
