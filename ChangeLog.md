@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+CASMUAS-7: back-end implementation of Images and Volumes APIs
+CASMUAS-31: integrate UAS with etcd
+
 ## [1.4.0] - 2020-06-01
 CASMUAS-113: Remove cray_uai_hosts tasks and role from playbook
 
