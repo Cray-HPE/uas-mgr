@@ -7,6 +7,7 @@ Manages Cray User Access Node instances.
 #pylint: disable=too-many-lines
 
 import logging
+import os
 import sys
 import time
 import uuid
@@ -331,14 +332,20 @@ class UaiManager:
         )
         affinity = client.V1Affinity(node_affinity=node_affinity)
 
-        # Create and configure a spec section
+        # Create and configure a spec section.  If we are using
+        # macvlans then we will set that up in an annotation in the
+        # metadata, otherwise, the annotations will be None.
+        # USE_MACVLAN is based on configuration from the Helm chart
+        # that can be set at service deployment time.
+        meta_annotations = None
+        if os.environ.get('USE_MACVLAN', 'true').lower() == 'true':
+            meta_annotations = {
+                'k8s.v1.cni.cncf.io/networks': 'macvlan-uas-nmn-conf@nmn1'
+            }
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(
-                labels=self.gen_labels(deployment_name)
                 labels=self.gen_labels(deployment_name),
-                annotations={
-                    'k8s.v1.cni.cncf.io/networks': 'macvlan-uas-nmn-conf@nmn1'
-                }
+                annotations=meta_annotations
             ),
             spec=client.V1PodSpec(
                 containers=[container],
