@@ -11,9 +11,3 @@
   roles:
     - cray_uai_img
     - cray_uas_mgr_localize
-    - cray_uas_user
-
-- hosts: compute
-  gather_facts: no
-  roles:
-    - cray_uas_user_compute
