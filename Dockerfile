@@ -19,15 +19,7 @@ RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
 COPY requirements.txt /usr/src/app/
-#
-# PR REVIEWERS!!!!  IF THIS COMMENT IS STILL HERE POINT IT OUT!!!!
-#
-# Temporarily use both the DST trusted repos pip index AND pypi
-# to find packages.  This should ONLY use the DST repos when this
-# comment is removed.  Being worked now by DST as DST-5496.
-#
 RUN pip3 install --no-cache-dir \
-                 --extra-index https://pypi.org/simple \
                  --index-url http://dst.us.cray.com/dstpiprepo/simple \
                  --trusted-host dst.us.cray.com -r requirements.txt
 
@@ -36,18 +28,13 @@ RUN pip3 install --no-cache-dir \
 #########################
 FROM base as coverage
 COPY pylintrc test-requirements.txt .coveragerc /usr/src/app/
-#
-# PR REVIEWERS!!!!  IF THIS COMMENT IS STILL HERE POINT IT OUT!!!!
-#
-# Temporarily use both the DST trusted repos pip index AND pypi
-# to find packages.  This should ONLY use the DST repos when this
-# comment is removed.  Being worked now by DST as DST-5496.
-#
-#RUN pip3 install --no-cache-dir \
-#                 --extra-index https://pypi.org/simple \
-#                 --index-url http://dst.us.cray.com/dstpiprepo/simple \
-#                 --trusted-host dst.us.cray.com -r test-requirements.txt
-RUN pip3 install --no-cache-dir -r test-requirements.txt
+# Allow the use of either pypi or DST here because this is not part of the
+# production delivered code, so it is less critical that everything be
+# strictly Cray provided.
+RUN pip3 install --no-cache-dir \
+                 --extra-index https://pypi.org/simple \
+                 --index-url http://dst.us.cray.com/dstpiprepo/simple \
+                 --trusted-host dst.us.cray.com -r test-requirements.txt
 
 # Copy the code into the container
 COPY setup.py .version /usr/src/app/
