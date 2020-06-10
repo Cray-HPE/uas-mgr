@@ -35,7 +35,7 @@ RUN pip3 install --no-cache-dir \
 ### Coverage/Unit Tests
 #########################
 FROM base as coverage
-COPY test-requirements.txt .coveragerc /usr/src/app/
+COPY pylintrc test-requirements.txt .coveragerc /usr/src/app/
 #
 # PR REVIEWERS!!!!  IF THIS COMMENT IS STILL HERE POINT IT OUT!!!!
 #
@@ -43,10 +43,11 @@ COPY test-requirements.txt .coveragerc /usr/src/app/
 # to find packages.  This should ONLY use the DST repos when this
 # comment is removed.  Being worked now by DST as DST-5496.
 #
-RUN pip3 install --no-cache-dir \
-                 --extra-index https://pypi.org/simple \
-                 --index-url http://dst.us.cray.com/dstpiprepo/simple \
-                 --trusted-host dst.us.cray.com -r test-requirements.txt
+#RUN pip3 install --no-cache-dir \
+#                 --extra-index https://pypi.org/simple \
+#                 --index-url http://dst.us.cray.com/dstpiprepo/simple \
+#                 --trusted-host dst.us.cray.com -r test-requirements.txt
+RUN pip3 install --no-cache-dir -r test-requirements.txt
 
 # Copy the code into the container
 COPY setup.py .version /usr/src/app/
@@ -54,6 +55,9 @@ COPY api/ swagger_server/ /usr/src/app/swagger_server/
 
 # Install a test configuration
 COPY swagger_server/test/cray-uas-mgr.yaml /etc/uas/
+
+# Lint the code (need 100% clean here)
+RUN pylint swagger_server
 
 RUN ./swagger_server/test/version-check.sh
 RUN mkdir -p /var/run/secrets/kubernetes.io/

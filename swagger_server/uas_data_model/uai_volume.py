@@ -6,10 +6,10 @@ Copyright 2020, Cray Inc. All rights reserved.
 from __future__ import absolute_import
 import logging
 import re
+from kubernetes import client
 from etcd3_model import Etcd3Attr
 from swagger_server import ETCD_INSTANCE, ETCD_PREFIX, version
 from swagger_server.uas_data_model.uas_data_model import UASDataModel
-from kubernetes import client
 
 UAS_CFG_LOGGER = logging.getLogger('uas_cfg')
 
