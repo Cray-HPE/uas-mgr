@@ -4,7 +4,7 @@ uasConfig:
   ip: 192.0.2.1
   ports:
     - 30123
-  uas_ssh_type: "NodePort"
+  uas_ssh_type: "LoadBalancer"
   uas_ssh_lb_pool: "customer-access"
 
 # UAI namespace
