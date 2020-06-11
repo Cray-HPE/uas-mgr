@@ -16,7 +16,7 @@ NAME = "cray-uas-mgr"
 # prerequisite: setuptools
 # http://pypi.python.org/pypi/setuptools
 
-REQUIRES = ["connexion"]
+REQUIRES = ["connexion", "etcd3_model"]
 
 setup(
     name=NAME,
@@ -35,4 +35,3 @@ setup(
     User Access Service. This service is responsible for the management of User Access Node lifecycles.
     """
 )
-

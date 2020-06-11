@@ -1,19 +1,26 @@
 #
 # Copyright 2019, Cray Inc.  All Rights Reserved.
 #
+"""UAS Server Controller
+
+"""
+
+import io
+
+from flask import abort
 
 from swagger_server import version
 from swagger_server.uas_lib.uai_mgr import UaiManager
 from swagger_server.uas_lib.uas_cfg import UasCfg
 
 
-uas_cfg = UasCfg()
+uas_cfg = UasCfg()  # pylint: disable=invalid-name
 
 
-def create_uai(publickey=None, imagename=None, ports=None):  # noqa: E501
+def create_uai(publickey=None, imagename=None, ports=None):
     """Create a new UAI for user
 
-    Create a new UAI for the user # noqa: E501
+    Create a new UAI for the user
 
     :param publickey: Public ssh key for the user
     :type publickey: werkzeug.datastructures.FileStorage
@@ -24,44 +31,41 @@ def create_uai(publickey=None, imagename=None, ports=None):  # noqa: E501
 
     :rtype: UAI
     """
-    uai_mgr = UaiManager()
-    uai_response = uai_mgr.create_uai(publickey, imagename, ports)
+    uai_response = UaiManager().create_uai(publickey, imagename, ports)
     return uai_response
 
 
-def delete_uai_by_name(uai_list):  # noqa: E501
+def delete_uai_by_name(uai_list):
     """Delete UAIs in uai_list
 
-    Delete a list of UAIs having names in uai_list. # noqa: E501
+    Delete a list of UAIs having names in uai_list.
 
     :param uai_list:
     :type uai_list: List[str]
 
     :rtype: UAI
     """
-    if len(uai_list) == 0:
+    if not uai_list:
         return "Must provide a list of UAI names to delete."
-    uai_mgr = UaiManager()
-    uai_resp = uai_mgr.delete_uais(uai_list)
+    uai_resp = UaiManager().delete_uais(uai_list)
     return uai_resp
 
 
-def get_uais_for_user():  # noqa: E501
+def get_uais_for_user():
     """List all UAIs for user
 
-    List all available UAIs for user # noqa: E501
+    List all available UAIs for user
 
     :rtype: List[UAI]
     """
-    uai_mgr = UaiManager()
-    uai_resp = uai_mgr.list_uais('')
+    uai_resp = UaiManager().list_uais('')
     return uai_resp
 
 
-def get_uas_images():  # noqa: E501
+def get_uas_images():
     """List available UAS images
 
-    List available UAS images # noqa: E501
+    List available UAS images
 
     :rtype: object
     """
@@ -72,10 +76,10 @@ def get_uas_images():  # noqa: E501
     return uas_img_info
 
 
-def get_uas_mgr_info():  # noqa: E501
+def get_uas_mgr_info():
     """List uas-mgr service info
 
-    List uas-mgr service info # noqa: E501
+    List uas-mgr service info
 
     :rtype: object
     """
@@ -86,7 +90,7 @@ def get_uas_mgr_info():  # noqa: E501
     return uas_mgr_info
 
 
-def get_all_uais(username=None, host=None):  # noqa: E501
+def get_all_uais(username=None, host=None):
     """List all UAIs matching optional parameters
 
     :param username:
@@ -101,12 +105,11 @@ def get_all_uais(username=None, host=None):  # noqa: E501
     if username:
         label += ',user=%s' % username
 
-    uai_mgr = UaiManager()
-    uai_resp = uai_mgr.list_uais(label, host)
+    uai_resp = UaiManager().list_uais(label, host)
     return uai_resp
 
 
-def delete_all_uais(username=None):  # noqa: E501
+def delete_all_uais(username=None):
     """Delete all UAIs
 
     :param username: username to delete UAIs for if specified
@@ -123,60 +126,57 @@ def delete_all_uais(username=None):  # noqa: E501
     uai_resp = uai_mgr.delete_uais(uai_list)
     return uai_resp
 
+# pylint: disable=unused-argument
+def delete_uas_image_deprecated(imagename):
+    """Deprecated and never implemented - see /admin/config/images/{imagename}
 
-def delete_uas_image(imagename):  # noqa: E501
-    """Delete UAS image
+    Deprecated and never implemented
 
     :param imagename:
     :type imagename: str
 
-    :rtype: object
+    :rtype: None
     """
-    if not imagename:
-        return "Must provide imagename to delete."
-    uai_mgr = UaiManager()
-    return uai_mgr.delete_image(imagename)
+    # This was never implemented at this path and is deprecated
+    abort(501, "Not implemented")
 
 
-def create_uas_image(imagename, default):  # noqa: E501
-    """Create UAS image
+# pylint: disable=unused-argument
+def create_uas_image_deprecated(imagename, default=None):
+    """Deprecated and never implemented  - see /admin/config/images
 
-    :param imagename:
+    Deprecated and never implemented
+
+    :param imagename: Image to create
     :type imagename: str
 
-    :param default:
+    :param default: default image (true/false)
     :type default: bool
 
     :rtype: object
     """
-    if not imagename:
-        return "Must provide imagename to create."
-    if not default:
-        return "Must provide true/false for default image."
-    uai_mgr = UaiManager()
-    return uai_mgr.create_image(imagename, default)
+    # This was never implemented at this path and is deprecated
+    abort(501, "Not implemented")
 
 
-def update_uas_image(imagename, default):  # noqa: E501
-    """Update UAS image
+# pylint: disable=unused-argument
+def update_uas_image_deprecated(imagename, default=None):
+    """Deprecated and never implemented  - see /admin/config/images/{imagename}
 
-    :param imagename:
+    Deprecated and never implemented
+
+    :param imagename: Image to update
     :type imagename: str
-
-    :param default:
+    :param default: default image (true/false)
     :type default: bool
 
     :rtype: object
     """
-    if not imagename:
-        return "Must provide imagename to update."
-    if not default:
-        return "Must provide true/false for default image."
-    uai_mgr = UaiManager()
-    return uai_mgr.update_image(imagename, default)
+    # This was never implemented at this path and is deprecated
+    abort(501, "Not implemented")
 
 
-def get_uas_image(imagename):  # noqa: E501
+def get_uas_image_deprecated(imagename):
     """Get UAS image
 
     :param imagename:
@@ -184,34 +184,38 @@ def get_uas_image(imagename):  # noqa: E501
 
     :rtype: object
     """
-    if not imagename:
-        return "Must provide imagename to get."
-    uai_mgr = UaiManager()
-    return uai_mgr.get_image(imagename)
+    # This was never implemented at this path and is deprecated
+    abort(501, "Not implemented")
 
 
-def delete_uas_volume(volumename):  # noqa: E501
-    """Delete UAS volume
+# pylint: disable=unused-argument
+def delete_uas_volume_deprecated(volumename):
+    """Deprecated and never implemented - see /admin/config/volumes/{volumename}
+
+    Deprecated and never implemented
 
     :param volumename:
     :type volumename: str
 
-    :rtype: object
+    :rtype: None
     """
-    if not volumename:
-        return "Must provide volumename to delete."
-    uai_mgr = UaiManager()
-    return uai_mgr.delete_volume(volumename)
+    # This was never implemented at this path and is deprecated
+    abort(501, "Not implemented")
 
 
-def create_uas_volume(volumename, type, mount_path=None, host_path=None,
-                      secret_name=None, config_map=None):  # noqa: E501
-    """Create UAS volume
+# pylint: disable=unused-argument,redefined-builtin,too-many-arguments
+def create_uas_volume_deprecated(volumename, type=None, mount_path=None,
+                                 host_path=None, secret_name=None,
+                                 config_map=None):
+    """Deprecated and never implemented - see /admin/config/volumes
+
+    Deprecated and never implemented
 
     :param volumename:
     :type volumename: str
 
-    :param type:
+    :param type: Valid types: DirectoryOrCreate, Directory, FileOrCreate, File,
+                              Socket, CharDevice, BlockDevice
     :type type: str
 
     :param mount_path:
@@ -227,67 +231,322 @@ def create_uas_volume(volumename, type, mount_path=None, host_path=None,
     :type config_map: str
 
     :rtype: object
+    """
+    # This was never implemented at this path and is deprecated
+    abort(501, "Not implemented")
+
+
+# pylint: disable=unused-argument,redefined-builtin,too-many-arguments
+def update_uas_volume_deprecated(volumename, type=None, mount_path=None,
+                                 host_path=None, secret_name=None,
+                                 config_map=None):
+    """Deprecated and never implemented - see /admin/config/volumes/{volumename}
+
+    Deprecated and never implemented
+
+    :param volumename:
+    :type volumename: str
+
+    :param type: Valid types: DirectoryOrCreate, Directory, FileOrCreate,
+                              File, Socket, CharDevice, BlockDevice
+    :type type: str
+
+    :param mount_path:
+    :type mount_path: str
+
+    :param host_path:
+    :type host_path: str
+
+    :param secret_name:
+    :type secret_name: str
+
+    :param config_map:
+    :type config_map: str
+
+    :rtype: object
+    """
+    # This was never implemented at this path and is deprecated
+    abort(501, "Not implemented")
+
+
+# pylint: disable=unused-argument
+def get_uas_volume_deprecated(volumename):
+    """Deprecated and never implemented - see /admin/config/volumes/{volumename}
+
+    :param volumename:
+    :type volumename: str
+
+    :rtype: object
+    """
+    # This was never implemented at this path and is deprecated
+    abort(501, "Not implemented")
+
+
+# pylint: disable=unused-argument
+def get_uas_volumes_deprecated():
+    """Deprecated and never implemented - see /admin/config/volumes
+
+    :rtype: object
+    """
+    # This was never implemented at this path and is deprecated
+    abort(501, "Not implemented")
+
+
+# Admin API
+#
+# Images...
+def create_uas_image_admin(imagename, default=None):
+    """Add an image
+
+    Add valid image name to configuration. Does not create or upload
+    container image.  Optionally, set default.
+
+    :param imagename: Image to create
+    :type imagename: str
+    :param default: default image (true/false)
+    :type default: bool
+
+    :rtype: Image
+
+    """
+    if not imagename:
+        return "Must provide imagename to create."
+    if default is None:
+        default = False
+    return UaiManager().create_image(imagename, default)
+
+
+def get_uas_images_admin():
+    """List UAS images
+
+    List all available UAS images.
+
+
+    :rtype: Image
+    """
+    return UaiManager().get_images()
+
+
+def get_uas_image_admin(image_id):
+    """Get image info
+
+    Get a description of the named image
+
+    :param image_id:
+    :type image_id: str
+
+    :rtype: Image
+    """
+    if not image_id:
+        return "Must provide image_id to get."
+    return UaiManager().get_image(image_id)
+
+
+def update_uas_image_admin(image_id, imagename=None, default=None):
+    """Update an image
+
+    Update an image, specifically this can set the image name and set
+    or unset the 'default' flag.
+
+    :param image_id: The ID of the image to update
+    :type image_id: str
+    :param imagename: New Image Name for the Image
+    :type imagename: str
+    :param default: default image (true/false)
+    :type default: bool
+
+    :rtype: Image
+
+    """
+    if not image_id:
+        return "Must provide image_id to update."
+    return UaiManager().update_image(image_id, imagename, default)
+
+def delete_uas_image_admin(image_id):
+    """Remove the imagename from set of valid images
+
+    Delete the named image from the set of valid UAI container
+    images.
+
+    :param image_id:
+    :type image_id: str
+
+    :rtype: None
+
+    """
+    if not image_id:
+        return "Must provide image_id to delete."
+    return UaiManager().delete_image(image_id)
+
+# Volumes...
+def create_uas_volume_admin(volumename, mount_path,
+                            volume_description):
+    """Add a volume
+
+    Add a volume to the volume list in the configuration.  The volume
+    list is used during UAI creation, so this request only applies to
+    UAIs subsequently created.  Modifying the volume list does not
+    affect existing UAIs.
+
+    :param volumename: Volume to create
+    :type volumename: str
+    :param mount_path: Mount path inside the UAI
+    :type mount_path: str
+    :param volume_description:
+        Desscription of a Kubernetes volume to be mounted in UAI
+        containers.  This is the equivalent of whatever YAML you
+        would normally apply to Kubernetes to attach the kind of
+        volume you want to a pod.  There are many kinds of volumes,
+        the examples given here illustrate some options:
+
+
+          { "hostPath": { "path": "/data", "type": "DirectoryOrCreate" } }
+
+          or
+
+          { "secret": { "secretName": "my-secret" } }
+
+          or
+
+          { "configMap": { "name": "my-configmap", "items": { "key": "flaps",
+            "path": "flaps" } } }
+    :type volume_description: str
+
+    :rtype: AdminVolume
+
     """
     if not volumename:
         return "Must provide volumename to create."
-    if not type:
-        return "Must provide type to create."
-    uai_mgr = UaiManager()
-    return uai_mgr.create_volume(volumename, type, mount_path, host_path,
-                                 secret_name, config_map)
+    if not mount_path:
+        return "Must provide mount_path."
+    if not volume_description:
+        return "Must provide volume_description."
+    if not isinstance(volume_description, io.BytesIO):
+        if not isinstance(volume_description, str):
+            return (
+                "Volume description must be either a JSON string or a "
+                "request body containing a JSON string"
+            )
+    else:
+        # It is an io.BytesIO, get the value as a string
+        volume_description = volume_description.getvalue()
+    return UaiManager().create_volume(
+        volumename,
+        mount_path,
+        volume_description
+    )
 
 
-def update_uas_volume(volumename, type, mount_path=None, host_path=None,
-                      secret_name=None, config_map=None):  # noqa: E501
-    """Update UAS volume
+def get_uas_volumes_admin():
+    """List volumes
 
-    :param volumename:
+    The volume list in the configuration is used during UAI
+    creation. This list does not necessarily relate to UAIs previously
+    created. This call does not affect the k8s volume itself.
+
+
+    :rtype: List[AdminVolume]
+
+    """
+    return UaiManager().get_volumes()
+
+
+def get_uas_volume_admin(volume_id):
+    """Get volume info for volume ID
+
+    Get volume info for volume_id
+
+    :param volume_id:
+    :type volume_id: str
+
+    :rtype: AdminVolume
+    """
+    if not volume_id:
+        return "Must provide volume_id to get."
+    return UaiManager().get_volume(volume_id)
+
+
+def update_uas_volume_admin(volume_id, volumename=None, mount_path=None,
+                            volume_description=None):
+    """Update a volume
+
+    Update a volume to be mounted in UAS images. This has no effect on
+    running UAIs and does not change the volume itself in any way, but
+    it can modify the relationship between future UAI containers and
+    the volume.
+
+    :param volume_id: Volume to update
+    :type volume_id: str
+    :param volumename: New volume name for volume
     :type volumename: str
-
-    :param type:
-    :type type: str
-
-    :param mount_path:
+    :param mount_path: Mount path inside the UAI
     :type mount_path: str
+    :param volume_description:
+        Description of a Kubernetes volume to be mounted in UAI
+        containers.  This is the equivalent of whatever YAML you
+        would normally apply to Kubernetes to attach the kind of
+        volume you want to a pod.  There are many kinds of volumes,
+        the examples given here illustrate some options:
 
-    :param host_path:
-    :type host_path: str
 
-    :param secret_name:
-    :type secret_name: str
+          { "hostPath": { "path": "/data", "type": "DirectoryOrCreate" } }
 
-    :param config_map:
-    :type config_map: str
+          or
 
-    :rtype: object
+          { "secret": { "secretName": "my-secret" } }
+
+          or
+
+          { "configMap": { "name": "my-configmap", "items": { "key": "flaps",
+            "path": "flaps" } } }
+    :type volume_description: str
+
+    :rtype: AdminVolume
+
     """
-    if not volumename:
-        return "Must provide volumename to update."
-    if not type:
-        return "Must provide type to update."
-    uai_mgr = UaiManager()
-    return uai_mgr.update_volume(volumename, type, mount_path, host_path,
-                                 secret_name, config_map)
+    if not volume_id:
+        return "Must provide volume_id to update."
+    if volume_description is not None:
+        if not isinstance(volume_description, io.BytesIO):
+            if not isinstance(volume_description, str):
+                return (
+                    "Volume description must be either a JSON string or a "
+                    "request body containing a JSON string"
+                )
+        else:
+            # It is an io.BytesIO, get the value as a string
+            volume_description = volume_description.getvalue()
+    return UaiManager().update_volume(
+        volume_id,
+        volumename,
+        mount_path,
+        volume_description
+    )
 
 
-def get_uas_volume(volumename):  # noqa: E501
-    """Get UAS volume
+def delete_uas_volume_admin(volume_id):
+    """Remove volume from the volume list
 
-    :param volumename:
-    :type volumename: str
+    Does not affect existing UAIs. Remove the volume from the list of
+    valid volumes. The actual volume itself is not affected in any
+    way.
 
-    :rtype: object
+    :param volume_id:
+    :type volume_id: str
+
+    :rtype: None
+
     """
-    if not volumename:
-        return "Must provide volumename to get."
-    uai_mgr = UaiManager()
-    return uai_mgr.get_volume(volumename)
+    if not volume_id:
+        return "Must provide volume_id to delete."
+    return UaiManager().delete_volume(volume_id)
 
+def delete_local_config_admin():
+    """Remove all local configuration and reset to defaults
 
-def get_uas_volumes():  # noqa: E501
-    """Get all volumes
+    Removes all locally applied configuration, leaving the UAS in its
+    default configuration.
 
-    :rtype: object
+    :rtype: None
     """
-    uai_mgr = UaiManager()
-    return uai_mgr.get_volumes()
+    return UaiManager().factory_reset()

@@ -1,16 +1,20 @@
 #
 # Copyright 2019, Cray Inc.  All Rights Reserved.
 #
+# pylint: disable=missing-docstring
 
 import pprint
 
-import six
 import typing
+import six
 
-T = typing.TypeVar('T')
+from swagger_server import util
+
+T = typing.TypeVar('T')  # pylint: disable=invalid-name
 
 
-class Model(object):
+class Model:
+    # pylint: disable=missing-docstring
     # swaggerTypes: The key is attribute name and the
     # value is attribute type.
     swagger_types = {}
@@ -18,6 +22,11 @@ class Model(object):
     # attributeMap: The key is attribute name and the
     # value is json key in definition.
     attribute_map = {}
+
+    @classmethod
+    def from_dict(cls: typing.Type[T], dikt) -> T:
+        """Returns the dict as a model"""
+        return util.deserialize_model(dikt, cls)
 
     def to_dict(self):
         """Returns the model properties as a dict

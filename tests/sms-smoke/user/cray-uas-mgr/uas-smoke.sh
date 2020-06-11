@@ -35,6 +35,10 @@ cray uas images list
 
 cray uas uais list
 
+cray uas admin config images list
+
+cray uas admin config volumes list
+
 echo "INFO: kubectl describe -n services cm/cray-uas-mgr-cfgmap"
 kubectl describe -n services cm/cray-uas-mgr-cfgmap
 

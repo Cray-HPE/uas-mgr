@@ -1,14 +1,18 @@
 #
 # Copyright 2018, Cray Inc.  All Rights Reserved.
 #
-# Description:
-#   Manages Cray User Access Node instances.
-#
+"""
+Manages Cray User Access Node instances.
+"""
+#pylint: disable=too-many-lines
 
 import logging
+import os
 import sys
 import time
 import uuid
+import json
+from datetime import datetime, timezone
 from flask import abort, request
 from kubernetes import config, client
 from kubernetes.client import Configuration
@@ -17,13 +21,18 @@ from kubernetes.client.rest import ApiException
 from swagger_server.models import UAI
 from swagger_server.uas_lib.uas_cfg import UasCfg
 from swagger_server.uas_lib.uas_auth import UasAuth
+from swagger_server.uas_data_model.uai_image import UAIImage
+from swagger_server.uas_data_model.uai_volume import UAIVolume
+from swagger_server.uas_data_model.populated_config import PopulatedConfig
 
 
 UAS_MGR_LOGGER = logging.getLogger('uas_mgr')
 UAS_MGR_LOGGER.setLevel(logging.INFO)
 
+# pylint: disable=invalid-name
 handler = logging.StreamHandler(sys.stdout)
 handler.setLevel(logging.INFO)
+# pylint: disable=invalid-name
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s"
                               " - %(message)s")
 handler.setFormatter(formatter)
@@ -33,9 +42,52 @@ UAS_MGR_LOGGER.addHandler(handler)
 UAI_IP_TIMEOUT = 40
 
 
-class UaiManager(object):
+# pylint: disable=too-many-public-methods
+class UaiManager:
+    """UAI Manager - manages UAI resources and allocates and controls UAIs
+
+    """
+    @staticmethod
+    def get_pod_age(start_time):
+        """
+        given a start time as an RFC3339 datetime object, return the difference
+        in time between that time and the current time, in a k8s format
+        of dDhHmM - ie: 3d7h5m or 6h9m or 19m
+
+        :return a string representing the delta between pod start and now.
+        :rtype string
+        """
+        # on new UAI start the start_time can be None
+        if start_time is None:
+            return None
+
+        try:
+            now = datetime.now(timezone.utc)
+            delta = now - start_time
+        except Exception as err:  # pylint: disable=broad-except
+            UAS_MGR_LOGGER.warning("Unable to convert pod start time - %s", err)
+            return None
+
+        # build the output string
+        retstr = ""
+        days, remainder = divmod(delta.total_seconds(), 60*60*24)
+        if days != 0:
+            retstr += "{:d}d".format(int(days))
+
+        hours, remainder = divmod(remainder, 60*60)
+        if hours != 0:
+            retstr += "{:d}h".format(int(hours))
+
+        # always show minutes, even if 0, but only if < 1 day old
+        if days == 0:
+            minutes = remainder / 60
+            retstr += "{:d}m".format(int(minutes))
+
+        return retstr
+
 
     def __init__(self):
+        """ Constructor """
         config.load_incluster_config()
         self.c = Configuration()
         self.c.assert_hostname = False
@@ -50,19 +102,30 @@ class UaiManager(object):
         self.check_authorization()
 
     def check_authorization(self):
+        """Check authorization based on request headers for the requested
+        action and extract user credentials to for use in UAIs.
 
+        """
         if 'Authorization' in request.headers:
-            self.userinfo = self.uas_auth.userinfo(request.headers['Host'], request.headers['Authorization'])
+            self.userinfo = self.uas_auth.userinfo(
+                request.headers['Host'],
+                request.headers['Authorization']
+            )
             if self.uas_auth.validUserinfo(self.userinfo):
                 self.passwd = self.uas_auth.createPasswd(self.userinfo)
                 self.username = self.userinfo[self.uas_auth.username]
-                UAS_MGR_LOGGER.info("UAS request for: %s" % self.username)
+                UAS_MGR_LOGGER.info("UAS request for: %s", self.username)
             else:
                 missing = self.uas_auth.missingAttributes(self.userinfo)
-                UAS_MGR_LOGGER.info("Token not valid for UAS. Attributes "
-                                    "missing: %s" % missing)
-                abort(400, "Token not valid for UAS. Attributes missing: "
-                           "%s" % missing)
+                UAS_MGR_LOGGER.info(
+                    "Token not valid for UAS. Attributes "
+                    "missing: %s",
+                    missing
+                )
+                abort(
+                    400,
+                    "Token not valid for UAS. Attributes missing: %s" %  missing
+                )
 
     def create_service_object(self, service_name, service_type, opt_ports_list,
                               deployment_name):
@@ -91,10 +154,13 @@ class UaiManager(object):
         svc_type = self.uas_cfg.get_svc_type(service_type)
         if not svc_type['valid']:
             # Invalid svc_type given.
-            msg = ("Unsupported service type '{}' configured, "
-                   "contact sysadmin. Valid service types are "
-                   "NodePort, ClusterIP, and LoadBalancer.".format(svc_type['svc_type'])
-                   )
+            msg = (
+                "Unsupported service type '{}' configured, "
+                "contact sysadmin. Valid service types are "
+                "NodePort, ClusterIP, and LoadBalancer.".format(
+                    svc_type['svc_type']
+                )
+            )
             abort(400, msg)
         # Check if LoadBalancer and whether an IP pool is set
         if svc_type['svc_type'] == "LoadBalancer" and svc_type['ip_pool']:
@@ -102,114 +168,191 @@ class UaiManager(object):
             metadata = client.V1ObjectMeta(
                 name=service_name,
                 labels=self.gen_labels(deployment_name),
-                annotations={"metallb.universe.tf/address-pool": svc_type['ip_pool']}
+                annotations={
+                    "metallb.universe.tf/address-pool": svc_type['ip_pool']
+                }
             )
-        spec = client.V1ServiceSpec(selector={'app': deployment_name},
-                                    type=svc_type['svc_type'],
-                                    ports=ports
-                                    )
-        service = client.V1Service(api_version="v1",
-                                   kind="Service",
-                                   metadata=metadata,
-                                   spec=spec
-                                   )
+        spec = client.V1ServiceSpec(
+            selector={'app': deployment_name},
+            type=svc_type['svc_type'],
+            ports=ports
+        )
+        service = client.V1Service(
+            api_version="v1",
+            kind="Service",
+            metadata=metadata,
+            spec=spec
+        )
         return service
 
     def create_service(self, service_name, service_body, namespace):
-        # Create the service
+        """Create the service
+
+        """
         resp = None
         try:
-            UAS_MGR_LOGGER.info("getting service %s in namespace %s" %
-                                (service_name, namespace))
-            resp = self.api.read_namespaced_service(name=service_name,
-                                                    namespace=namespace)
-        except ApiException as e:
-            if e.status != 404:
-                UAS_MGR_LOGGER.error("Failed to get service info while "
-                                     "creating UAI: %s" % e.reason)
-                abort(e.status, "Failed to get service info while creating "
-                      "UAI: %s" % e.reason)
+            UAS_MGR_LOGGER.info(
+                "getting service %s in namespace %s",
+                service_name,
+                namespace
+            )
+            resp = self.api.read_namespaced_service(
+                name=service_name,
+                namespace=namespace
+            )
+        except ApiException as err:
+            if err.status != 404:
+                UAS_MGR_LOGGER.error(
+                    "Failed to get service info while "
+                    "creating UAI: %s",
+                    err.reason
+                )
+                abort(
+                    err.status,
+                    "Failed to get service info while creating "
+                    "UAI: %s" % err.reason
+                )
         if not resp:
             try:
-                UAS_MGR_LOGGER.info("creating service %s in namespace %s" %
-                                    (service_name, namespace))
-                resp = self.api.create_namespaced_service(body=service_body,
-                                                          namespace=namespace)
-            except ApiException as e:
-                UAS_MGR_LOGGER.error("Failed to create service %s: %s" %
-                                     (service_name, e.reason))
+                UAS_MGR_LOGGER.info(
+                    "creating service %s in namespace %s",
+                    service_name,
+                    namespace
+                )
+                resp = self.api.create_namespaced_service(
+                    body=service_body,
+                    namespace=namespace
+                )
+            except ApiException as err:
+                UAS_MGR_LOGGER.error(
+                    "Failed to create service %s: %s",
+                    service_name,
+                    err.reason
+                )
                 resp = None
         return resp
 
     def delete_service(self, service_name, namespace):
-        # Delete the service
+        """Delete the service
+
+        """
         resp = None
         try:
-            UAS_MGR_LOGGER.info("deleting service %s in namespace %s" %
-                                (service_name, namespace))
+            UAS_MGR_LOGGER.info(
+                "deleting service %s in namespace %s",
+                service_name,
+                namespace
+            )
             resp = self.api.delete_namespaced_service(
-                    name=service_name,
-                    namespace=namespace,
-                    body=client.V1DeleteOptions(
-                        propagation_policy='Background',
-                        grace_period_seconds=5))
-        except ApiException as e:
-            if e.status != 404:
-                UAS_MGR_LOGGER.error("Failed to delete service %s: %s" %
-                                     (service_name, e.reason))
-                abort(e.status, "Failed to delete service %s: %s" %
-                      (service_name, e.reason))
+                name=service_name,
+                namespace=namespace,
+                body=client.V1DeleteOptions(
+                    propagation_policy='Background',
+                    grace_period_seconds=5
+                )
+            )
+        except ApiException as err:
             # if we get 404 we don't want to abort because it's possible that
             # other parts are still laying around (deployment for example)
+            if err.status != 404:
+                UAS_MGR_LOGGER.error(
+                    "Failed to delete service %s: %s",
+                    service_name,
+                    err.reason
+                )
+                abort(
+                    err.status, "Failed to delete service %s: %s" % (
+                        service_name,
+                        err.reason
+                    )
+                )
         return resp
 
+    # pylint: disable=too-many-arguments,too-many-locals
     def create_deployment_object(self, deployment_name, imagename,
-                                 publickeyStr, opt_ports_list, namespace):
+                                 publickeyStr, opt_ports_list):
+        """Construct a deployment for a UAI
 
-        container_ports = self.uas_cfg.gen_port_list(service=False,
-                                                     optional_ports=opt_ports_list)
-        UAS_MGR_LOGGER.info("UAI Name: %s; Container ports: %s; Optional ports: %s"
-                            % (deployment_name, container_ports, opt_ports_list))
+        """
+        container_ports = self.uas_cfg.gen_port_list(
+            service=False,
+            optional_ports=opt_ports_list
+        )
+        UAS_MGR_LOGGER.info(
+            "UAI Name: %s; Container ports: %s; Optional ports: %s",
+            deployment_name,
+            container_ports,
+            opt_ports_list
+        )
 
         # Configure Pod template container
         container = client.V1Container(
             name=deployment_name,
             image=imagename,
-            env=[client.V1EnvVar(
+            env=[
+                client.V1EnvVar(
                     name='UAS_NAME',
-                    value=deployment_name + "-ssh"),
-                 client.V1EnvVar(
-                     name='UAS_PASSWD',
-                     value=self.passwd),
-                 client.V1EnvVar(
-                     name='UAS_PUBKEY',
-                     value=publickeyStr)],
+                    value=deployment_name + "-ssh"
+                ),
+                client.V1EnvVar(
+                    name='UAS_PASSWD',
+                    value=self.passwd
+                ),
+                client.V1EnvVar(
+                    name='UAS_PUBKEY',
+                    value=publickeyStr
+                )
+            ],
             ports=container_ports,
             volume_mounts=self.uas_cfg.gen_volume_mounts(),
-            readiness_probe=self.uas_cfg.create_readiness_probe())
+            readiness_probe=self.uas_cfg.create_readiness_probe()
+        )
         # Create a volumes template
         volumes = self.uas_cfg.gen_volumes()
 
         # Create and configure affinity
         node_selector_terms = [
-            client.V1NodeSelectorTerm(match_expressions=[
-                client.V1NodeSelectorRequirement(key='node-role.kubernetes.io/master',
-                                                 operator='DoesNotExist'),
-                client.V1NodeSelectorRequirement(key='uas',
-                                                 operator='NotIn',
-                                                 values=['False', 'false', 'FALSE'])
-                                                 ])]
+            client.V1NodeSelectorTerm(
+                match_expressions=[
+                    client.V1NodeSelectorRequirement(
+                        key='node-role.kubernetes.io/master',
+                        operator='DoesNotExist'
+                    ),
+                    client.V1NodeSelectorRequirement(
+                        key='uas',
+                        operator='NotIn',
+                        values=['False', 'false', 'FALSE']
+                    )
+                ]
+            )
+        ]
         node_selector = client.V1NodeSelector(node_selector_terms)
-        node_affinity = client.V1NodeAffinity(required_during_scheduling_ignored_during_execution=node_selector)
+        node_affinity = client.V1NodeAffinity(
+            required_during_scheduling_ignored_during_execution=node_selector
+        )
         affinity = client.V1Affinity(node_affinity=node_affinity)
 
-        # Create and configure a spec section
+        # Create and configure a spec section.  If we are using
+        # macvlans then we will set that up in an annotation in the
+        # metadata, otherwise, the annotations will be None.
+        # USE_MACVLAN is based on configuration from the Helm chart
+        # that can be set at service deployment time.
+        meta_annotations = None
+        if os.environ.get('USE_MACVLAN', 'true').lower() == 'true':
+            meta_annotations = {
+                'k8s.v1.cni.cncf.io/networks': 'macvlan-uas-nmn-conf@nmn1'
+            }
         template = client.V1PodTemplateSpec(
-            metadata=client.V1ObjectMeta(labels=self.gen_labels(deployment_name),
-                                         annotations={'k8s.v1.cni.cncf.io/networks': 'macvlan-uas-nmn-conf@nmn1'}),
-            spec=client.V1PodSpec(containers=[container],
-                                  affinity=affinity,
-                                  volumes=volumes))
+            metadata=client.V1ObjectMeta(
+                labels=self.gen_labels(deployment_name),
+                annotations=meta_annotations
+            ),
+            spec=client.V1PodSpec(
+                containers=[container],
+                affinity=affinity,
+                volumes=volumes
+            )
+        )
         # Create the specification of deployment
         spec = client.V1DeploymentSpec(
             replicas=1,
@@ -219,91 +362,147 @@ class UaiManager(object):
         deployment = client.V1Deployment(
             api_version="apps/v1",
             kind="Deployment",
-            metadata=client.V1ObjectMeta(name=deployment_name,
-                                         labels=self.gen_labels(deployment_name)),
+            metadata=client.V1ObjectMeta(
+                name=deployment_name,
+                labels=self.gen_labels(deployment_name)
+            ),
             spec=spec)
         return deployment
 
     def create_deployment(self, deployment, namespace):
-        # Create deployment
+        """Create a UAI deployment
+
+        """
         resp = None
         try:
-            UAS_MGR_LOGGER.info("creating deployment %s in namespace %s" %
-                                 (deployment.metadata.name, namespace))
+            UAS_MGR_LOGGER.info(
+                "creating deployment %s in namespace %s",
+                deployment.metadata.name,
+                namespace
+            )
             resp = self.apps_v1.create_namespaced_deployment(
                 body=deployment,
-                namespace=namespace)
-        except ApiException as e:
-            UAS_MGR_LOGGER.error("Failed to create deployment %s: %s"
-                                 % (deployment.metadata.name, e.reason))
-            abort(e.status, "Failed to create deployment %s: %s"
-                  % (deployment.metadata.name, e.reason))
+                namespace=namespace
+            )
+        except ApiException as err:
+            UAS_MGR_LOGGER.error(
+                "Failed to create deployment %s: %s",
+                deployment.metadata.name,
+                err.reason
+            )
+            abort(
+                err.status,
+                "Failed to create deployment %s: %s" % (
+                    deployment.metadata.name, err.reason
+                )
+            )
         return resp
 
     def delete_deployment(self, deployment_name, namespace):
-        # Delete deployment
+        """Delete a UAI deployment
+
+        """
         resp = None
         try:
-            UAS_MGR_LOGGER.info("delete deployment %s in namespace %s" %
-                                 (deployment_name, namespace))
+            UAS_MGR_LOGGER.info(
+                "delete deployment %s in namespace %s",
+                deployment_name,
+                namespace
+            )
             resp = self.apps_v1.delete_namespaced_deployment(
                 name=deployment_name,
                 namespace=namespace,
                 body=client.V1DeleteOptions(
                     propagation_policy='Background',
                     grace_period_seconds=5))
-        except ApiException as e:
-            if e.status != 404:
-                UAS_MGR_LOGGER.error("Failed to delete deployment %s: %s" %
-                                     (deployment_name, e.reason))
-                abort(e.status, "Failed to delete deployment %s: %s" %
-                      (deployment_name, e.reason))
+        except ApiException as err:
+            if err.status != 404:
+                UAS_MGR_LOGGER.error(
+                    "Failed to delete deployment %s: %s",
+                    deployment_name,
+                    err.reason
+                )
+                abort(
+                    err.status,
+                    "Failed to delete deployment %s: %s" % (
+                        deployment_name,
+                        err.reason
+                    )
+                )
             # if we get 404 we don't want to abort because it's possible that
             # other parts are still laying around (services for example)
         return resp
 
-    def get_pod_info(self, deployment_name, namespace=None, host=None):  # noqa E501
+    # pylint: disable=too-many-branches,too-many-statements
+    def get_pod_info(
+            self,
+            deployment_name,
+            namespace=None,
+            host=None
+    ):
+        """Retrieve pod information for a UAI pod from configuration.
+
+        """
         pod_resp = None
 
         if not namespace:
             namespace = self.uas_cfg.get_uai_namespace()
-            UAS_MGR_LOGGER.info("get_pod_info - UAIs will be gathered from"
-                                " the %s namespace.", namespace)
-
+            UAS_MGR_LOGGER.info(
+                "get_pod_info - UAIs will be gathered from"
+                " the %s namespace.",
+                namespace
+            )
         try:
-            UAS_MGR_LOGGER.info("getting pod info %s in namespace %s"
-                                " on host %s" % (deployment_name, namespace,
-                                                 host))
+            UAS_MGR_LOGGER.info(
+                "getting pod info %s in namespace %s"
+                " on host %s",
+                deployment_name,
+                namespace,
+                host
+            )
             if host:
-                pod_resp = self.api.list_namespaced_pod(namespace=namespace,
-                                                        label_selector="app=%s" % deployment_name,
-                                                        field_selector="spec.nodeName=%s" % host)
+                pod_resp = self.api.list_namespaced_pod(
+                    namespace=namespace,
+                    label_selector="app=%s" % deployment_name,
+                    field_selector="spec.nodeName=%s" % host)
             else:
-                pod_resp = self.api.list_namespaced_pod(namespace=namespace,
-                                                        label_selector="app=%s" % deployment_name)
-        except ApiException as e:
-            UAS_MGR_LOGGER.error("Failed to get pod info %s: %s" %
-                                 (deployment_name, e.reason))
-            abort(e.status, "Failed to get pod info %s: %s" %
-                  (deployment_name, e.reason))
+                pod_resp = self.api.list_namespaced_pod(
+                    namespace=namespace,
+                    label_selector="app=%s" % deployment_name
+                )
+        except ApiException as err:
+            UAS_MGR_LOGGER.error(
+                "Failed to get pod info %s: %s",
+                deployment_name,
+                err.reason
+            )
+            abort(
+                err.status,
+                "Failed to get pod info %s: %s" % (
+                    deployment_name,
+                    err.reason
+                )
+            )
 
         # previously this code could return an empty UAI object,
         # but with the host filter, we could legitimately get 0
         # results and returning an empty object puts an empty object
         # into the return list.
-        if len(pod_resp.items) == 0:
+        if not pod_resp.items:
             return None
-        elif len(pod_resp.items) > 1:
-            UAS_MGR_LOGGER.warning("Oddly found more than one pod in "
-                                   "deployment %s" % deployment_name)
-
+        if len(pod_resp.items) > 1:
+            UAS_MGR_LOGGER.warning(
+                "Oddly found more than one pod in "
+                "deployment %s",
+                deployment_name
+            )
         pod = pod_resp.items[0]
 
         uai = UAI()
         uai.uai_portmap = {}
         uai.uai_name = deployment_name
         uai.uai_host = pod.spec.node_name
-        age_str = self.uas_cfg.get_pod_age(pod.status.start_time)
+        age_str = self.get_pod_age(pod.status.start_time)
         if age_str:
             uai.uai_age = age_str
         uai.username = deployment_name.split('-')[1]
@@ -312,6 +511,7 @@ class UaiManager(object):
                 uai.uai_img = ctr.image
         if pod.status.phase == 'Pending':
             uai.uai_status = 'Pending'
+        # pylint: disable=too-many-nested-blocks
         if pod.status.container_statuses:
             for s in pod.status.container_statuses:
                 if s.name == deployment_name:
@@ -332,23 +532,35 @@ class UaiManager(object):
                         uai.uai_msg = s.state.waiting.reason
         srv_resp = None
         try:
-            UAS_MGR_LOGGER.info("getting service info for %s-ssh in "
-                                "namespace %s" % (deployment_name,
-                                                  namespace))
-            srv_resp = self.api.read_namespaced_service(name=deployment_name + "-ssh",
-                                                        namespace=namespace)
-        except ApiException as e:
-            if e.status != 404:
-                UAS_MGR_LOGGER.error("Failed to get service info for "
-                                     "%s-ssh: %s" % (deployment_name,
-                                                     e.reason))
-                abort(e.status, "Failed to get service info for "
-                                "%s-ssh: %s" % (deployment_name,
-                                                e.reason))
+            UAS_MGR_LOGGER.info(
+                "getting service info for %s-ssh in "
+                "namespace %s",
+                deployment_name,
+                namespace
+            )
+            srv_resp = self.api.read_namespaced_service(
+                name=deployment_name + "-ssh",
+                namespace=namespace
+            )
+        except ApiException as err:
+            if err.status != 404:
+                UAS_MGR_LOGGER.error(
+                    "Failed to get service info for "
+                    "%s-ssh: %s",
+                    deployment_name,
+                    err.reason
+                )
+                abort(
+                    err.status,
+                    "Failed to get service info for %s-ssh: %s" % (
+                        deployment_name,
+                        err.reason
+                    )
+                )
             return uai
 
-        if srv_resp: 
-            svc_type = self.uas_cfg.get_svc_type('ssh') 
+        if srv_resp:
+            svc_type = self.uas_cfg.get_svc_type('ssh')
             if svc_type['svc_type'] == "LoadBalancer":
                 uai.uai_ip = srv_resp.status.load_balancer.ingress[0].ip
                 uai.uai_port = 22
@@ -363,7 +575,8 @@ class UaiManager(object):
         uai.uai_connect_string = self.gen_connection_string(uai)
         return uai
 
-    def gen_connection_string(self, uai):
+    @staticmethod
+    def gen_connection_string(uai):
         """
         This function generates the uai.uai_connect_string for creating a
         ssh connection to the uai.
@@ -377,19 +590,30 @@ class UaiManager(object):
         """
         port_string = " -p " + str(uai.uai_port) if uai.uai_port != 22 else ""
 
-        return "ssh %s@%s%s -i ~/.ssh/id_rsa" % (uai.username,
-                                                     uai.uai_ip,
-                                                     port_string)
+        return "ssh %s@%s%s -i ~/.ssh/id_rsa" % (
+            uai.username,
+            uai.uai_ip,
+            port_string
+        )
 
     def gen_labels(self, deployment_name):
-        return {"app": deployment_name,
-                "uas": "managed",
-                "user": self.username}
+        """Generate labels for a UAI Deployment
 
+        """
+        return {
+            "app": deployment_name,
+            "uas": "managed",
+            "user": self.username
+        }
+
+    # pylint: disable=too-many-branches,too-many-statements
     def create_uai(self, publickey, imagename, opt_ports, namespace=None):
+        """Create a new UAI
+
+        """
         opt_ports_list = []
         if not publickey:
-            UAS_MGR_LOGGER.warn("create_uai - missing publickey")
+            UAS_MGR_LOGGER.warning("create_uai - missing publickey")
             abort(400, "Missing ssh public key.")
         else:
             try:
@@ -399,26 +623,39 @@ class UaiManager(object):
                     # could be a private key accidentally passed in
                     UAS_MGR_LOGGER.info("create_uai - invalid ssh public key")
                     abort(400, "Invalid ssh public key.")
-            except Exception as e:
+            except Exception:  # pylint: disable=broad-except
                 UAS_MGR_LOGGER.info("create_uai - invalid ssh public key")
                 abort(400, "Invalid ssh public key.")
 
         if not namespace:
             namespace = self.uas_cfg.get_uai_namespace()
-            UAS_MGR_LOGGER.info("create_uai - UAI will be created in"
-                                " the %s namespace.", namespace)
+            UAS_MGR_LOGGER.info(
+                "create_uai - UAI will be created in"
+                " the %s namespace.",
+                namespace
+            )
 
         if not imagename:
             imagename = self.uas_cfg.get_default_image()
-            UAS_MGR_LOGGER.info("create_uai - no image name provided, "
-                                "using default %s" % imagename)
+            UAS_MGR_LOGGER.info(
+                "create_uai - no image name provided, "
+                "using default %s",
+                imagename
+            )
 
         if not self.uas_cfg.validate_image(imagename):
-            UAS_MGR_LOGGER.error("create_uai - image %s is invalid"
-                                 % imagename)
-            abort(400, "Invalid image (%s). Valid images: %s. Default: %s"
-                  % (imagename, self.uas_cfg.get_images(),
-                     self.uas_cfg.get_default_image()))
+            UAS_MGR_LOGGER.error(
+                "create_uai - image %s is invalid",
+                imagename
+            )
+            abort(
+                400,
+                "Invalid image (%s). Valid images: %s. Default: %s" % (
+                    imagename,
+                    self.uas_cfg.get_images(),
+                    self.uas_cfg.get_default_image()
+                )
+            )
         if opt_ports:
             opt_ports_list = [int(i) for i in opt_ports.split(',')]
 
@@ -426,44 +663,79 @@ class UaiManager(object):
         if opt_ports_list:
             for port in opt_ports_list:
                 if port not in self.uas_cfg.get_valid_optional_ports():
-                    UAS_MGR_LOGGER.error("create_uai - invalid port requested (%s). "
-                                         "Valid ports are %s."
-                                         % (port, self.uas_cfg.get_valid_optional_ports()))
-                    abort(400, "Invalid port requested (%s). Valid ports are: %s."
-                                % (port, self.uas_cfg.get_valid_optional_ports()))
+                    UAS_MGR_LOGGER.error(
+                        "create_uai - invalid port requested (%s). "
+                        "Valid ports are %s.",
+                        port,
+                        self.uas_cfg.get_valid_optional_ports()
+                    )
+                    abort(
+                        400,
+                        "Invalid port requested (%s). Valid ports are: %s." % (
+                            port,
+                            self.uas_cfg.get_valid_optional_ports()
+                        )
+                    )
 
         deployment_id = uuid.uuid4().hex[:8]
         deployment_name = 'uai-' + self.username + '-' + str(deployment_id)
-        deployment = self.create_deployment_object(deployment_name,
-                                                   imagename, publickeyStr, opt_ports_list,
-                                                   namespace)
+        deployment = self.create_deployment_object(
+            deployment_name,
+            imagename,
+            publickeyStr,
+            opt_ports_list
+        )
         # Create a service for the UAI
         uas_ssh_svc_name = deployment_name + '-ssh'
-        uas_ssh_svc = self.create_service_object(uas_ssh_svc_name, "ssh",  opt_ports_list, deployment_name)
+        uas_ssh_svc = self.create_service_object(
+            uas_ssh_svc_name,
+            "ssh",
+            opt_ports_list,
+            deployment_name
+        )
 
         # Make sure the UAI deployment is created
         deploy_resp = None
         try:
-            UAS_MGR_LOGGER.info("getting deployment %s in namespace %s" %
-                                (deployment_name, namespace))
-            deploy_resp = self.apps_v1.read_namespaced_deployment(deployment_name, namespace)
-        except ApiException as e:
-            if e.status != 404:
-                UAS_MGR_LOGGER.error("Failed to create deployment %s: %s" %
-                                     (deployment_name, e.reason))
-                abort(e.status, "Failed to create deployment %s: %s" %
-                      (deployment_name, e.reason))
+            UAS_MGR_LOGGER.info(
+                "getting deployment %s in namespace %s",
+                deployment_name,
+                namespace
+            )
+            deploy_resp = self.apps_v1.read_namespaced_deployment(
+                deployment_name,
+                namespace
+            )
+        except ApiException as err:
+            if err.status != 404:
+                UAS_MGR_LOGGER.error(
+                    "Failed to create deployment %s: %s",
+                    deployment_name,
+                    err.reason
+                )
+                abort(
+                    err.status,
+                    "Failed to create deployment %s: %s" % (
+                        deployment_name,
+                        err.reason
+                    )
+                )
         if not deploy_resp:
             deploy_resp = self.create_deployment(deployment, namespace)
 
         # Start the UAI services
-        UAS_MGR_LOGGER.info("creating the UAI service %s" %
-                            uas_ssh_svc_name)
-        svc_resp = self.create_service(uas_ssh_svc_name, uas_ssh_svc, namespace)
+        UAS_MGR_LOGGER.info("creating the UAI service %s", uas_ssh_svc_name)
+        svc_resp = self.create_service(
+            uas_ssh_svc_name,
+            uas_ssh_svc,
+            namespace
+        )
         if not svc_resp:
             # Clean up the deployment
-            UAS_MGR_LOGGER.error("failed to create service, deleting UAI %s" %
-                                 (deployment_name))
+            UAS_MGR_LOGGER.error(
+                "failed to create service, deleting UAI %s",
+                deployment_name
+            )
             self.delete_uais([deployment_name], namespace)
             abort(404, "Failed to create service: %s" % uas_ssh_svc_name)
 
@@ -475,12 +747,16 @@ class UaiManager(object):
             if uai_info and uai_info.uai_ip:
                 break
             if total_wait >= UAI_IP_TIMEOUT:
-                abort(504, "Failed to get IP for service: %s" %
-                      uas_ssh_svc_name)
+                abort(
+                    504,
+                    "Failed to get IP for service: %s" % uas_ssh_svc_name
+                )
             time.sleep(delay)
             total_wait += delay
-            UAS_MGR_LOGGER.info("waiting for uai_ip %s seconds" %
-                                str(total_wait))
+            UAS_MGR_LOGGER.info(
+                "waiting for uai_ip %s seconds",
+                str(total_wait)
+            )
         return uai_info
 
     def list_uais(self, label, host=None, namespace=None):
@@ -500,22 +776,32 @@ class UaiManager(object):
 
         if not namespace:
             namespace = self.uas_cfg.get_uai_namespace()
-            UAS_MGR_LOGGER.info("list_uais - UAI will be listed from"
-                                " the %s namespace.", namespace)
+            UAS_MGR_LOGGER.info(
+                "list_uais - UAI will be listed from"
+                " the %s namespace.",
+                namespace
+            )
 
         if not label:
             label = 'user=' + self.username
         try:
-            UAS_MGR_LOGGER.info("listing deployments matching: namespace %s,"
-                                " label %s" % (namespace, label))
-            resp = self.apps_v1.list_namespaced_deployment(namespace=namespace,
-                                                label_selector=label)
-
-        except ApiException as e:
-            if e.status != 404:
-                UAS_MGR_LOGGER.error("Failed to get deployment list: %s",
-                                     e.reason)
-                abort(e.status, "Failed to get deployment list")
+            UAS_MGR_LOGGER.info(
+                "listing deployments matching: namespace %s,"
+                " label %s",
+                namespace,
+                label
+            )
+            resp = self.apps_v1.list_namespaced_deployment(
+                namespace=namespace,
+                label_selector=label
+            )
+        except ApiException as err:
+            if err.status != 404:
+                UAS_MGR_LOGGER.error(
+                    "Failed to get deployment list: %s",
+                    err.reason
+                )
+                abort(err.status, "Failed to get deployment list")
         for deployment in resp.items:
             uai = self.get_pod_info(deployment.metadata.name, namespace, host)
             if uai:
@@ -527,7 +813,8 @@ class UaiManager(object):
         Deletes the UAIs named in deployment_list.
         If deployment_list is empty, it will delete all UAIs.
 
-        :param deployment_list: List of UAI names to delete. If empty, delete all UAIs.
+        :param deployment_list: List of UAI names to delete.
+                                If empty, delete all UAIs.
         :type deployment_list: list
         :return: List of UAIs deleted.
         :rtype: list
@@ -537,8 +824,11 @@ class UaiManager(object):
 
         if not namespace:
             namespace = self.uas_cfg.get_uai_namespace()
-            UAS_MGR_LOGGER.info("delete_uais - UAI will be deleted from"
-                                " the %s namespace.", namespace)
+            UAS_MGR_LOGGER.info(
+                "delete_uais - UAI will be deleted from"
+                " the %s namespace.",
+                namespace
+            )
 
         if not deployment_list:
             for uai in self.list_uais('uas=managed'):
@@ -558,80 +848,266 @@ class UaiManager(object):
             resp_list.append(message)
         return resp_list
 
-    def delete_image(self, imagename):
-        # Delete the image
-        resp = None
-        abort(501, "Not implemented")
-        return resp
+    def delete_image(self, image_id):
+        """Delete a UAI image from the config
+
+        """
+        self.uas_cfg.get_config()
+        img = UAIImage.get(image_id)
+        if img is None:
+            abort(404, "image '%s' does not exist" % image_id)
+        img.remove() # don't use img.delete() you actually want it removed
+        return {
+            'image_id': img.image_id,
+            'imagename': img.imagename,
+            'default': img.default
+        }
 
     def create_image(self, imagename, default):
-        # Create the image
-        resp = None
-        abort(501, "Not implemented")
-        return resp
+        """Create a new UAI image in the config
 
-    def update_image(self, imagename, default):
-        # Update the image
-        resp = None
-        abort(501, "Not implemented")
-        return resp
+        """
+        self.uas_cfg.get_config()
+        if UAIImage.get_by_name(imagename):
+            abort(304, "image named '%s' already exists" % imagename)
+        # Create it and store it...
+        if default is None:
+            default = False
+        img = UAIImage(imagename=imagename, default=default)
+        img.put()
+        return {
+            'image_id': img.image_id,
+            'imagename': img.imagename,
+            'default': img.default
+        }
 
-    def get_image(self, imagename):
-        # Get image info
-        resp = None
-        abort(501, "Not implemented")
-        return resp
 
-    def delete_volume(self, volumename):
-        # Delete the volume
-        resp = None
-        abort(501, "Not implemented")
-        return resp
+    def update_image(self, image_id, imagename, default):
+        """Update a UAI image in the config
 
-    def create_volume(self, volumename, type, mount_path=None, host_path=None,
-                      secret_name=None, config_map=None):
-        # Create the volume
+        """
+        self.uas_cfg.get_config()
+        img = UAIImage.get(image_id)
+        if img is None:
+            abort(404, "image '%s' does not exist" % image_id)
+        changed = False
+        if imagename is not None:
+            tmp = UAIImage.get_by_name(imagename)
+            if tmp is not None and tmp.image_id != img.image_id:
+                abort(304, "image named '%s' already exists" % imagename)
+            # A value is specified to update...
+            img.imagename = imagename
+            changed = True
+        if default is not None:
+            # A value is specified to update...
+            img.default = default
+            changed = True
+        if changed:
+            img.put()
+        return {
+            'image_id': img.image_id,
+            'imagename': img.imagename,
+            'default': img.default
+        }
 
-        if not self.uas_cfg.is_valid_host_path_mount_type(type):
-            abort(400, "Invalid type - please refer to the Kubernetes volume"
-                  " documentation for valid types")
+    def get_image(self, image_id):
+        """Retrieve a UAI image from the config
 
-        if not self.uas_cfg.is_valid_volume_name(volumename):
-            abort(400, "Invalid volume name - names must consist of lower case"
-                       " alphanumeric characters or '-', and must start and"
-                       " end with an alphanumeric character. Refer to the "
-                       "Kubernetes documentation for more information.")
+        """
+        self.uas_cfg.get_config()
+        img = UAIImage.get(image_id)
+        if img is None:
+            abort(404, "image '%s' does not exist" % image_id)
+        return {
+            'image_id': img.image_id,
+            'imagename': img.imagename,
+            'default': img.default
+        }
 
-        resp = None
-        abort(501, "Not implemented")
-        return resp
+    def get_images(self):
+        """Get the list of UAI images in the config
 
-    def update_volume(self, volumename, type, mount_path=None, host_path=None,
-                      secret_name=None, config_map=None):
-        # Update the volume
+        """
+        self.uas_cfg.get_config()
+        imgs = UAIImage.get_all()
+        return [
+            {
+                'image_id': img.image_id,
+                'imagename': img.imagename,
+                'default': img.default
+            }
+            for img in imgs
+        ]
 
-        if not self.uas_cfg.is_valid_host_path_mount_type(type):
-            abort(400, "Invalid type - please refer to the Kubernetes volume"
-                       " documentation for valid types")
+    def delete_volume(self, volume_id):
+        """Delete a UAI volume from the config
 
-        if not self.uas_cfg.is_valid_volume_name(volumename):
-            abort(400, "Invalid volume name - names must consist of lower case"
-                       " alphanumeric characters or '-', and must start and"
-                       " end with an alphanumeric character. Refer to the "
-                       "Kubernetes documentation for more information.")
+        """
+        self.uas_cfg.get_config()
+        vol = UAIVolume.get(volume_id)
+        if vol is None:
+            abort(404, "volume '%s' does not exist" % volume_id)
+        vol.remove() # don't use vol.delete() you actually want it removed
+        return {
+            'volume_id': vol.volume_id,
+            'volumename': vol.volumename,
+            'mount_path': vol.mount_path,
+            'volume_description': vol.volume_description
+        }
 
-        resp = None
-        abort(501, "Not implemented")
-        return resp
+    def create_volume(self, volumename, mount_path, vol_desc):
+        """Create a UAI volume in the config
 
-    def get_volume(self, volumename):
-        # Get info on a specific volume
-        resp = None
-        abort(501, "Not implemented")
-        return resp
+        """
+        self.uas_cfg.get_config()
+        if not UAIVolume.is_valid_volume_name(volumename):
+            abort(
+                400,
+                "Invalid volume name - names must consist of lower case"
+                " alphanumeric characters or '-', and must start and"
+                " end with an alphanumeric character. Refer to the "
+                "Kubernetes documentation for more information."
+            )
+        if not mount_path:
+            abort(400, "No mount path specified for volume")
+        if vol_desc is None:
+            abort(400, "No volume description provided for volume")
+        # Convert vol_desc from a JSON string to a dictionary
+        try:
+            vol_desc = json.loads(vol_desc)
+        except json.decoder.JSONDecodeError as err:
+            abort(
+                400,
+                "Volume description failed JSON decoding - %s" % str(err)
+            )
+        err = UAIVolume.vol_desc_errors(vol_desc)
+        if err is not None:
+            abort(
+                400,
+                "Volume has a malformed volume description - %s" % err
+            )
+        if UAIVolume.get_by_name(volumename) is not None:
+            abort(304, "volume named '%s' already exists" % volumename)
+        # Create it and store it...
+        vol = UAIVolume(
+            volumename=volumename,
+            mount_path=mount_path,
+            volume_description=vol_desc
+        )
+        vol.put()
+        return {
+            'volume_id': vol.volume_id,
+            'volumename': vol.volumename,
+            'mount_path': vol.mount_path,
+            'volume_description': vol.volume_description
+        }
+
+    def update_volume(self, volume_id,
+                      volumename=None, mount_path=None, vol_desc=None):
+        """Update a UAI volume in the config
+
+        """
+        self.uas_cfg.get_config()
+        vol = UAIVolume.get(volume_id)
+        if vol is None:
+            abort(
+                404,
+                "Volume %s not found" % volume_id
+            )
+        changed = False
+        if volumename is not None:
+            if not volumename:
+                abort(400, "invalid (empty) volume name specified")
+                if not UAIVolume.is_valid_volume_name(volumename):
+                    abort(
+                        400,
+                        "Invalid volume name - names must consist of lower "
+                        "case alphanumeric characters or '-', and must start "
+                        "and end with an alphanumeric character. Refer to the "
+                        "Kubernetes documentation for more information."
+                    )
+            tmp = UAIVolume.get_by_name(volumename)
+            if tmp is not None and tmp.volume_id != vol.volume_id:
+                abort(304, "volume named '%s' already exists" % volumename)
+            vol.volumename = volumename
+            changed = True
+        if mount_path is not None:
+            if not mount_path:
+                abort(400, "invalid (empty) mount_path specified")
+            vol.mount_path = mount_path
+            changed = True
+        if vol_desc is not None:
+            # Convert vol_desc from a JSON string to a dictionary
+            try:
+                vol_desc = json.loads(vol_desc)
+            except json.decoder.JSONDecodeError as err:
+                abort(
+                    400,
+                    "Volume description failed JSON decoding - %s" % str(err)
+                )
+            err = UAIVolume.vol_desc_errors(vol_desc)
+            if err is not None:
+                abort(
+                    400,
+                    "Volume has a malformed volume description - %s" % err
+                )
+            vol.volume_description = vol_desc
+            changed = True
+        if changed:
+            vol.put()
+        return {
+            'volume_id': vol.volume_id,
+            'volumename': vol.volumename,
+            'mount_path': vol.mount_path,
+            'volume_description': vol.volume_description
+        }
+
+    def get_volume(self, volume_id):
+        """Get info on a specific volume from the config
+
+        """
+        self.uas_cfg.get_config()
+        vol = UAIVolume.get(volume_id)
+        if vol is None:
+            abort(
+                404,
+                "Unknown volume '%s'" % volume_id
+            )
+        return {
+            'volume_id': vol.volume_id,
+            'volumename': vol.volumename,
+            'mount_path': vol.mount_path,
+            'volume_description': vol.volume_description
+        }
 
     def get_volumes(self):
-        # Get all volumes
-        resp = None
-        abort(501, "Not implemented")
-        return resp
+        """Get info on all volumes in the config
+
+        """
+        self.uas_cfg.get_config()
+        vols = UAIVolume.get_all()
+        return [
+            {
+                'volume_id': vol.volume_id,
+                'volumename': vol.volumename,
+                'mount_path': vol.mount_path,
+                'volume_description': vol.volume_description
+            }
+            for vol in vols
+        ]
+
+    def factory_reset(self):
+        """Delete all the local configuration so that the next operation
+        reloads config from the configmap configuration.
+
+        """
+        self.uas_cfg.get_config()
+        vols = UAIVolume.get_all()
+        for vol in vols:
+            vol.remove()
+        imgs = UAIImage.get_all()
+        for img in imgs:
+            img.remove()
+        cfgs = PopulatedConfig.get_all()
+        for cfg in cfgs:
+            cfg.remove()

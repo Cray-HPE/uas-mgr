@@ -19,23 +19,38 @@ RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
 COPY requirements.txt /usr/src/app/
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir \
+                 --index-url http://dst.us.cray.com/dstpiprepo/simple \
+                 --trusted-host dst.us.cray.com -r requirements.txt
 
 #########################
 ### Coverage/Unit Tests
 #########################
 FROM base as coverage
-COPY test-requirements.txt .coveragerc /usr/src/app/
-RUN pip3 install --no-cache-dir -r test-requirements.txt
+COPY pylintrc test-requirements.txt .coveragerc /usr/src/app/
+# Allow the use of either pypi or DST here because this is not part of the
+# production delivered code, so it is less critical that everything be
+# strictly Cray provided.
+RUN pip3 install --no-cache-dir \
+                 --extra-index https://pypi.org/simple \
+                 --index-url http://dst.us.cray.com/dstpiprepo/simple \
+                 --trusted-host dst.us.cray.com -r test-requirements.txt
 
 # Copy the code into the container
 COPY setup.py .version /usr/src/app/
 COPY api/ swagger_server/ /usr/src/app/swagger_server/
 
+# Install a test configuration
+COPY swagger_server/test/cray-uas-mgr.yaml /etc/uas/
+
+# Lint the code (need 100% clean here)
+RUN pylint swagger_server
+
 RUN ./swagger_server/test/version-check.sh
 RUN mkdir -p /var/run/secrets/kubernetes.io/
 COPY serviceaccount/ /var/run/secrets/kubernetes.io/serviceaccount/
-ENTRYPOINT pytest --cov swagger_server --cov-fail-under 67
+ENV ETCD_MOCK_CLIENT yes
+ENTRYPOINT pytest --cov swagger_server --cov-fail-under 72
 
 #########################
 ### API Tests

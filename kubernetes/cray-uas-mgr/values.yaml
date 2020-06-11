@@ -72,6 +72,19 @@ cray-service:
     - name: cray-uas-mgr
       image:
         repository: cray/cray-uas-mgr
+      env:
+        # The following ENV variable settings are taken from
+        # 'templates/env_configmap.yaml' which, in turn takes
+        # templated values from the config found here.  That makes it
+        # easier to override environment variable settings.  Don't set
+        # environment variables directly here. Instead add what you
+        # need to config here and then template the env settings in
+        # 'env_configmap.yaml'.
+        - name: USE_MACVLAN
+          valueFrom:
+            configMapKeyRef:
+              name: cray-uas-mgr-config
+              key: cray-uas-mgr.use_macvlan
       ports:
         - name: http
           containerPort: 8088
@@ -104,3 +117,6 @@ cray-service:
     enabled: true
     prefix: /apis/uas-mgr/
     uri: /
+
+  etcdCluster:
+    enabled: true

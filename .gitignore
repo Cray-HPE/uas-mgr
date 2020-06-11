@@ -2,3 +2,8 @@
 cray_uas_mgr.egg-info/
 **/__pycache__
 .vscode/
+tmp
+uas_env
+*.pyc
+swagger_server/swagger.yaml
+

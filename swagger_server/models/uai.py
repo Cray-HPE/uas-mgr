@@ -2,13 +2,13 @@
 # Copyright 2019, Cray Inc.  All Rights Reserved.
 #
 # coding: utf-8
+# pylint: disable=missing-docstring
 
 from __future__ import absolute_import
-from datetime import date, datetime  # noqa: F401
-
-from typing import List, Dict  # noqa: F401
+from typing import Dict
 
 from swagger_server.models.base_model_ import Model
+from swagger_server import util
 
 
 class UAI(Model):
@@ -16,13 +16,12 @@ class UAI(Model):
 
     Do not edit the class manually.
     """
-
+    # pylint: disable=dangerous-default-value,too-many-arguments
     def __init__(self, uai_name: str = None, username: str = None,
                  publickey: str = None, uai_img: str = None,
                  uai_status: str = None, uai_msg: str = None,
                  uai_connect_string: str = None, uai_portmap: dict = {},
                  uai_host: str = None, uai_age: str = None):
-
         """UAI - a model defined in Swagger
 
         :param uai_name: The uai_name of this UAI.
@@ -37,10 +36,11 @@ class UAI(Model):
         :type uai_status: str
         :param uai_msg: The uai_msg of this UAI.
         :type uai_msg: str
-        :param uai_connect_string: The uai_connect_string of this UAI.
+        :param uai_connect_string: The uai_connect_string of this
+                                   UAI.
         :type uai_connect_string: str
         :param uai_portmap: The uai_portmap of this UAI.
-        :type uai_portmap: dict
+        :type uai_portmap: Dict[str, int]
         :param uai_host: The physical host for this UAI.
         :type uai_host: str
         :param uai_age: Age of the UAI.
@@ -55,7 +55,7 @@ class UAI(Model):
             'uai_status': str,
             'uai_msg': str,
             'uai_connect_string': str,
-            'uai_portmap': dict,
+            'uai_portmap': Dict[str, int],
             'uai_host': str,
             'uai_age': str
         }
@@ -72,7 +72,6 @@ class UAI(Model):
             'uai_host': 'uai_host',
             'uai_age': 'uai_age'
         }
-
         self._uai_name = uai_name
         self._username = username
         self._publickey = publickey
@@ -83,6 +82,17 @@ class UAI(Model):
         self._uai_portmap = uai_portmap
         self._uai_host = uai_host
         self._uai_age = uai_age
+
+    @classmethod
+    def from_dict(cls, dikt) -> 'UAI':
+        """Returns the dict as a model
+
+        :param dikt: A dict.
+        :type: dict
+        :return: The UAI of this UAI.
+        :rtype: UAI
+        """
+        return util.deserialize_model(dikt, cls)
 
     @property
     def uai_name(self) -> str:
@@ -232,22 +242,22 @@ class UAI(Model):
         self._uai_connect_string = uai_connect_string
 
     @property
-    def uai_portmap(self) -> dict:
+    def uai_portmap(self) -> Dict[str, int]:
         """Gets the uai_portmap of this UAI.
 
 
         :return: The uai_portmap of this UAI.
-        :rtype: dict
+        :rtype: Dict[str, int]
         """
         return self._uai_portmap
 
     @uai_portmap.setter
-    def uai_portmap(self, uai_portmap: dict):
+    def uai_portmap(self, uai_portmap: Dict[str, int]):
         """Sets the uai_portmap of this UAI.
 
 
         :param uai_portmap: The uai_portmap of this UAI.
-        :type uai_portmap: dict
+        :type uai_portmap: Dict[str, int]
         """
 
         self._uai_portmap = uai_portmap
@@ -277,6 +287,7 @@ class UAI(Model):
     def uai_age(self) -> str:
         """Gets the uai_age of this UAI.
 
+
         :return: The uai_age of this UAI.
         :rtype: str
         """
@@ -286,7 +297,9 @@ class UAI(Model):
     def uai_age(self, uai_age: str):
         """Sets the uai_age of this UAI.
 
+
         :param uai_age: The uai_age of this UAI.
         :type uai_age: str
         """
+
         self._uai_age = uai_age

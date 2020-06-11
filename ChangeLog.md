@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2020-06-11
+- CASMUAS-7: back-end implementation of Images and Volumes APIs
+- CASMUAS-31: integrate UAS with etcd
+
 ## [1.5.0] - 2020-06-04
 CASMUAS-9: Remove creation of uastest user
 CASMUAS-46: Switch SSH to LoadBalancer IPs
