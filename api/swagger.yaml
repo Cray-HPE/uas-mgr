@@ -93,7 +93,7 @@ info:
     those changes do not affect pre-existing UAIs.
 
     These operations are available under the /admin/config prefix.
-    Currently supported paths uder /admin/config are /admin/config/images and
+    Currently supported paths under /admin/config are /admin/config/images and
     /admin/config/volumes.
 
     #### GET /uas
