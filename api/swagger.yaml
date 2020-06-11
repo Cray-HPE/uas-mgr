@@ -221,7 +221,7 @@ paths:
         required: false
         schema:
           type: "string"
-        example: "node.local/uas-sles15:latest"
+        example: "docker.local/cray/cray-uas-sles15sp1:latest"
       - name: "ports"
         in: "query"
         description: "Additional ports to project from the UAI besides ssh. Restricted to ports 80, 443 and 8888."
@@ -317,7 +317,7 @@ paths:
         required: true
         schema:
           type: "string"
-        example: "node.local/uas-sles15:latest"
+        example: "docker.local/cray/cray-uas-sles15sp1:latest"
       - name: "default"
         in: "query"
         description: "default image (true/false)"
@@ -356,7 +356,7 @@ paths:
         required: true
         schema:
           type: "string"
-        example: "node.local/uas-sles15:latest"
+        example: "docker.local/cray/cray-uas-sles15sp1:latest"
       responses:
         200:
           description: "Image removed"
@@ -378,7 +378,7 @@ paths:
         required: true
         schema:
           type: "string"
-        example: "docker.local/cray/cray-uas-sles15:latest"
+        example: "docker.local/cray/cray-uas-sles15sp1:latest"
       - name: "default"
         in: "query"
         description: "default image (true/false)"
@@ -415,7 +415,7 @@ paths:
         required: true
         schema:
           type: "string"
-        example: "node.local/uas-sles15:latest"
+        example: "docker.local/cray/cray-uas-sles15sp1:latest"
       responses:
         200:
           description: "UAS Image"
@@ -463,7 +463,7 @@ paths:
         required: true
         schema:
           type: "string"
-        example: "mymount"
+        example: "my-mount"
       - name: "type"
         in: "query"
         description: "Valid k8s hostPath subtypes: DirectoryOrCreate, Directory, FileOrCreate,
@@ -523,7 +523,7 @@ paths:
         required: true
         schema:
           type: "string"
-        example: "node.local/uas-sles15:latest"
+        example: "my-mount"
       responses:
         200:
           description: "Volume removed from list"
@@ -545,7 +545,7 @@ paths:
         required: true
         schema:
           type: "string"
-        example: "mymount"
+        example: "my-mount"
       - name: "type"
         in: "query"
         description: "Valid types: DirectoryOrCreate, Directory, FileOrCreate,
@@ -603,7 +603,7 @@ paths:
         required: true
         schema:
           type: "string"
-        example: "node.local/uas-sles15:latest"
+        example: "my-mount"
       responses:
         200:
           description: "UAS Volume"
@@ -738,7 +738,7 @@ paths:
         required: true
         schema:
           type: "string"
-        example: "node.local/uas-sles15:latest"
+        example: "docker.local/cray/cray-uas-sles15sp1:latest"
       - name: "default"
         in: "query"
         description: "default image (true/false)"
@@ -837,7 +837,7 @@ paths:
         description: |
           The image name to be used by instances based on this UAI
           instance.
-        example: "docker.local/cray/cray-uas-sles15:latest"
+        example: "docker.local/cray/cray-uas-sles15sp1:latest"
       - name: "default"
         in: "query"
         description: "default image (true/false)"
@@ -910,7 +910,7 @@ paths:
         required: true
         schema:
           type: "string"
-        example: "mymount"
+        example: "my-mount"
       - name: "mount_path"
         in: "query"
         description: "Mount path inside the UAI"
@@ -1069,7 +1069,7 @@ paths:
         required: false
         schema:
           type: "string"
-        example: "mymount"
+        example: "my-mount"
       - name: "mount_path"
         in: "query"
         description: "Mount path for the volume inside the UAI"
@@ -1224,10 +1224,10 @@ components:
           type: "object"
       example:
         volume_id:  "e2918379-7df1-4086-92fe-e3ec777a9b2e"
-        volumename: "example_mount"
-        mount_path: "/opt/test/foo"
+        volumename: "my-mount"
+        mount_path: "/mnt/test"
         volume_description: |
-          {"hostPath":{"path": "/opt/host/foo", "type": "DirectoryOrCreate"}}
+          {"hostPath":{"path": "/opt/host/path", "type": "DirectoryOrCreate"}}
     Image:
       type: "object"
       properties:
