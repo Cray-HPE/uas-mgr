@@ -6,7 +6,7 @@
 
 TARBALL=$1
 TAG=$2
-REPO=cray-sles15-sp1-cn
+REPO=cos-1.3-sle-15sp1-compute
 
 BASE_IMG="uai_base_img:latest"
 
@@ -49,7 +49,7 @@ FROM $BASE_IMG
 COPY certs/*.crt /usr/share/pki/trust/anchors/
 COPY cmds/* /usr/bin
 RUN update-ca-certificates; \
-    zypper addrepo https://api-gw-service-nmn.local/repositories/$REPO $REPO; \
+    zypper addrepo https://packages.local/repository/$REPO $REPO; \
     zypper --non-interactive --gpg-auto-import-keys --no-gpg-checks install cray-uai-util
 RUN rm /etc/security/limits.d/99-cray-network.conf
 ENTRYPOINT /usr/bin/uai-ssh.sh
