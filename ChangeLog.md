@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.1] - 2020-07-13
+- Change the repository where UAI images are kept from bis.local:5000 to registry.local so it can be picked up by Nexus
+
 ## [1.7.0] - 2020-06-25
 - CASMUAS-126: Because of DST-5600 a version bump is required to get artifacts built
 
