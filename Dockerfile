@@ -7,7 +7,7 @@
 FROM dtr.dev.cray.com/baseos/alpine as base
 
 # packages needed to run the app & install deps
-ENV BASE_PACKAGES g++ gcc libffi-dev linux-headers musl-dev openssl-dev python3 python3-dev
+ENV BASE_PACKAGES g++ gcc libffi-dev linux-headers musl-dev openssl-dev python3 python3-dev py3-pip
 
 # packages needed to debug the application from inside the container
 ENV DEBUG_PACKAGES procps iputils curl wget vim less
@@ -22,7 +22,6 @@ COPY requirements.txt /usr/src/app/
 RUN pip3 install --no-cache-dir \
                  --index-url http://dst.us.cray.com/dstpiprepo/simple \
                  --trusted-host dst.us.cray.com -r requirements.txt
-
 #########################
 ### Coverage/Unit Tests
 #########################
