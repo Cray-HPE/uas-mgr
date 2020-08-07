@@ -961,7 +961,6 @@ paths:
                       }
                     }
                   type: "string"
-                  format: "binary"
                   example: "{ \"configMap\": { \"name\": \"my-configmap\" } }"
       responses:
         201:
@@ -1120,7 +1119,6 @@ paths:
                       }
                     }
                   type: "string"
-                  format: "binary"
                   example: "{ \"configMap\": { \"name\": \"my-configmap\" } }"
       responses:
         201:
