@@ -166,7 +166,7 @@ info:
 
     Delete the specified volume from the list of available volumes.
 
-  version: "1.7.1"
+  version: "1.7.0"
 
 servers:
   - url: "/apis/uas-mgr/v1"
@@ -466,7 +466,7 @@ paths:
         example: "my-mount"
       - name: "type"
         in: "query"
-        description: "Valid k8s hostPath subtypes: DirectoryOrCreate, Directory, FileOrCreate,
+        description: "Valid k8s host_path subtypes: DirectoryOrCreate, Directory, FileOrCreate,
           File, Socket, CharDevice, BlockDevice"
         required: false
         schema:
@@ -918,51 +918,44 @@ paths:
         schema:
           type: "string"
         example: "/mnt/test"
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              type: "object"
-              properties:
-                volume_description:
-                  description: |
-                    JSON description of a Kubernetes volume to be
-                    mounted in UAI containers.  This is the JSON
-                    equivalent of whatever YAML you would normally
-                    apply to Kubernetes to attach the kind of volume
-                    you want to a pod.  There are many kinds of
-                    volumes, the examples given here illustrate some
-                    options:
+      - name: "volume_description"
+        in: "query"
+        description: |
+          JSON description of a Kubernetes volume to be
+          mounted in UAI containers.  This is the JSON
+          equivalent of whatever YAML you would normally
+          apply to Kubernetes to attach the kind of volume
+          you want to a pod.  There are many kinds of
+          volumes, the examples given here illustrate some
+          options:
 
-                    {
-                      "hostPath": {
-                        "path": "/data",
-                        "type": "DirectoryOrCreate"
-                      }
-                    }
+          {
+            "host_path": {
+              "path": "/data",
+              "type": "DirectoryOrCreate"
+            }
+          }
 
-                    or
-
-                    {
-                      "secret": {
-                        "secretName": "my-secret"
-                      }
-                    }
-
-                    or
-
-                    {
-                      "configMap": {
-                        "name": "my-configmap",
-                        "items": {
-                          "key": "flaps",
-                          "path": "flaps"
-                        }
-                      }
-                    }
-                  type: "string"
-                  format: "binary"
-                  example: "{ \"configMap\": { \"name\": \"my-configmap\" } }"
+          or
+           {
+            "secret": {
+              "secretName": "my-secret"
+            }
+          }
+          or
+           {
+            "config_map": {
+              "name": "my-configmap",
+              "items": {
+                "key": "flaps",
+                "path": "flaps"
+              }
+            }
+          }
+        required: true
+        schema:
+          type: "string"
+        example: "{ \"config_map\": { \"name\": \"my-configmap\" } }"
       responses:
         201:
           description: "Volume added"
@@ -1077,51 +1070,44 @@ paths:
         schema:
           type: "string"
         example: "/mnt/test"
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              type: "object"
-              properties:
-                volume_description:
-                  description: |
-                    JSON description of a Kubernetes volume to be
-                    mounted in UAI containers.  This is the JSON
-                    equivalent of whatever YAML you would normally
-                    apply to Kubernetes to attach the kind of volume
-                    you want to a pod.  There are many kinds of
-                    volumes, the examples given here illustrate some
-                    options:
+      - name: "volume_description"
+        in: "query"
+        description: |
+          JSON description of a Kubernetes volume to be
+          mounted in UAI containers.  This is the JSON
+          equivalent of whatever YAML you would normally
+          apply to Kubernetes to attach the kind of volume
+          you want to a pod.  There are many kinds of
+          volumes, the examples given here illustrate some
+          options:
 
-                    {
-                      "hostPath": {
-                        "path": "/data",
-                        "type": "DirectoryOrCreate"
-                      }
-                    }
+          {
+            "host_path": {
+              "path": "/data",
+              "type": "DirectoryOrCreate"
+            }
+          }
 
-                    or
-
-                    {
-                      "secret": {
-                        "secretName": "my-secret"
-                      }
-                    }
-
-                    or
-
-                    {
-                      "configMap": {
-                        "name": "my-configmap",
-                        "items": {
-                          "key": "flaps",
-                          "path": "flaps"
-                        }
-                      }
-                    }
-                  type: "string"
-                  format: "binary"
-                  example: "{ \"configMap\": { \"name\": \"my-configmap\" } }"
+          or
+           {
+            "secret": {
+              "secretName": "my-secret"
+            }
+          }
+          or
+           {
+            "config_map": {
+              "name": "my-configmap",
+              "items": {
+                "key": "flaps",
+                "path": "flaps"
+              }
+            }
+          }
+        required: false
+        schema:
+          type: "string"
+        example: "{ \"config_map\": { \"name\": \"my-configmap\" } }"
       responses:
         201:
           description: "Volume updated"
@@ -1227,7 +1213,7 @@ components:
         volumename: "my-mount"
         mount_path: "/mnt/test"
         volume_description: |
-          {"hostPath":{"path": "/opt/host/path", "type": "DirectoryOrCreate"}}
+          {"host_path":{"path": "/opt/host/path", "type": "DirectoryOrCreate"}}
     Image:
       type: "object"
       properties:
