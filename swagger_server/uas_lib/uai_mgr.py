@@ -869,10 +869,19 @@ class UaiManager:
         """
         self.uas_cfg.get_config()
         if UAIImage.get_by_name(imagename):
-            abort(304, "image named '%s' already exists" % imagename)
+            abort(400, "image named '%s' already exists" % imagename)
         # Create it and store it...
         if default is None:
             default = False
+        if default:
+            # This is the default image. Check for any other image
+            # that is currently default and make it no longer default.
+            imgs = UAIImage.get_all()
+            for img in imgs:
+                if img.default:
+                    img.default = False
+                    img.put()
+        # Now create the new image...
         img = UAIImage(imagename=imagename, default=default)
         img.put()
         return {
@@ -891,18 +900,36 @@ class UaiManager:
         if img is None:
             abort(404, "image '%s' does not exist" % image_id)
         changed = False
-        if imagename is not None:
+        # Is the image name changing?
+        if imagename is None:
+            imagename = img.imagename
+        if imagename != img.imagename:
+            # Going to change the image name, make sure it is unique...
             tmp = UAIImage.get_by_name(imagename)
-            if tmp is not None and tmp.image_id != img.image_id:
-                abort(304, "image named '%s' already exists" % imagename)
+            if tmp is not None:
+                abort(400, "image named '%s' already exists" % imagename)
             # A value is specified to update...
             img.imagename = imagename
             changed = True
-        if default is not None:
+        # Is the default settting changing?
+        if default is None:
+            default = img.default
+        if default != img.default:
             # A value is specified to update...
             img.default = default
             changed = True
         if changed:
+            if default:
+                # This will be the default image. If there is another
+                # image that is default right now, make it no longer
+                # default.
+                imgs = UAIImage.get_all()
+                for tmp in imgs:
+                    if tmp.image_id == image_id:
+                        continue
+                    if tmp.default:
+                        tmp.default = False
+                        tmp.put()
             img.put()
         return {
             'image_id': img.image_id,
@@ -987,7 +1014,7 @@ class UaiManager:
                 "Volume has a malformed volume description - %s" % err
             )
         if UAIVolume.get_by_name(volumename) is not None:
-            abort(304, "volume named '%s' already exists" % volumename)
+            abort(400, "volume named '%s' already exists" % volumename)
         # Create it and store it...
         vol = UAIVolume(
             volumename=volumename,
@@ -1028,7 +1055,7 @@ class UaiManager:
                     )
             tmp = UAIVolume.get_by_name(volumename)
             if tmp is not None and tmp.volume_id != vol.volume_id:
-                abort(304, "volume named '%s' already exists" % volumename)
+                abort(400, "volume named '%s' already exists" % volumename)
             vol.volumename = volumename
             changed = True
         if mount_path is not None:
