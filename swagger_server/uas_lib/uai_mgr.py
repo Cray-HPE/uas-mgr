@@ -869,7 +869,7 @@ class UaiManager:
         """
         self.uas_cfg.get_config()
         if UAIImage.get_by_name(imagename):
-            abort(400, "image named '%s' already exists" % imagename)
+            abort(409, "image named '%s' already exists" % imagename)
         # Create it and store it...
         if default is None:
             default = False
@@ -907,7 +907,7 @@ class UaiManager:
             # Going to change the image name, make sure it is unique...
             tmp = UAIImage.get_by_name(imagename)
             if tmp is not None:
-                abort(400, "image named '%s' already exists" % imagename)
+                abort(409, "image named '%s' already exists" % imagename)
             # A value is specified to update...
             img.imagename = imagename
             changed = True
@@ -1014,7 +1014,7 @@ class UaiManager:
                 "Volume has a malformed volume description - %s" % err
             )
         if UAIVolume.get_by_name(volumename) is not None:
-            abort(400, "volume named '%s' already exists" % volumename)
+            abort(409, "volume named '%s' already exists" % volumename)
         # Create it and store it...
         vol = UAIVolume(
             volumename=volumename,
@@ -1055,7 +1055,7 @@ class UaiManager:
                     )
             tmp = UAIVolume.get_by_name(volumename)
             if tmp is not None and tmp.volume_id != vol.volume_id:
-                abort(400, "volume named '%s' already exists" % volumename)
+                abort(409, "volume named '%s' already exists" % volumename)
             vol.volumename = volumename
             changed = True
         if mount_path is not None:
