@@ -166,7 +166,7 @@ info:
 
     Delete the specified volume from the list of available volumes.
 
-  version: "1.7.0"
+  version: "1.7.2"
 
 servers:
   - url: "/apis/uas-mgr/v1"
@@ -844,7 +844,6 @@ paths:
         required: false
         schema:
           type: boolean
-          default: false
         example: false
       responses:
         201:
