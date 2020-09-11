@@ -55,10 +55,12 @@ cray-service:
   serviceAccountName: "cray-uas-mgr"
 
   volumes:
-    - name: cray-uas-mgr-cfgmap
+    cray-uas-mgr-cfgmap:
+      name: cray-uas-mgr-cfgmap
       configMap:
         name: cray-uas-mgr-cfgmap
-    - name: ca-vol
+    ca-vol:
+      name: ca-vol
       configMap:
         name: cray-configmap-ca-public-key
 
@@ -83,7 +85,8 @@ cray-service:
       targetPort: http
 
   containers:
-    - name: cray-uas-mgr
+    cray-uas-mgr:
+      name: cray-uas-mgr
       image:
         repository: cray/cray-uas-mgr
       env:
