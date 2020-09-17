@@ -348,6 +348,7 @@ class UaiManager:
                 annotations=meta_annotations
             ),
             spec=client.V1PodSpec(
+                priority_class_name='uai-priority',
                 containers=[container],
                 affinity=affinity,
                 volumes=volumes

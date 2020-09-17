@@ -36,6 +36,18 @@ uasConfig:
       host_path: /etc/localtime
       type: FileOrCreate
 
+uaiResources:
+  quota:
+    cpu: 10
+    memory: 100Gi
+    pods: 100
+  default_limits:
+    cpu: 100m
+    memory: 1Gi
+  default_request:
+    cpu: 100m
+    memory: 1Gi
+
 cray-service:
   type: Deployment
   replicaCount: 2
