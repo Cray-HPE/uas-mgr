@@ -7,17 +7,23 @@
   delegate_to: "{{ groups['bis'][0] }}"
   run_once: true
 
-- name: Set fact for make_uai_img
+- name: Set fact for moving UAI images as needed
   set_fact:
-    make_uai_img: "{{ uai_exists.stdout | length == 0 }}"
+    move_uai_img: "{{ uai_exists.stdout | length > 0 }}"
 
-- name: Find a compute tar to create a uai image from
+- name: Move the existing UAI image out of the way to make room for a new one
   shell: |
-    find {{ compute_tar_prefix }} -name {{ compute_image_filter }} -type f -print -quit
+    docker tag {{ uai_image_name }} {{ uai_image_name }}-backup-$(date +'%Y%m%d%H%M%S') && docker rmi {{ uai_image_name }}
+  delegate_to: "{{ groups['bis'][0] }}"
+  run_once: true
+  when: move_uai_img
+
+- name: Find the most recent compute tar image from which to make the new image
+  shell: |
+    find {{ compute_tar_prefix }} -name {{ compute_image_filter }} -type f -print | sort | tail -1
   register: compute_tar_path
   delegate_to: "{{ groups['bis'][0] }}"
   run_once: true
-  when: make_uai_img
 
 - name: Transfer gen-uai-img.sh utility
   copy:
@@ -26,7 +32,6 @@
     mode: 0700
   delegate_to: "{{ groups['bis'][0] }}"
   run_once: true
-  when: make_uai_img
 
 - name: Run gen-uai-img.sh 
   shell: |
@@ -34,7 +39,6 @@
   register: compute_tar_path
   delegate_to: "{{ groups['bis'][0] }}"
   run_once: true
-  when: make_uai_img
 
 - name: Remove gen-uai-img.sh utility
   file:
@@ -42,4 +46,3 @@
     state: absent
   delegate_to: "{{ groups['bis'][0] }}"
   run_once: true
-  when: make_uai_img
