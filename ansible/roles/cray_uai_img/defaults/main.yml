@@ -4,5 +4,6 @@ uai_version_sles: "sles15sp1"
 uai_version_tag: "latest"
 uai_image_name: "registry.local/cray/cray-uas-{{ uai_version_sles }}:{{ uai_version_tag }}"
 
+uas_compute_tar_bos_id: ""
 compute_tar_prefix: "/var/cray/vbis/www/shasta-cd-repo/bloblets/shasta-general/isos/{{ uai_version_sles }}"
 compute_image_filter: "Cray-shasta-compute-{{ uai_version_sles }}*.*.tar.xz"

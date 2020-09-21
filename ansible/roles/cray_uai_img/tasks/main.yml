@@ -1,5 +1,6 @@
 # Copyright 2020 HPE All Rights Reserved
 ---
+
 - name: Check if docker image being created already exists
   shell: |
     docker images -q {{ uai_image_name }}
@@ -15,12 +16,24 @@
   shell: |
     docker tag {{ uai_image_name }} {{ uai_image_name }}-backup-$(date +'%Y%m%d%H%M%S') && docker rmi {{ uai_image_name }}
   delegate_to: "{{ groups['bis'][0] }}"
-  run_once: true
   when: move_uai_img
+  run_once: true
 
-- name: Find the most recent compute tar image from which to make the new image
+- name: Transfer get_img_tarball.sh utility
+  copy:
+    src: get_img_tarball.sh
+    dest: /tmp
+    mode: 0700
+  delegate_to: "{{ groups['bis'][0] }}"
+  run_once: true
+
+- name: Get the tarball to build from (could be a BOS session template ID or the CD Repo)
   shell: |
-    find {{ compute_tar_prefix }} -name {{ compute_image_filter }} -type f -print | sort | tail -1
+    if [ -z "{{ uas_compute_tar_bos_id }}" ]; then
+      find {{ compute_tar_prefix }} -name {{ compute_image_filter }} -type f -print | sort | tail -1
+    else
+      /tmp/get_img_tarball.sh {{ uas_compute_tar_bos_id }}
+    fi
   register: compute_tar_path
   delegate_to: "{{ groups['bis'][0] }}"
   run_once: true
@@ -43,6 +56,13 @@
 - name: Remove gen-uai-img.sh utility
   file:
     path: /tmp/gen-uai-img.sh
+    state: absent
+  delegate_to: "{{ groups['bis'][0] }}"
+  run_once: true
+
+- name: Remove get_img_tarball.sh utility
+  file:
+    path: /tmp/get_img_tarball.sh
     state: absent
   delegate_to: "{{ groups['bis'][0] }}"
   run_once: true
