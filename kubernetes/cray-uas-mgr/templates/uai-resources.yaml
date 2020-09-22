@@ -1,0 +1,39 @@
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: uai-priority
+value: -100
+globalDefault: false
+description: "Priority Class for UAIs to differentiate from other services"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: uai-pod-quotas
+  namespace: user
+spec:
+  hard:
+    cpu: "{{ .Values.uaiResources.quota.cpu }}"
+    memory: "{{ .Values.uaiResources.quota.memory }}"
+    pods: "{{ .Values.uaiResources.quota.pods }}"
+  scopeSelector:
+    matchExpressions:
+    - operator : In
+      scopeName: PriorityClass
+      values: ["uai-priority"]
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: cpu-mem-limit-range
+  namespace: "{{ .Values.uasConfig.uai_namespace }}"
+spec:
+  limits:
+  - type: Container
+    defaultRequest:
+      cpu: "{{ .Values.uaiResources.default_request.cpu }}"
+      memory: "{{ .Values.uaiResources.default_request.memory }}"
+    default:
+      cpu: "{{ .Values.uaiResources.default_limits.cpu }}"
+      memory: "{{ .Values.uaiResources.default_limits.memory }}"

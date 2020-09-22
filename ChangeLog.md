@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 1.9.0
+- Version Re-alignment after 1.3 release
+- CASMUAS-164 add resource limits on UAIs to protect management services
+
 ## 1.7.2 - 2020-09-09
 - CASMUAS-149: Handling of default images is not clean in UAS Admin Config commands
 
