@@ -1,5 +1,6 @@
 # Copyright 2020 HPE All Rights Reserved
 ---
+
 - name: Check if docker image being created already exists
   shell: |
     docker images -q {{ uai_image_name }}
@@ -7,17 +8,35 @@
   delegate_to: "{{ groups['bis'][0] }}"
   run_once: true
 
-- name: Set fact for make_uai_img
+- name: Set fact for moving UAI images as needed
   set_fact:
-    make_uai_img: "{{ uai_exists.stdout | length == 0 }}"
+    move_uai_img: "{{ uai_exists.stdout | length > 0 }}"
 
-- name: Find a compute tar to create a uai image from
+- name: Move the existing UAI image out of the way to make room for a new one
   shell: |
-    find {{ compute_tar_prefix }} -name {{ compute_image_filter }} -type f -print -quit
+    docker tag {{ uai_image_name }} {{ uai_image_name }}-backup-$(date +'%Y%m%d%H%M%S') && docker rmi {{ uai_image_name }}
+  delegate_to: "{{ groups['bis'][0] }}"
+  when: move_uai_img
+  run_once: true
+
+- name: Transfer get_img_tarball.sh utility
+  copy:
+    src: get_img_tarball.sh
+    dest: /tmp
+    mode: 0700
+  delegate_to: "{{ groups['bis'][0] }}"
+  run_once: true
+
+- name: Get the tarball to build from (could be a BOS session template ID or the CD Repo)
+  shell: |
+    if [ -z "{{ uas_compute_tar_bos_id }}" ]; then
+      find {{ compute_tar_prefix }} -name {{ compute_image_filter }} -type f -print | sort | tail -1
+    else
+      /tmp/get_img_tarball.sh {{ uas_compute_tar_bos_id }}
+    fi
   register: compute_tar_path
   delegate_to: "{{ groups['bis'][0] }}"
   run_once: true
-  when: make_uai_img
 
 - name: Transfer gen-uai-img.sh utility
   copy:
@@ -26,7 +45,6 @@
     mode: 0700
   delegate_to: "{{ groups['bis'][0] }}"
   run_once: true
-  when: make_uai_img
 
 - name: Run gen-uai-img.sh 
   shell: |
@@ -34,7 +52,6 @@
   register: compute_tar_path
   delegate_to: "{{ groups['bis'][0] }}"
   run_once: true
-  when: make_uai_img
 
 - name: Remove gen-uai-img.sh utility
   file:
@@ -42,4 +59,10 @@
     state: absent
   delegate_to: "{{ groups['bis'][0] }}"
   run_once: true
-  when: make_uai_img
+
+- name: Remove get_img_tarball.sh utility
+  file:
+    path: /tmp/get_img_tarball.sh
+    state: absent
+  delegate_to: "{{ groups['bis'][0] }}"
+  run_once: true
