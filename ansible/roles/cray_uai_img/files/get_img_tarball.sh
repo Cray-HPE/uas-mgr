@@ -19,7 +19,7 @@ trap cleanup ERR
 trap cleanup INT
 
 if [ -z "$1" ]; then
-  echo "Please specify a BOD Session Template ID"
+  echo "Please specify a BOS Session Template ID"
   echo "usage: get_img_tarball.sh <BOS-Session-Template-ID>" >&2
   exit 1
 fi
