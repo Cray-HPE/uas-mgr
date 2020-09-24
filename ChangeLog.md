@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.2] - 2020-09-23
+- CASMUAS-175 use mount instead of unsquashfs to make UAI images from IMS builds
+
 ## [1.9.1] - 2020-09-18
 - Fix UAI image generation ansible to work with the 1.3.1 Patch
 
