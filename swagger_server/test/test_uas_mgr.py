@@ -257,23 +257,23 @@ class TestUasMgr(unittest.TestCase):
 
     # pylint: disable=missing-docstring
     def test_get_pod_age(self):
-        self.assertEqual(UaiManager.get_pod_age(None), None)
-        self.assertEqual(UaiManager.get_pod_age("wrong"), None)
+        self.assertEqual(self.uas_mgr.get_pod_age(None), None)
+        self.assertEqual(self.uas_mgr.get_pod_age("wrong"), None)
 
         now = datetime.now(timezone.utc)
-        self.assertEqual(UaiManager.get_pod_age(now), "0m")
-        self.assertEqual(UaiManager.get_pod_age(now-timedelta(hours=1)),
+        self.assertEqual(self.uas_mgr.get_pod_age(now), "0m")
+        self.assertEqual(self.uas_mgr.get_pod_age(now-timedelta(hours=1)),
                          "1h0m")
-        self.assertEqual(UaiManager.get_pod_age(now-timedelta(hours=25)),
+        self.assertEqual(self.uas_mgr.get_pod_age(now-timedelta(hours=25)),
                          "1d1h")
-        self.assertEqual(UaiManager.get_pod_age(now-timedelta(minutes=25)),
+        self.assertEqual(self.uas_mgr.get_pod_age(now-timedelta(minutes=25)),
                          "25m")
-        self.assertEqual(UaiManager.get_pod_age(now-timedelta(days=89)),
+        self.assertEqual(self.uas_mgr.get_pod_age(now-timedelta(days=89)),
                          "89d")
         # for days > 0, don't print minutes
-        self.assertEqual(UaiManager.get_pod_age(now-timedelta(minutes=1442)),
+        self.assertEqual(self.uas_mgr.get_pod_age(now-timedelta(minutes=1442)),
                          "1d")
-        self.assertEqual(UaiManager.get_pod_age(now-timedelta(minutes=1501)),
+        self.assertEqual(self.uas_mgr.get_pod_age(now-timedelta(minutes=1501)),
                          "1d1h")
 
 

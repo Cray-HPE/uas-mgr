@@ -6,95 +6,33 @@ Manages Cray User Access Node instances.
 """
 #pylint: disable=too-many-lines
 
-import logging
 import os
-import sys
 import time
 import uuid
 import json
 from datetime import datetime, timezone
 from flask import abort, request
-from kubernetes import config, client
-from kubernetes.client import Configuration
-from kubernetes.client.api import core_v1_api
+from kubernetes import client
 from kubernetes.client.rest import ApiException
 from swagger_server.models import UAI
-from swagger_server.uas_lib.uas_cfg import UasCfg
+from swagger_server.uas_lib.uas_base import UasBase
 from swagger_server.uas_lib.uas_auth import UasAuth
 from swagger_server.uas_data_model.uai_image import UAIImage
 from swagger_server.uas_data_model.uai_volume import UAIVolume
 from swagger_server.uas_data_model.populated_config import PopulatedConfig
-
-
-UAS_MGR_LOGGER = logging.getLogger('uas_mgr')
-UAS_MGR_LOGGER.setLevel(logging.INFO)
-
-# pylint: disable=invalid-name
-handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.INFO)
-# pylint: disable=invalid-name
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s"
-                              " - %(message)s")
-handler.setFormatter(formatter)
-UAS_MGR_LOGGER.addHandler(handler)
 
 # picking 40 seconds so that it's under the gateway timeout
 UAI_IP_TIMEOUT = 40
 
 
 # pylint: disable=too-many-public-methods
-class UaiManager:
+class UaiManager(UasBase):
     """UAI Manager - manages UAI resources and allocates and controls UAIs
 
     """
-    @staticmethod
-    def get_pod_age(start_time):
-        """
-        given a start time as an RFC3339 datetime object, return the difference
-        in time between that time and the current time, in a k8s format
-        of dDhHmM - ie: 3d7h5m or 6h9m or 19m
-
-        :return a string representing the delta between pod start and now.
-        :rtype string
-        """
-        # on new UAI start the start_time can be None
-        if start_time is None:
-            return None
-
-        try:
-            now = datetime.now(timezone.utc)
-            delta = now - start_time
-        except Exception as err:  # pylint: disable=broad-except
-            UAS_MGR_LOGGER.warning("Unable to convert pod start time - %s", err)
-            return None
-
-        # build the output string
-        retstr = ""
-        days, remainder = divmod(delta.total_seconds(), 60*60*24)
-        if days != 0:
-            retstr += "{:d}d".format(int(days))
-
-        hours, remainder = divmod(remainder, 60*60)
-        if hours != 0:
-            retstr += "{:d}h".format(int(hours))
-
-        # always show minutes, even if 0, but only if < 1 day old
-        if days == 0:
-            minutes = remainder / 60
-            retstr += "{:d}m".format(int(minutes))
-
-        return retstr
-
-
     def __init__(self):
         """ Constructor """
-        config.load_incluster_config()
-        self.c = Configuration()
-        self.c.assert_hostname = False
-        Configuration.set_default(self.c)
-        self.api = core_v1_api.CoreV1Api()
-        self.apps_v1 = client.AppsV1Api()
-        self.uas_cfg = UasCfg()
+        UasBase.__init__(self)
         self.uas_auth = UasAuth()
         self.userinfo = None
         self.passwd = None
@@ -114,18 +52,56 @@ class UaiManager:
             if self.uas_auth.validUserinfo(self.userinfo):
                 self.passwd = self.uas_auth.createPasswd(self.userinfo)
                 self.username = self.userinfo[self.uas_auth.username]
-                UAS_MGR_LOGGER.info("UAS request for: %s", self.username)
+                self.logger.info("UAS request for: %s", self.username)
             else:
                 missing = self.uas_auth.missingAttributes(self.userinfo)
-                UAS_MGR_LOGGER.info(
+                self.logger.info(
                     "Token not valid for UAS. Attributes "
                     "missing: %s",
                     missing
                 )
                 abort(
                     400,
-                    "Token not valid for UAS. Attributes missing: %s" %  missing
+                    "Token not valid for UAS. Attributes "
+                    "missing: %s" %  missing
                 )
+
+    def get_pod_age(self, start_time):
+        """
+        given a start time as an RFC3339 datetime object, return the difference
+        in time between that time and the current time, in a k8s format
+        of dDhHmM - ie: 3d7h5m or 6h9m or 19m
+
+        :return a string representing the delta between pod start and now.
+        :rtype string
+        """
+        # on new UAI start the start_time can be None
+        if start_time is None:
+            return None
+
+        try:
+            now = datetime.now(timezone.utc)
+            delta = now - start_time
+        except Exception as err:  # pylint: disable=broad-except
+            self.logger.warning("Unable to convert pod start time - %s", err)
+            return None
+
+        # build the output string
+        retstr = ""
+        days, remainder = divmod(delta.total_seconds(), 60*60*24)
+        if days != 0:
+            retstr += "{:d}d".format(int(days))
+
+        hours, remainder = divmod(remainder, 60*60)
+        if hours != 0:
+            retstr += "{:d}h".format(int(hours))
+
+        # always show minutes, even if 0, but only if < 1 day old
+        if days == 0:
+            minutes = remainder / 60
+            retstr += "{:d}m".format(int(minutes))
+
+        return retstr
 
     def create_service_object(self, service_name, service_type, opt_ports_list,
                               deployment_name):
@@ -191,7 +167,7 @@ class UaiManager:
         """
         resp = None
         try:
-            UAS_MGR_LOGGER.info(
+            self.logger.info(
                 "getting service %s in namespace %s",
                 service_name,
                 namespace
@@ -202,7 +178,7 @@ class UaiManager:
             )
         except ApiException as err:
             if err.status != 404:
-                UAS_MGR_LOGGER.error(
+                self.logger.error(
                     "Failed to get service info while "
                     "creating UAI: %s",
                     err.reason
@@ -214,7 +190,7 @@ class UaiManager:
                 )
         if not resp:
             try:
-                UAS_MGR_LOGGER.info(
+                self.logger.info(
                     "creating service %s in namespace %s",
                     service_name,
                     namespace
@@ -224,7 +200,7 @@ class UaiManager:
                     namespace=namespace
                 )
             except ApiException as err:
-                UAS_MGR_LOGGER.error(
+                self.logger.error(
                     "Failed to create service %s: %s",
                     service_name,
                     err.reason
@@ -238,7 +214,7 @@ class UaiManager:
         """
         resp = None
         try:
-            UAS_MGR_LOGGER.info(
+            self.logger.info(
                 "deleting service %s in namespace %s",
                 service_name,
                 namespace
@@ -255,7 +231,7 @@ class UaiManager:
             # if we get 404 we don't want to abort because it's possible that
             # other parts are still laying around (deployment for example)
             if err.status != 404:
-                UAS_MGR_LOGGER.error(
+                self.logger.error(
                     "Failed to delete service %s: %s",
                     service_name,
                     err.reason
@@ -270,7 +246,7 @@ class UaiManager:
 
     # pylint: disable=too-many-arguments,too-many-locals
     def create_deployment_object(self, deployment_name, imagename,
-                                 publickeyStr, opt_ports_list):
+                                 public_key_str, opt_ports_list):
         """Construct a deployment for a UAI
 
         """
@@ -278,7 +254,7 @@ class UaiManager:
             service=False,
             optional_ports=opt_ports_list
         )
-        UAS_MGR_LOGGER.info(
+        self.logger.info(
             "UAI Name: %s; Container ports: %s; Optional ports: %s",
             deployment_name,
             container_ports,
@@ -300,7 +276,7 @@ class UaiManager:
                 ),
                 client.V1EnvVar(
                     name='UAS_PUBKEY',
-                    value=publickeyStr
+                    value=public_key_str
                 )
             ],
             ports=container_ports,
@@ -376,7 +352,7 @@ class UaiManager:
         """
         resp = None
         try:
-            UAS_MGR_LOGGER.info(
+            self.logger.info(
                 "creating deployment %s in namespace %s",
                 deployment.metadata.name,
                 namespace
@@ -386,7 +362,7 @@ class UaiManager:
                 namespace=namespace
             )
         except ApiException as err:
-            UAS_MGR_LOGGER.error(
+            self.logger.error(
                 "Failed to create deployment %s: %s",
                 deployment.metadata.name,
                 err.reason
@@ -405,7 +381,7 @@ class UaiManager:
         """
         resp = None
         try:
-            UAS_MGR_LOGGER.info(
+            self.logger.info(
                 "delete deployment %s in namespace %s",
                 deployment_name,
                 namespace
@@ -418,7 +394,7 @@ class UaiManager:
                     grace_period_seconds=5))
         except ApiException as err:
             if err.status != 404:
-                UAS_MGR_LOGGER.error(
+                self.logger.error(
                     "Failed to delete deployment %s: %s",
                     deployment_name,
                     err.reason
@@ -448,13 +424,13 @@ class UaiManager:
 
         if not namespace:
             namespace = self.uas_cfg.get_uai_namespace()
-            UAS_MGR_LOGGER.info(
+            self.logger.info(
                 "get_pod_info - UAIs will be gathered from"
                 " the %s namespace.",
                 namespace
             )
         try:
-            UAS_MGR_LOGGER.info(
+            self.logger.info(
                 "getting pod info %s in namespace %s"
                 " on host %s",
                 deployment_name,
@@ -472,7 +448,7 @@ class UaiManager:
                     label_selector="app=%s" % deployment_name
                 )
         except ApiException as err:
-            UAS_MGR_LOGGER.error(
+            self.logger.error(
                 "Failed to get pod info %s: %s",
                 deployment_name,
                 err.reason
@@ -492,7 +468,7 @@ class UaiManager:
         if not pod_resp.items:
             return None
         if len(pod_resp.items) > 1:
-            UAS_MGR_LOGGER.warning(
+            self.logger.warning(
                 "Oddly found more than one pod in "
                 "deployment %s",
                 deployment_name
@@ -514,26 +490,26 @@ class UaiManager:
             uai.uai_status = 'Pending'
         # pylint: disable=too-many-nested-blocks
         if pod.status.container_statuses:
-            for s in pod.status.container_statuses:
-                if s.name == deployment_name:
-                    if s.state.running:
-                        for c in pod.status.conditions:
-                            if c.type == 'Ready':
+            for status in pod.status.container_statuses:
+                if status.name == deployment_name:
+                    if status.state.running:
+                        for cond in pod.status.conditions:
+                            if cond.type == 'Ready':
                                 if pod.metadata.deletion_timestamp:
                                     uai.uai_status = 'Terminating'
-                                elif c.status == 'True':
+                                elif cond.status == 'True':
                                     uai.uai_status = 'Running: Ready'
                                 else:
                                     uai.uai_status = 'Running: Not Ready'
-                                    uai.uai_msg = c.message
-                    if s.state.terminated:
+                                    uai.uai_msg = cond.message
+                    if status.state.terminated:
                         uai.uai_status = 'Terminated'
-                    if s.state.waiting:
+                    if status.state.waiting:
                         uai.uai_status = 'Waiting'
-                        uai.uai_msg = s.state.waiting.reason
+                        uai.uai_msg = status.state.waiting.reason
         srv_resp = None
         try:
-            UAS_MGR_LOGGER.info(
+            self.logger.info(
                 "getting service info for %s-ssh in "
                 "namespace %s",
                 deployment_name,
@@ -545,7 +521,7 @@ class UaiManager:
             )
         except ApiException as err:
             if err.status != 404:
-                UAS_MGR_LOGGER.error(
+                self.logger.error(
                     "Failed to get service info for "
                     "%s-ssh: %s",
                     deployment_name,
@@ -608,29 +584,29 @@ class UaiManager:
         }
 
     # pylint: disable=too-many-branches,too-many-statements
-    def create_uai(self, publickey, imagename, opt_ports, namespace=None):
+    def create_uai(self, public_key, imagename, opt_ports, namespace=None):
         """Create a new UAI
 
         """
         opt_ports_list = []
-        if not publickey:
-            UAS_MGR_LOGGER.warning("create_uai - missing publickey")
+        if not public_key:
+            self.logger.warning("create_uai - missing public key")
             abort(400, "Missing ssh public key.")
         else:
             try:
-                publickeyStr = publickey.read().decode()
-                if not self.uas_cfg.validate_ssh_key(publickeyStr):
+                public_key_str = public_key.read().decode()
+                if not self.uas_cfg.validate_ssh_key(public_key_str):
                     # do not log the key here even if it's invalid, it
                     # could be a private key accidentally passed in
-                    UAS_MGR_LOGGER.info("create_uai - invalid ssh public key")
+                    self.logger.info("create_uai - invalid ssh public key")
                     abort(400, "Invalid ssh public key.")
             except Exception:  # pylint: disable=broad-except
-                UAS_MGR_LOGGER.info("create_uai - invalid ssh public key")
+                self.logger.info("create_uai - invalid ssh public key")
                 abort(400, "Invalid ssh public key.")
 
         if not namespace:
             namespace = self.uas_cfg.get_uai_namespace()
-            UAS_MGR_LOGGER.info(
+            self.logger.info(
                 "create_uai - UAI will be created in"
                 " the %s namespace.",
                 namespace
@@ -638,14 +614,14 @@ class UaiManager:
 
         if not imagename:
             imagename = self.uas_cfg.get_default_image()
-            UAS_MGR_LOGGER.info(
+            self.logger.info(
                 "create_uai - no image name provided, "
                 "using default %s",
                 imagename
             )
 
         if not self.uas_cfg.validate_image(imagename):
-            UAS_MGR_LOGGER.error(
+            self.logger.error(
                 "create_uai - image %s is invalid",
                 imagename
             )
@@ -664,7 +640,7 @@ class UaiManager:
         if opt_ports_list:
             for port in opt_ports_list:
                 if port not in self.uas_cfg.get_valid_optional_ports():
-                    UAS_MGR_LOGGER.error(
+                    self.logger.error(
                         "create_uai - invalid port requested (%s). "
                         "Valid ports are %s.",
                         port,
@@ -683,7 +659,7 @@ class UaiManager:
         deployment = self.create_deployment_object(
             deployment_name,
             imagename,
-            publickeyStr,
+            public_key_str,
             opt_ports_list
         )
         # Create a service for the UAI
@@ -698,7 +674,7 @@ class UaiManager:
         # Make sure the UAI deployment is created
         deploy_resp = None
         try:
-            UAS_MGR_LOGGER.info(
+            self.logger.info(
                 "getting deployment %s in namespace %s",
                 deployment_name,
                 namespace
@@ -709,7 +685,7 @@ class UaiManager:
             )
         except ApiException as err:
             if err.status != 404:
-                UAS_MGR_LOGGER.error(
+                self.logger.error(
                     "Failed to create deployment %s: %s",
                     deployment_name,
                     err.reason
@@ -725,7 +701,7 @@ class UaiManager:
             deploy_resp = self.create_deployment(deployment, namespace)
 
         # Start the UAI services
-        UAS_MGR_LOGGER.info("creating the UAI service %s", uas_ssh_svc_name)
+        self.logger.info("creating the UAI service %s", uas_ssh_svc_name)
         svc_resp = self.create_service(
             uas_ssh_svc_name,
             uas_ssh_svc,
@@ -733,7 +709,7 @@ class UaiManager:
         )
         if not svc_resp:
             # Clean up the deployment
-            UAS_MGR_LOGGER.error(
+            self.logger.error(
                 "failed to create service, deleting UAI %s",
                 deployment_name
             )
@@ -754,7 +730,7 @@ class UaiManager:
                 )
             time.sleep(delay)
             total_wait += delay
-            UAS_MGR_LOGGER.info(
+            self.logger.info(
                 "waiting for uai_ip %s seconds",
                 str(total_wait)
             )
@@ -777,7 +753,7 @@ class UaiManager:
 
         if not namespace:
             namespace = self.uas_cfg.get_uai_namespace()
-            UAS_MGR_LOGGER.info(
+            self.logger.info(
                 "list_uais - UAI will be listed from"
                 " the %s namespace.",
                 namespace
@@ -786,7 +762,7 @@ class UaiManager:
         if not label:
             label = 'user=' + self.username
         try:
-            UAS_MGR_LOGGER.info(
+            self.logger.info(
                 "listing deployments matching: namespace %s,"
                 " label %s",
                 namespace,
@@ -798,7 +774,7 @@ class UaiManager:
             )
         except ApiException as err:
             if err.status != 404:
-                UAS_MGR_LOGGER.error(
+                self.logger.error(
                     "Failed to get deployment list: %s",
                     err.reason
                 )
@@ -825,7 +801,7 @@ class UaiManager:
 
         if not namespace:
             namespace = self.uas_cfg.get_uai_namespace()
-            UAS_MGR_LOGGER.info(
+            self.logger.info(
                 "delete_uais - UAI will be deleted from"
                 " the %s namespace.",
                 namespace
@@ -837,15 +813,15 @@ class UaiManager:
         else:
             uai_list = [uai for uai in deployment_list if
                         'uai-'+self.username+'-' in uai]
-        for d in [d.strip() for d in uai_list]:
+        for uai_dep in [dep.strip() for dep in uai_list]:
             # Do services first so that we don't orphan one if they abort
-            service_resp = self.delete_service(d + "-ssh", namespace)
-            deploy_resp = self.delete_deployment(d, namespace)
+            service_resp = self.delete_service(uai_dep + "-ssh", namespace)
+            deploy_resp = self.delete_deployment(uai_dep, namespace)
 
             if deploy_resp is None and service_resp is None:
-                message = "Failed to delete %s - Not found" % d
+                message = "Failed to delete %s - Not found" % uai_dep
             else:
-                message = "Successfully deleted %s" % d
+                message = "Successfully deleted %s" % uai_dep
             resp_list.append(message)
         return resp_list
 
