@@ -11,6 +11,7 @@ from flask import abort
 
 from swagger_server import version
 from swagger_server.uas_lib.uai_mgr import UaiManager
+from swagger_server.uas_lib.uas_mgr import UasManager
 from swagger_server.uas_lib.uas_cfg import UasCfg
 
 
@@ -313,7 +314,7 @@ def create_uas_image_admin(imagename, default=None):
         return "Must provide imagename to create."
     if default is None:
         default = False
-    return UaiManager().create_image(imagename, default)
+    return UasManager().create_image(imagename, default)
 
 
 def get_uas_images_admin():
@@ -324,7 +325,7 @@ def get_uas_images_admin():
 
     :rtype: Image
     """
-    return UaiManager().get_images()
+    return UasManager().get_images()
 
 
 def get_uas_image_admin(image_id):
@@ -339,7 +340,7 @@ def get_uas_image_admin(image_id):
     """
     if not image_id:
         return "Must provide image_id to get."
-    return UaiManager().get_image(image_id)
+    return UasManager().get_image(image_id)
 
 
 def update_uas_image_admin(image_id, imagename=None, default=None):
@@ -360,7 +361,7 @@ def update_uas_image_admin(image_id, imagename=None, default=None):
     """
     if not image_id:
         return "Must provide image_id to update."
-    return UaiManager().update_image(image_id, imagename, default)
+    return UasManager().update_image(image_id, imagename, default)
 
 def delete_uas_image_admin(image_id):
     """Remove the imagename from set of valid images
@@ -376,7 +377,7 @@ def delete_uas_image_admin(image_id):
     """
     if not image_id:
         return "Must provide image_id to delete."
-    return UaiManager().delete_image(image_id)
+    return UasManager().delete_image(image_id)
 
 # Volumes...
 def create_uas_volume_admin(volumename, mount_path,
@@ -430,7 +431,7 @@ def create_uas_volume_admin(volumename, mount_path,
     else:
         # It is an io.BytesIO, get the value as a string
         volume_description = volume_description.getvalue()
-    return UaiManager().create_volume(
+    return UasManager().create_volume(
         volumename,
         mount_path,
         volume_description
@@ -448,7 +449,7 @@ def get_uas_volumes_admin():
     :rtype: List[AdminVolume]
 
     """
-    return UaiManager().get_volumes()
+    return UasManager().get_volumes()
 
 
 def get_uas_volume_admin(volume_id):
@@ -463,7 +464,7 @@ def get_uas_volume_admin(volume_id):
     """
     if not volume_id:
         return "Must provide volume_id to get."
-    return UaiManager().get_volume(volume_id)
+    return UasManager().get_volume(volume_id)
 
 
 def update_uas_volume_admin(volume_id, volumename=None, mount_path=None,
@@ -516,7 +517,7 @@ def update_uas_volume_admin(volume_id, volumename=None, mount_path=None,
         else:
             # It is an io.BytesIO, get the value as a string
             volume_description = volume_description.getvalue()
-    return UaiManager().update_volume(
+    return UasManager().update_volume(
         volume_id,
         volumename,
         mount_path,
@@ -539,7 +540,7 @@ def delete_uas_volume_admin(volume_id):
     """
     if not volume_id:
         return "Must provide volume_id to delete."
-    return UaiManager().delete_volume(volume_id)
+    return UasManager().delete_volume(volume_id)
 
 def delete_local_config_admin():
     """Remove all local configuration and reset to defaults
@@ -549,4 +550,4 @@ def delete_local_config_admin():
 
     :rtype: None
     """
-    return UaiManager().factory_reset()
+    return UasManager().factory_reset()
