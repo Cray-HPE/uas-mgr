@@ -37,8 +37,15 @@ class TestUasMgr(unittest.TestCase):
     def test_gen_labels(self):
         labels = self.uai_mgr.gen_labels(self.deployment_name)
         self.assertEqual(labels, {"app": self.deployment_name,
+                                  "uas": "managed"})
+        labels = self.uai_mgr.gen_labels(self.deployment_name, None)
+        self.assertEqual(labels, {"app": self.deployment_name,
+                                  "uas": "managed"})
+        labels = self.uai_mgr.gen_labels(self.deployment_name, "test_user")
+        self.assertEqual(labels, {"app": self.deployment_name,
                                   "uas": "managed",
-                                  "user": None})
+                                  "user": "test_user"})
+
 
     # pylint: disable=missing-docstring
     def test_gen_connection_string(self):

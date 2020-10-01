@@ -54,63 +54,6 @@ class TestUasController(unittest.TestCase):
                           'version': version})
 
     # pylint: disable=missing-docstring
-    def test_delete_uas_image(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.delete_uas_image_deprecated("fred")
-
-    # pylint: disable=missing-docstring
-    def test_create_uas_image(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.create_uas_image_deprecated(None, None)
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.create_uas_image_deprecated("fred", None)
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.create_uas_image_deprecated("fred", False)
-
-    # pylint: disable=missing-docstring
-    def test_update_uas_image(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.update_uas_image_deprecated(None, None)
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.update_uas_image_deprecated("fred", None)
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.update_uas_image_deprecated("fred", False)
-
-    # pylint: disable=missing-docstring
-    def test_get_uas_image(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.get_uas_image_deprecated(None)
-
-    # pylint: disable=missing-docstring
-    def test_delete_uas_volume(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.delete_uas_volume_deprecated(None)
-
-    # pylint: disable=missing-docstring
-    def test_create_uas_volume(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.create_uas_volume_deprecated(None, None)
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.create_uas_volume_deprecated("fred", None)
-
-    # pylint: disable=missing-docstring
-    def test_update_uas_volume(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.update_uas_volume_deprecated(None, None)
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.update_uas_volume_deprecated("fred", None)
-
-    # pylint: disable=missing-docstring
-    def test_get_uas_volume(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.get_uas_volume_deprecated(None)
-
-    # pylint: disable=missing-docstring
-    def test_get_uas_volumes(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.get_uas_volumes_deprecated()
-
-    # pylint: disable=missing-docstring
     def test_get_uas_images_admin(self):
         with app.test_request_context('/'):
             imgs = uas_ctl.get_uas_images_admin()
