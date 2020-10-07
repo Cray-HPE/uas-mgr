@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.0] - 2020-10-01
+- Updates to chart(s) to support Helm v3/Loftsman v1
+
 ## [1.9.2] - 2020-09-23
 - CASMUAS-175 use mount instead of unsquashfs to make UAI images from IMS builds
 
