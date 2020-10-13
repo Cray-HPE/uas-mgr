@@ -49,7 +49,7 @@ RUN ./swagger_server/test/version-check.sh
 RUN mkdir -p /var/run/secrets/kubernetes.io/
 COPY serviceaccount/ /var/run/secrets/kubernetes.io/serviceaccount/
 ENV ETCD_MOCK_CLIENT yes
-ENTRYPOINT pytest --cov swagger_server --cov-fail-under 72
+ENTRYPOINT pytest --cov swagger_server --cov-fail-under 75
 
 #########################
 ### API Tests

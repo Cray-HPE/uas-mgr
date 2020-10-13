@@ -7,10 +7,9 @@
 
 import io
 
-from flask import abort
-
 from swagger_server import version
 from swagger_server.uas_lib.uai_mgr import UaiManager
+from swagger_server.uas_lib.uas_mgr import UasManager
 from swagger_server.uas_lib.uas_cfg import UasCfg
 
 
@@ -126,171 +125,6 @@ def delete_all_uais(username=None):
     uai_resp = uai_mgr.delete_uais(uai_list)
     return uai_resp
 
-# pylint: disable=unused-argument
-def delete_uas_image_deprecated(imagename):
-    """Deprecated and never implemented - see /admin/config/images/{imagename}
-
-    Deprecated and never implemented
-
-    :param imagename:
-    :type imagename: str
-
-    :rtype: None
-    """
-    # This was never implemented at this path and is deprecated
-    abort(501, "Not implemented")
-
-
-# pylint: disable=unused-argument
-def create_uas_image_deprecated(imagename, default=None):
-    """Deprecated and never implemented  - see /admin/config/images
-
-    Deprecated and never implemented
-
-    :param imagename: Image to create
-    :type imagename: str
-
-    :param default: default image (true/false)
-    :type default: bool
-
-    :rtype: object
-    """
-    # This was never implemented at this path and is deprecated
-    abort(501, "Not implemented")
-
-
-# pylint: disable=unused-argument
-def update_uas_image_deprecated(imagename, default=None):
-    """Deprecated and never implemented  - see /admin/config/images/{imagename}
-
-    Deprecated and never implemented
-
-    :param imagename: Image to update
-    :type imagename: str
-    :param default: default image (true/false)
-    :type default: bool
-
-    :rtype: object
-    """
-    # This was never implemented at this path and is deprecated
-    abort(501, "Not implemented")
-
-
-def get_uas_image_deprecated(imagename):
-    """Get UAS image
-
-    :param imagename:
-    :type imagename: str
-
-    :rtype: object
-    """
-    # This was never implemented at this path and is deprecated
-    abort(501, "Not implemented")
-
-
-# pylint: disable=unused-argument
-def delete_uas_volume_deprecated(volumename):
-    """Deprecated and never implemented - see /admin/config/volumes/{volumename}
-
-    Deprecated and never implemented
-
-    :param volumename:
-    :type volumename: str
-
-    :rtype: None
-    """
-    # This was never implemented at this path and is deprecated
-    abort(501, "Not implemented")
-
-
-# pylint: disable=unused-argument,redefined-builtin,too-many-arguments
-def create_uas_volume_deprecated(volumename, type=None, mount_path=None,
-                                 host_path=None, secret_name=None,
-                                 config_map=None):
-    """Deprecated and never implemented - see /admin/config/volumes
-
-    Deprecated and never implemented
-
-    :param volumename:
-    :type volumename: str
-
-    :param type: Valid types: DirectoryOrCreate, Directory, FileOrCreate, File,
-                              Socket, CharDevice, BlockDevice
-    :type type: str
-
-    :param mount_path:
-    :type mount_path: str
-
-    :param host_path:
-    :type host_path: str
-
-    :param secret_name:
-    :type secret_name: str
-
-    :param config_map:
-    :type config_map: str
-
-    :rtype: object
-    """
-    # This was never implemented at this path and is deprecated
-    abort(501, "Not implemented")
-
-
-# pylint: disable=unused-argument,redefined-builtin,too-many-arguments
-def update_uas_volume_deprecated(volumename, type=None, mount_path=None,
-                                 host_path=None, secret_name=None,
-                                 config_map=None):
-    """Deprecated and never implemented - see /admin/config/volumes/{volumename}
-
-    Deprecated and never implemented
-
-    :param volumename:
-    :type volumename: str
-
-    :param type: Valid types: DirectoryOrCreate, Directory, FileOrCreate,
-                              File, Socket, CharDevice, BlockDevice
-    :type type: str
-
-    :param mount_path:
-    :type mount_path: str
-
-    :param host_path:
-    :type host_path: str
-
-    :param secret_name:
-    :type secret_name: str
-
-    :param config_map:
-    :type config_map: str
-
-    :rtype: object
-    """
-    # This was never implemented at this path and is deprecated
-    abort(501, "Not implemented")
-
-
-# pylint: disable=unused-argument
-def get_uas_volume_deprecated(volumename):
-    """Deprecated and never implemented - see /admin/config/volumes/{volumename}
-
-    :param volumename:
-    :type volumename: str
-
-    :rtype: object
-    """
-    # This was never implemented at this path and is deprecated
-    abort(501, "Not implemented")
-
-
-# pylint: disable=unused-argument
-def get_uas_volumes_deprecated():
-    """Deprecated and never implemented - see /admin/config/volumes
-
-    :rtype: object
-    """
-    # This was never implemented at this path and is deprecated
-    abort(501, "Not implemented")
-
 
 # Admin API
 #
@@ -313,7 +147,7 @@ def create_uas_image_admin(imagename, default=None):
         return "Must provide imagename to create."
     if default is None:
         default = False
-    return UaiManager().create_image(imagename, default)
+    return UasManager().create_image(imagename, default)
 
 
 def get_uas_images_admin():
@@ -324,7 +158,7 @@ def get_uas_images_admin():
 
     :rtype: Image
     """
-    return UaiManager().get_images()
+    return UasManager().get_images()
 
 
 def get_uas_image_admin(image_id):
@@ -339,7 +173,7 @@ def get_uas_image_admin(image_id):
     """
     if not image_id:
         return "Must provide image_id to get."
-    return UaiManager().get_image(image_id)
+    return UasManager().get_image(image_id)
 
 
 def update_uas_image_admin(image_id, imagename=None, default=None):
@@ -360,7 +194,7 @@ def update_uas_image_admin(image_id, imagename=None, default=None):
     """
     if not image_id:
         return "Must provide image_id to update."
-    return UaiManager().update_image(image_id, imagename, default)
+    return UasManager().update_image(image_id, imagename, default)
 
 def delete_uas_image_admin(image_id):
     """Remove the imagename from set of valid images
@@ -376,7 +210,7 @@ def delete_uas_image_admin(image_id):
     """
     if not image_id:
         return "Must provide image_id to delete."
-    return UaiManager().delete_image(image_id)
+    return UasManager().delete_image(image_id)
 
 # Volumes...
 def create_uas_volume_admin(volumename, mount_path,
@@ -430,7 +264,7 @@ def create_uas_volume_admin(volumename, mount_path,
     else:
         # It is an io.BytesIO, get the value as a string
         volume_description = volume_description.getvalue()
-    return UaiManager().create_volume(
+    return UasManager().create_volume(
         volumename,
         mount_path,
         volume_description
@@ -448,7 +282,7 @@ def get_uas_volumes_admin():
     :rtype: List[AdminVolume]
 
     """
-    return UaiManager().get_volumes()
+    return UasManager().get_volumes()
 
 
 def get_uas_volume_admin(volume_id):
@@ -463,7 +297,7 @@ def get_uas_volume_admin(volume_id):
     """
     if not volume_id:
         return "Must provide volume_id to get."
-    return UaiManager().get_volume(volume_id)
+    return UasManager().get_volume(volume_id)
 
 
 def update_uas_volume_admin(volume_id, volumename=None, mount_path=None,
@@ -516,7 +350,7 @@ def update_uas_volume_admin(volume_id, volumename=None, mount_path=None,
         else:
             # It is an io.BytesIO, get the value as a string
             volume_description = volume_description.getvalue()
-    return UaiManager().update_volume(
+    return UasManager().update_volume(
         volume_id,
         volumename,
         mount_path,
@@ -539,7 +373,7 @@ def delete_uas_volume_admin(volume_id):
     """
     if not volume_id:
         return "Must provide volume_id to delete."
-    return UaiManager().delete_volume(volume_id)
+    return UasManager().delete_volume(volume_id)
 
 def delete_local_config_admin():
     """Remove all local configuration and reset to defaults
@@ -549,4 +383,4 @@ def delete_local_config_admin():
 
     :rtype: None
     """
-    return UaiManager().factory_reset()
+    return UasManager().factory_reset()

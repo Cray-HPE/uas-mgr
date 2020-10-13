@@ -12,6 +12,7 @@ import json
 import werkzeug
 import flask
 from swagger_server.uas_lib.uai_mgr import UaiManager
+from swagger_server.uas_lib.uas_mgr import UasManager
 from swagger_server.models.uai import UAI
 
 app = flask.Flask(__name__)  # pylint: disable=invalid-name
@@ -25,7 +26,8 @@ class TestUasMgr(unittest.TestCase):
     os.environ["KUBERNETES_SERVICE_HOST"] = "127.0.0.1"
     deployment_name = "hal-234a85"
     with app.test_request_context('/'):
-        uas_mgr = UaiManager()
+        uai_mgr = UaiManager()
+        uas_mgr = UasManager()
 
     # pylint: disable=missing-docstring,no-self-use
     def test_uas_mgr_init(self):
@@ -33,10 +35,17 @@ class TestUasMgr(unittest.TestCase):
 
     # pylint: disable=missing-docstring
     def test_gen_labels(self):
-        labels = self.uas_mgr.gen_labels(self.deployment_name)
+        labels = self.uai_mgr.gen_labels(self.deployment_name)
+        self.assertEqual(labels, {"app": self.deployment_name,
+                                  "uas": "managed"})
+        labels = self.uai_mgr.gen_labels(self.deployment_name, None)
+        self.assertEqual(labels, {"app": self.deployment_name,
+                                  "uas": "managed"})
+        labels = self.uai_mgr.gen_labels(self.deployment_name, "test_user")
         self.assertEqual(labels, {"app": self.deployment_name,
                                   "uas": "managed",
-                                  "user": None})
+                                  "user": "test_user"})
+
 
     # pylint: disable=missing-docstring
     def test_gen_connection_string(self):
@@ -44,7 +53,7 @@ class TestUasMgr(unittest.TestCase):
         uai.username = "testuser"
         uai.uai_port = 12345
         uai.uai_ip = "1.2.3.4"
-        uai.uai_connect_string = self.uas_mgr.gen_connection_string(uai)
+        uai.uai_connect_string = self.uai_mgr.gen_connection_string(uai)
 
         self.assertEqual("ssh testuser@1.2.3.4 -p 12345 -i ~/.ssh/id_rsa",
                          uai.uai_connect_string)
@@ -55,7 +64,7 @@ class TestUasMgr(unittest.TestCase):
         uai.username = "testuser"
         uai.uai_port = 22
         uai.uai_ip = "1.2.3.4"
-        uai.uai_connect_string = self.uas_mgr.gen_connection_string(uai)
+        uai.uai_connect_string = self.uai_mgr.gen_connection_string(uai)
 
         self.assertEqual("ssh testuser@1.2.3.4 -i ~/.ssh/id_rsa",
                          uai.uai_connect_string)
@@ -257,23 +266,23 @@ class TestUasMgr(unittest.TestCase):
 
     # pylint: disable=missing-docstring
     def test_get_pod_age(self):
-        self.assertEqual(UaiManager.get_pod_age(None), None)
-        self.assertEqual(UaiManager.get_pod_age("wrong"), None)
+        self.assertEqual(self.uas_mgr.get_pod_age(None), None)
+        self.assertEqual(self.uas_mgr.get_pod_age("wrong"), None)
 
         now = datetime.now(timezone.utc)
-        self.assertEqual(UaiManager.get_pod_age(now), "0m")
-        self.assertEqual(UaiManager.get_pod_age(now-timedelta(hours=1)),
+        self.assertEqual(self.uas_mgr.get_pod_age(now), "0m")
+        self.assertEqual(self.uas_mgr.get_pod_age(now-timedelta(hours=1)),
                          "1h0m")
-        self.assertEqual(UaiManager.get_pod_age(now-timedelta(hours=25)),
+        self.assertEqual(self.uas_mgr.get_pod_age(now-timedelta(hours=25)),
                          "1d1h")
-        self.assertEqual(UaiManager.get_pod_age(now-timedelta(minutes=25)),
+        self.assertEqual(self.uas_mgr.get_pod_age(now-timedelta(minutes=25)),
                          "25m")
-        self.assertEqual(UaiManager.get_pod_age(now-timedelta(days=89)),
+        self.assertEqual(self.uas_mgr.get_pod_age(now-timedelta(days=89)),
                          "89d")
         # for days > 0, don't print minutes
-        self.assertEqual(UaiManager.get_pod_age(now-timedelta(minutes=1442)),
+        self.assertEqual(self.uas_mgr.get_pod_age(now-timedelta(minutes=1442)),
                          "1d")
-        self.assertEqual(UaiManager.get_pod_age(now-timedelta(minutes=1501)),
+        self.assertEqual(self.uas_mgr.get_pod_age(now-timedelta(minutes=1501)),
                          "1d1h")
 
 

@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.1] - 2020-10-01
+- CASMUAS-176 refactor UAS manager / UAI manager functions to prep for SSH Broker work
+
 ## [1.10.0] - 2020-10-01
 - Updates to chart(s) to support Helm v3/Loftsman v1
 

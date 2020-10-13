@@ -16,7 +16,6 @@ import werkzeug
 import swagger_server.controllers.uas_controller as uas_ctl
 from swagger_server import version
 from swagger_server.uas_lib.uas_cfg import UasCfg
-from swagger_server.uas_lib.uai_mgr import UaiManager
 
 app = flask.Flask(__name__)  # pylint: disable=invalid-name
 
@@ -29,17 +28,17 @@ class TestUasController(unittest.TestCase):
     os.environ["KUBERNETES_SERVICE_PORT"] = "443"
     os.environ["KUBERNETES_SERVICE_HOST"] = "127.0.0.1"
     uas_ctl.uas_cfg = UasCfg(uas_cfg='swagger_server/test/cray-uas-mgr.yaml')
-    with app.test_request_context('/'):
-        uas_ctl.uas_mgr = UaiManager()
 
     # pylint: disable=missing-docstring
     def test_delete_uai_by_name(self):
-        resp = uas_ctl.delete_uai_by_name([])
+        with app.test_request_context('/'):
+            resp = uas_ctl.delete_uai_by_name([])
         self.assertEqual(resp, "Must provide a list of UAI names to delete.")
 
     # pylint: disable=missing-docstring
     def test_get_uas_images(self):
-        images = uas_ctl.get_uas_images()
+        with app.test_request_context('/'):
+            images = uas_ctl.get_uas_images()
         self.assertEqual(images,
                          {'default_image':
                           'dtr.dev.cray.com:443/cray/cray-uas-sles15:latest',
@@ -48,67 +47,11 @@ class TestUasController(unittest.TestCase):
 
     # pylint: disable=missing-docstring
     def test_get_uas_mgr_info(self):
-        info = uas_ctl.get_uas_mgr_info()
+        with app.test_request_context('/'):
+            info = uas_ctl.get_uas_mgr_info()
         self.assertEqual(info,
                          {'service_name': 'cray-uas-mgr',
                           'version': version})
-
-    # pylint: disable=missing-docstring
-    def test_delete_uas_image(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.delete_uas_image_deprecated("fred")
-
-    # pylint: disable=missing-docstring
-    def test_create_uas_image(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.create_uas_image_deprecated(None, None)
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.create_uas_image_deprecated("fred", None)
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.create_uas_image_deprecated("fred", False)
-
-    # pylint: disable=missing-docstring
-    def test_update_uas_image(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.update_uas_image_deprecated(None, None)
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.update_uas_image_deprecated("fred", None)
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.update_uas_image_deprecated("fred", False)
-
-    # pylint: disable=missing-docstring
-    def test_get_uas_image(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.get_uas_image_deprecated(None)
-
-    # pylint: disable=missing-docstring
-    def test_delete_uas_volume(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.delete_uas_volume_deprecated(None)
-
-    # pylint: disable=missing-docstring
-    def test_create_uas_volume(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.create_uas_volume_deprecated(None, None)
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.create_uas_volume_deprecated("fred", None)
-
-    # pylint: disable=missing-docstring
-    def test_update_uas_volume(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.update_uas_volume_deprecated(None, None)
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.update_uas_volume_deprecated("fred", None)
-
-    # pylint: disable=missing-docstring
-    def test_get_uas_volume(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.get_uas_volume_deprecated(None)
-
-    # pylint: disable=missing-docstring
-    def test_get_uas_volumes(self):
-        with self.assertRaises(werkzeug.exceptions.NotImplemented):
-            uas_ctl.get_uas_volumes_deprecated()
 
     # pylint: disable=missing-docstring
     def test_get_uas_images_admin(self):
@@ -121,7 +64,8 @@ class TestUasController(unittest.TestCase):
         its image_id.
 
         """
-        resp = uas_ctl.create_uas_image_admin(imagename=name, default=default)
+        with app.test_request_context('/'):
+            resp = uas_ctl.create_uas_image_admin(imagename=name, default=default)
         self.assertIsInstance(resp, dict)
         self.assertIn('image_id', resp)
         return resp['image_id']
@@ -130,7 +74,8 @@ class TestUasController(unittest.TestCase):
         """ Delete an image based on its image ID and verify the result.
 
         """
-        resp = uas_ctl.delete_uas_image_admin(image_id=image_id)
+        with app.test_request_context('/'):
+            resp = uas_ctl.delete_uas_image_admin(image_id=image_id)
         self.assertIsInstance(resp, dict)
         self.assertIn('image_id', resp)
         self.assertEqual(image_id, resp['image_id'])
@@ -205,11 +150,12 @@ class TestUasController(unittest.TestCase):
                 encoding='utf8'
             )
         )
-        resp = uas_ctl.create_uas_volume_admin(
-            volumename="my-volume",
-            mount_path="/var/mnt",
-            volume_description=vol_desc
-        )
+        with app.test_request_context('/'):
+            resp = uas_ctl.create_uas_volume_admin(
+                volumename="my-volume",
+                mount_path="/var/mnt",
+                volume_description=vol_desc
+            )
         self.assertIsInstance(resp, dict)
         self.assertIn('volume_id', resp)
         return resp['volume_id']
@@ -218,7 +164,8 @@ class TestUasController(unittest.TestCase):
         """Delete a volume by its volume_id and verify the result.
 
         """
-        resp = uas_ctl.delete_uas_volume_admin(volume_id=volume_id)
+        with app.test_request_context('/'):
+            resp = uas_ctl.delete_uas_volume_admin(volume_id=volume_id)
         self.assertIn('volume_id', resp)
         self.assertEqual(volume_id, resp['volume_id'])
 
