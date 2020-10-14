@@ -384,3 +384,86 @@ def delete_local_config_admin():
     :rtype: None
     """
     return UasManager().factory_reset()
+
+# Resource Configs...
+def create_uas_resource_admin(comment=None, limit=None, request=None):
+    """Add a resource limit / request configuration item
+
+    Add a resource limit / request configuration to configuration.
+
+    :param comment: Comment describing Resource Config to Create (optional)
+    :type comment: str
+    :param limit: K8s resource limit JSON string
+    :type limit: str
+    :param request: K8s resource request JSON string
+    :type request: str
+
+    :rtype: Resource
+
+    """
+    return UasManager().create_resource(comment, limit, request)
+
+
+def get_uas_resources_admin():
+    """List UAS resource limit / request config items
+
+    List all available UAS resource limit / request config items.
+
+
+    :rtype: Resource
+    """
+    return UasManager().get_resources()
+
+
+def get_uas_resource_admin(resource_id):
+    """Get the specified resource limit / request configuration item
+
+    Get a description of the named resource limit / request config item
+
+    :param resource_id:
+    :type resource_id: str
+
+    :rtype: Resource
+    """
+    if not resource_id:
+        return "Must provide resource_id to get."
+    return UasManager().get_resource(resource_id)
+
+
+def update_uas_resource_admin(resource_id,
+                              comment=None,
+                              limit=None,
+                              request=None):
+    """Update a resource limit / request configuration item
+
+    Update an resource, specifically this can set the 'comment',
+    'limit' or 'request' fields of the resource configuration.
+
+    :param resource_id: The ID of the resource to update
+    :type resource_id: str
+    :param comment: new comment for the resource request / limit config
+    :type comment: str
+    :param limit: K8s resource limit JSON string
+    :type default: str
+    :param request: K8s resource request JSON string
+    :type default: str
+
+    :rtype: Resource
+
+    """
+    if not resource_id:
+        return "Must provide resource_id to update."
+    return UasManager().update_resource(resource_id, comment, limit, request)
+
+def delete_uas_resource_admin(resource_id):
+    """Remove the specified resource limit / request configuration
+
+    :param resource_id:
+    :type resource_id: str
+
+    :rtype: Resource
+
+    """
+    if not resource_id:
+        return "Must provide resource_id to delete."
+    return UasManager().delete_resource(resource_id)
