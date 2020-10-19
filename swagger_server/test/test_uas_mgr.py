@@ -55,7 +55,7 @@ class TestUasMgr(unittest.TestCase):
         uai.uai_ip = "1.2.3.4"
         uai.uai_connect_string = self.uai_mgr.gen_connection_string(uai)
 
-        self.assertEqual("ssh testuser@1.2.3.4 -p 12345 -i ~/.ssh/id_rsa",
+        self.assertEqual("ssh testuser@1.2.3.4 -p 12345",
                          uai.uai_connect_string)
 
     # pylint: disable=missing-docstring
@@ -66,7 +66,7 @@ class TestUasMgr(unittest.TestCase):
         uai.uai_ip = "1.2.3.4"
         uai.uai_connect_string = self.uai_mgr.gen_connection_string(uai)
 
-        self.assertEqual("ssh testuser@1.2.3.4 -i ~/.ssh/id_rsa",
+        self.assertEqual("ssh testuser@1.2.3.4",
                          uai.uai_connect_string)
 
     def test_image_lifecycle(self):

@@ -97,10 +97,7 @@ class UasCfg:
         imgs = UAIImage.get_all()
         if not imgs:
             return None
-        images = []
-        for img in imgs:
-            images.append(img.imagename)
-        return images
+        return [img.imagename for img in imgs]
 
     def get_default_image(self):
         """Retrieve the name of the default image.
@@ -108,6 +105,7 @@ class UasCfg:
         """
         _ = self.get_config()
         imgs = UAIImage.get_all()
+        imgs = [] if imgs is None else imgs
         for img in imgs:
             if img.default:
                 return img.imagename
@@ -119,6 +117,7 @@ class UasCfg:
         """
         _ = self.get_config()
         imgs = UAIImage.get_all()
+        imgs = [] if imgs is None else imgs
         for img in imgs:
             if imagename == img.imagename:
                 return True
@@ -140,32 +139,29 @@ class UasCfg:
             ext_ip = None
         return ext_ip
 
-    def gen_volume_mounts(self):
+    def gen_volume_mounts(self, volume_list):
         """Generate a list of volume mounts from the configuration.  Return
         the K8s volume mount for each.
 
         """
         _ = self.get_config()
-        volume_mount_list = []
-        volume_mounts = UAIVolume.get_all()
-        for mnt in volume_mounts:
-            volume_mount_list.append(
-                client.V1VolumeMount(
-                    name=mnt.volumename,
-                    mount_path=mnt.mount_path
-                )
-            )
+        volume_mounts = [UAIVolume.get(volume_id) for volume_id in volume_list]
+        volume_mount_list = [
+            client.V1VolumeMount(name=mnt.volumename,
+                                 mount_path=mnt.mount_path)
+            for mnt in volume_mounts
+        ]
         return volume_mount_list
 
-    def gen_volumes(self):
+    def gen_volumes(self, volume_list):
         """Generate a list of volumes from the configuration.  Return the K8s
         volume definitions for each.
 
         """
         _ = self.get_config()
-        volume_list = []
-        volume_mounts = UAIVolume.get_all()
-        for vol in volume_mounts:
+        volume_mounts = [UAIVolume.get(volume_id) for volume_id in volume_list]
+        ret = []
+        for volume_mount in volume_mounts:
             # Okay, this is magic, so it requires a bit of
             # explanation. The 'client.V1Volume()' call takes a long
             # list of different arguments, one for each supported type
@@ -179,13 +175,13 @@ class UasCfg:
             # defined, then pass the dictionary instead of explicit
             # arguments.
             volume_args = {}
-            volume_args['name'] = vol.volumename
-            volume_source_key = list(vol.volume_description.keys())[0]
+            volume_args['name'] = volume_mount.volumename
+            volume_source_key = list(volume_mount.volume_description.keys())[0]
             volume_args[volume_source_key] = UAIVolume.get_volume_source(
-                vol.volume_description
+                volume_mount.volume_description
             )
-            volume_list.append(client.V1Volume(**volume_args))
-        return volume_list
+            ret.append(client.V1Volume(**volume_args))
+        return ret
 
     def gen_port_entry(self, port, service):
         """Generate a port entry for the service object """
@@ -243,7 +239,7 @@ class UasCfg:
             # numbers to be processed into kubernetes port entry
             # objects
             try:
-                cfg_port_list = cfg['uas_svc_ports']
+                cfg_port_list = cfg['uas_ports']
                 if optional_ports:
                     # Add any optional ports to the cfg_port_list
                     for port in optional_ports:

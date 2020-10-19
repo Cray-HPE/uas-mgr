@@ -88,7 +88,7 @@ class UASDataModel(Etcd3Model):
 
     @classmethod
     def watch(cls):
-        """Wrap Etcd3Model.get_all() and bypass it if the class is not
+        """Wrap Etcd3Model.watch() and bypass it if the class is not
         registered yet.
 
         """

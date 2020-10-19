@@ -49,3 +49,15 @@ class UAIResource(UASDataModel):
     # Resource request JSON string, see Kubernetes documentation for
     # details.
     request = Etcd3Attr(default=None)
+
+    def expand(self):
+        """Produce a dictionary of the publicly viewable elements of the
+        object.
+
+        """
+        return {
+            'resource_id': self.resource_id,
+            'comment': self.comment,
+            'limit': self.limit,
+            'request': self.request
+        }

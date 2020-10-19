@@ -5,12 +5,17 @@
 Class that implements UAS operations that require user attributes
 """
 
+import os
 import time
 import uuid
 from flask import abort, request
+from kubernetes import client
 from kubernetes.client.rest import ApiException
 from swagger_server.uas_lib.uas_base import UasBase
 from swagger_server.uas_lib.uas_auth import UasAuth
+from swagger_server.uas_data_model.uai_image import UAIImage
+from swagger_server.uas_data_model.uai_volume import UAIVolume
+from swagger_server.uas_data_model.uai_class import UAIClass
 
 # picking 40 seconds so that it's under the gateway timeout
 UAI_IP_TIMEOUT = 40
@@ -55,12 +60,63 @@ class UaiManager(UasBase):
                     "missing: %s" %  missing
                 )
 
+
+    def _construct_uai_class(self, imagename):
+        """Make a UAI class on which to base a User Workflow style UAI.  This
+        will use a default UAI Class if there is one, otherwise, it
+        will build a temporary UAI Class on which to base the proposed
+        UAI.
+
+        """
+        uai_class = UAIClass.get_default()
+        if uai_class is None:
+            if not imagename:
+                imagename = self.uas_cfg.get_default_image()
+                self.logger.info(
+                    "create_uai - no image name provided, "
+                    "using default %s",
+                    imagename
+                )
+                if not self.uas_cfg.validate_image(imagename):
+                    self.logger.error(
+                        "create_uai - image %s is invalid",
+                        imagename
+                    )
+                    abort(
+                        400,
+                        "Invalid image (%s). Valid images: %s. Default: %s" % (
+                            imagename,
+                            self.uas_cfg.get_images(),
+                            self.uas_cfg.get_default_image()
+                        )
+                    )
+            image_id = UAIImage.get_by_name(imagename).image_id
+            volumes = UAIVolume.get_all()
+            volumes = [] if volumes is None else volumes
+            volume_list = [ vol.volume_id for vol in volumes]
+            uai_class = UAIClass(
+                comment=None,
+                default=False,
+                public_ssh=True,
+                image_id=image_id,
+                resource_id=None,
+                volume_list=volume_list
+            )
+        elif imagename is not None:
+            abort(
+                400,
+                "imagename cannot be specified when a default "
+                "UAI Class is defined"
+            )
+        return uai_class
+
     # pylint: disable=too-many-branches,too-many-statements,too-many-locals
     def create_uai(self, public_key, imagename, opt_ports, namespace=None):
         """Create a new UAI
 
         """
         opt_ports_list = []
+        uai_class = self._construct_uai_class(imagename)
         if not public_key:
             self.logger.warning("create_uai - missing public key")
             abort(400, "Missing ssh public key.")
@@ -84,27 +140,6 @@ class UaiManager(UasBase):
                 namespace
             )
 
-        if not imagename:
-            imagename = self.uas_cfg.get_default_image()
-            self.logger.info(
-                "create_uai - no image name provided, "
-                "using default %s",
-                imagename
-            )
-
-        if not self.uas_cfg.validate_image(imagename):
-            self.logger.error(
-                "create_uai - image %s is invalid",
-                imagename
-            )
-            abort(
-                400,
-                "Invalid image (%s). Valid images: %s. Default: %s" % (
-                    imagename,
-                    self.uas_cfg.get_images(),
-                    self.uas_cfg.get_default_image()
-                )
-            )
         if opt_ports:
             opt_ports_list = [int(i) for i in opt_ports.split(',')]
 
@@ -128,22 +163,76 @@ class UaiManager(UasBase):
 
         deployment_id = uuid.uuid4().hex[:8]
         deployment_name = 'uai-' + self.username + '-' + str(deployment_id)
+        env = [
+            client.V1EnvVar(
+                name='UAS_NAME',
+                value=deployment_name + "-ssh"
+            ),
+            client.V1EnvVar(
+                name='UAS_PASSWD',
+                value=self.passwd
+            ),
+            client.V1EnvVar(
+                name='UAS_PUBKEY',
+                value=public_key_str
+            )
+        ]
+        if uai_class.uai_creation_class is not None:
+            env.append(
+                client.V1EnvVar(
+                    name='UAI_CREATION_CLASS',
+                    value=uai_class.uai_creation_class
+                )
+            )
+
+        # Create and configure a spec section.  If we are using
+        # macvlans then we will set that up in an annotation in the
+        # metadata, otherwise, the annotations will be None.
+        # USE_MACVLAN is based on configuration from the Helm chart
+        # that can be set at service deployment time.
+        meta_annotations = None
+        if os.environ.get('USE_MACVLAN', 'true').lower() == 'true':
+            meta_annotations = {
+                'k8s.v1.cni.cncf.io/networks': 'macvlan-uas-nmn-conf@nmn1'
+            }
+        labels = self.gen_labels(deployment_name, self.username, uai_class)
+        pod_metadata=client.V1ObjectMeta(
+            labels=labels,
+            annotations=meta_annotations
+        )
+        deploy_metadata = client.V1ObjectMeta(
+            name=deployment_name,
+            labels=labels
+        )
         deployment = self.create_deployment_object(
-            deployment_name,
-            self.username,
-            imagename,
-            public_key_str,
-            self.passwd,
-            opt_ports_list
+            uai_class=uai_class,
+            deployment_name=deployment_name,
+            env=env,
+            pod_metadata=pod_metadata,
+            deploy_metadata=deploy_metadata,
+            opt_ports_list=opt_ports_list
         )
         # Create a service for the UAI
         uas_ssh_svc_name = deployment_name + '-ssh'
+        service_metadata = client.V1ObjectMeta(
+            name=uas_ssh_svc_name,
+            labels=self.gen_labels(deployment_name, self.username),
+        )
+        # Pick the service type based on the value of 'public_ssh' in
+        # the UAI Class.  This is a lot simpler than it looks if you
+        # delve into it, but I am using the code that was here to do
+        # this. That code bases the service class (SSH point of
+        # access) on two strings: "service" (which basically means an
+        # internal ClusterIP) and "ssh" (which basically means a
+        # LoadBalncer IP or a NodePort).  Instead of reworking all
+        # that logic, I am picking one or the other here based on
+        # whether 'public_ssh' is true or false.
+        service_type = "ssh" if uai_class.public_ssh else "service"
         uas_ssh_svc = self.create_service_object(
-            uas_ssh_svc_name,
-            "ssh",
-            opt_ports_list,
-            deployment_name,
-            self.username
+            service_type=service_type,
+            opt_ports_list=opt_ports_list,
+            deployment_name=deployment_name,
+            metadata=service_metadata
         )
 
         # Make sure the UAI deployment is created

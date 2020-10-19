@@ -1,0 +1,105 @@
+"""Data Model for UAI Classes
+
+Copyright 2020, Cray Inc. All rights reserved.
+
+"""
+from __future__ import absolute_import
+from etcd3_model import Etcd3Attr
+from swagger_server import ETCD_INSTANCE, ETCD_PREFIX, version
+from swagger_server.uas_data_model.uas_data_model import UASDataModel
+
+
+#pylint: disable=too-few-public-methods
+class UAIClass(UASDataModel):
+    """
+    UAI Class Data Model
+
+        Fields:
+            imagename: the name of the docker image (string)
+            kind: "UAIImage"
+            data_version: the data model version for this instance
+            default: whether or not this is the default image to use
+                     for a UAI (boolean)
+    """
+    etcd_instance = ETCD_INSTANCE
+    model_prefix = "%s/%s" % (ETCD_PREFIX, "UAIClass")
+
+    # The Object ID used to locate each UAI Class configuration instance
+    class_id = Etcd3Attr(is_object_id=True)  # Read-only after creation
+
+    # The kind of object that the data here represent.  Should always
+    # contain "UAIClass".  Protects against stray data
+    # types.
+    kind = Etcd3Attr(default="UAIClass")  # Read only
+
+    # The Data Model version corresponding to this UAI Class's data.
+    # Will always be equal to the UAS Manager service version
+    # under which the data were stored in ETCD.  Protects against
+    # incompatible data.
+    api_version = Etcd3Attr(default=version)  # Read only
+
+    # A comment describing what this UAI Class is used for.
+    comment = Etcd3Attr(default=None)
+
+    # A flag indicating whether the UAI Class is the default UAI Class.
+    default = Etcd3Attr(default=False)
+
+    # A flag indicating whether UAIs created using this class have SSH
+    # listening on a public IP address or a cluster-only IP address.
+    public_ssh = Etcd3Attr(default=False)
+
+    # The namespace UAIs of this class will be placed in when created.
+    namespace = Etcd3Attr(default=None)
+
+    # The class that UAIs created by a Broker of this class will be
+    # created with.  This is for broker UAIs only and has no meaning
+    # for non-broker UAIs.
+    uai_creation_class = Etcd3Attr(default=None)
+
+    # The UAI Image ID of the UAI Image to be used by UAIs created
+    # using the UAI Class.
+    image_id = Etcd3Attr(default=None)
+
+    # The K8s priority class name that UAIs or Brokers created using
+    # this UAI Class run with.  This determines which set of resource
+    # quotas are assigned to the UAI or Broker and what the scheduling
+    # priorities of its pods are relative to other pods on the system.
+    priority_class_name = Etcd3Attr(default=None)
+
+    # The UAI Resource Configuration ID of the Resource Limit /
+    # Request Configuration to be used by UAIs created using the UAI
+    # Class.
+    resource_id = Etcd3Attr(default=None)
+
+    # The list of Volume Mount IDs identifying volumes to be mounted
+    # in UAIs created using the UAI Class.
+    volume_list = Etcd3Attr(default=None)
+
+    @staticmethod
+    def get_default():
+        """ Retrieve the current default UAI / Broker Class, if any.
+
+        """
+        uai_classes = UAIClass.get_all()
+        if uai_classes is not None:
+            for uai_class in uai_classes:
+                if uai_class.default:
+                    return uai_class
+        return None
+
+    def expand(self):
+        """Produce a dictionary of the publicly viewable elements of the
+        object.
+
+        """
+        return {
+            'class_id': self.class_id,
+            'comment': self.comment,
+            'default': self.default,
+            'public_ssh': self.public_ssh,
+            'namespace': self.namespace,
+            'uai_creation_class': self.uai_creation_class,
+            'image_id': self.image_id,
+            'resource_id': self.resource_id,
+            'volume_list': self.volume_list
+        }

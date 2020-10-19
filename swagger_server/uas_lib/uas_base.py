@@ -4,9 +4,9 @@
 Base Class for User Access Service Operations
 """
 
-import os
 import logging
 import sys
+import json
 from datetime import datetime, timezone
 from flask import abort
 from kubernetes import config, client
@@ -15,6 +15,8 @@ from kubernetes.client import Configuration
 from kubernetes.client.api import core_v1_api
 from swagger_server.models import UAI
 from swagger_server.uas_lib.uas_cfg import UasCfg
+from swagger_server.uas_data_model.uai_resource import UAIResource
+from swagger_server.uas_data_model.uai_image import UAIImage
 
 class UasBase:
     """Base class used for any class implementing UAS API functionality.
@@ -82,7 +84,7 @@ class UasBase:
         return retstr
 
     @staticmethod
-    def gen_labels(deployment_name, user_name=None):
+    def gen_labels(deployment_name, user_name=None, uai_class=None):
         """Generate labels for a UAI Deployment
 
         """
@@ -92,14 +94,38 @@ class UasBase:
         }
         if user_name is not None:
             ret['user'] = user_name
+        if uai_class is not None:
+            if uai_class.uai_creation_class is not None:
+                ret['uas-uai-creation-class'] = uai_class.uai_creation_class
+            ret['uas-public-ssh'] = str(uai_class.public_ssh)
+            ret['uas-class-id'] = uai_class.class_id
         return ret
 
     # pylint: disable=too-many-arguments,too-many-locals
-    def create_deployment_object(self, deployment_name, user_name, imagename,
-                                 public_key_str, passwd_str, opt_ports_list):
-        """Construct a deployment for a UAI
+    def create_deployment_object(self,
+                                 uai_class,
+                                 deployment_name,
+                                 env,
+                                 pod_metadata,
+                                 deploy_metadata,
+                                 opt_ports_list):
+        """Construct a deployment for a UAI or Broker
 
         """
+        imagename = UAIImage.get(uai_class.image_id).imagename
+        volume_list = uai_class.volume_list
+        resource_id = uai_class.resource_id
+        resources = None
+        if resource_id is not None:
+            resources = {}
+            limit_json = UAIResource.get(resource_id).limit
+            request_json = UAIResource.get(resource_id).request
+            if limit_json:
+                resources['limits'] = json.loads(limit_json)
+            if request_json:
+                resources['requests'] = json.loads(request_json)
+        if not resources:
+            resources = None
         container_ports = self.uas_cfg.gen_port_list(
             service=False,
             optional_ports=opt_ports_list
@@ -115,26 +141,14 @@ class UasBase:
         container = client.V1Container(
             name=deployment_name,
             image=imagename,
-            env=[
-                client.V1EnvVar(
-                    name='UAS_NAME',
-                    value=deployment_name + "-ssh"
-                ),
-                client.V1EnvVar(
-                    name='UAS_PASSWD',
-                    value=passwd_str
-                ),
-                client.V1EnvVar(
-                    name='UAS_PUBKEY',
-                    value=public_key_str
-                )
-            ],
+            resources=resources,
+            env=env,
             ports=container_ports,
-            volume_mounts=self.uas_cfg.gen_volume_mounts(),
+            volume_mounts=self.uas_cfg.gen_volume_mounts(volume_list),
             readiness_probe=self.uas_cfg.create_readiness_probe()
         )
         # Create a volumes template
-        volumes = self.uas_cfg.gen_volumes()
+        volumes = self.uas_cfg.gen_volumes(volume_list)
 
         # Create and configure affinity
         node_selector_terms = [
@@ -157,62 +171,53 @@ class UasBase:
             required_during_scheduling_ignored_during_execution=node_selector
         )
         affinity = client.V1Affinity(node_affinity=node_affinity)
-
-        # Create and configure a spec section.  If we are using
-        # macvlans then we will set that up in an annotation in the
-        # metadata, otherwise, the annotations will be None.
-        # USE_MACVLAN is based on configuration from the Helm chart
-        # that can be set at service deployment time.
-        meta_annotations = None
-        if os.environ.get('USE_MACVLAN', 'true').lower() == 'true':
-            meta_annotations = {
-                'k8s.v1.cni.cncf.io/networks': 'macvlan-uas-nmn-conf@nmn1'
-            }
+        priority_class_name = 'uai-priority'
+        if uai_class.priority_class_name is not None:
+            priority_class_name = uai_class.priority_class_name
         template = client.V1PodTemplateSpec(
-            metadata=client.V1ObjectMeta(
-                labels=self.gen_labels(deployment_name, user_name),
-                annotations=meta_annotations
-            ),
+            metadata=pod_metadata,
             spec=client.V1PodSpec(
-                priority_class_name='uai-priority',
+                priority_class_name=priority_class_name,
                 containers=[container],
                 affinity=affinity,
                 volumes=volumes
             )
         )
+
         # Create the specification of deployment
         spec = client.V1DeploymentSpec(
             replicas=1,
-            selector={'matchLabels': {'app': deployment_name}},
-            template=template)
+            selector={
+                'matchLabels': {
+                    'app': deployment_name
+                }
+            },
+            template=template
+        )
         # Instantiate the deployment object
         deployment = client.V1Deployment(
             api_version="apps/v1",
             kind="Deployment",
-            metadata=client.V1ObjectMeta(
-                name=deployment_name,
-                labels=self.gen_labels(deployment_name, user_name)
-            ),
-            spec=spec)
+            metadata=deploy_metadata,
+            spec=spec
+        )
         return deployment
 
-    def create_service_object(self, service_name, service_type, opt_ports_list,
-                              deployment_name, user_name):
+    def create_service_object(self, service_type, opt_ports_list,
+                              deployment_name, metadata):
         """
         Create a service object for the deployment of the UAI.
 
-        :param service_name: Name of the service
-        :type service_name: str
         :param service_type: One of "ssh" or "service"
         :type service_type: str
         :param opt_ports_list: List of optional ports to project
         :type opt_ports_list: list
+        :param deployment_name: The name of the UAI / Broker deployment
+        :type deployment_name: str
+        :param metadata: The service metadata to use
+        :type metadata: K8s metadata object
         :return: service object
         """
-        metadata = client.V1ObjectMeta(
-            name=service_name,
-            labels=self.gen_labels(deployment_name, user_name),
-        )
         ports = self.uas_cfg.gen_port_list(service_type, service=True,
                                            optional_ports=opt_ports_list)
 
@@ -233,14 +238,11 @@ class UasBase:
             abort(400, msg)
         # Check if LoadBalancer and whether an IP pool is set
         if svc_type['svc_type'] == "LoadBalancer" and svc_type['ip_pool']:
-            # A specific IP pool is given, create new metadata with annotations
-            metadata = client.V1ObjectMeta(
-                name=service_name,
-                labels=self.gen_labels(deployment_name, user_name),
-                annotations={
-                    "metallb.universe.tf/address-pool": svc_type['ip_pool']
-                }
-            )
+            # A specific IP pool is given, update the metadata with
+            # annotations
+            metadata.annotations = {
+                "metallb.universe.tf/address-pool": svc_type['ip_pool']
+            }
         spec = client.V1ServiceSpec(
             selector={'app': deployment_name},
             type=svc_type['svc_type'],
@@ -293,6 +295,11 @@ class UasBase:
                     namespace=namespace
                 )
             except ApiException as err:
+                self.logger.info(
+                    "Failed to create service\n %s",
+                    (str(service_body))
+                )
+
                 self.logger.error(
                     "Failed to create service %s: %s",
                     service_name,
@@ -408,7 +415,7 @@ class UasBase:
         ssh connection to the uai.
 
         The string will look like:
-          ssh uai.username@uai.uai_ip -p uai.uai_port -i ~/.ssh/id_rsa
+          ssh uai.username@uai.uai_ip -p uai.uai_port
 
         :param uai:
         :type uai: uai
@@ -416,7 +423,7 @@ class UasBase:
         """
         port_string = " -p " + str(uai.uai_port) if uai.uai_port != 22 else ""
 
-        return "ssh %s@%s%s -i ~/.ssh/id_rsa" % (
+        return "ssh %s@%s%s" % (
             uai.username,
             uai.uai_ip,
             port_string

@@ -407,5 +407,18 @@ class UAIVolume(UASDataModel):
 
         """
         vols = cls.get_all()
+        vols = [] if vols is None else vols
         vol_dict = {vol.volumename: vol for vol in vols}
         return vol_dict.get(volumename, None)
+
+    def expand(self):
+        """Produce a dictionary of the publicly viewable elements of the
+        object.
+
+        """
+        return {
+            'volume_id': self.volume_id,
+            'volumename': self.volumename,
+            'mount_path': self.mount_path,
+            'volume_description': self.volume_description
+        }
