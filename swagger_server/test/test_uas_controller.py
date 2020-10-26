@@ -260,20 +260,123 @@ class TestUasController(unittest.TestCase):
                 _ = uas_ctl.delete_uas_volume_admin(volume_id=str(uuid4()))
 
     # pylint: disable=missing-docstring
+    def test_get_uas_resources_admin(self):
+        with app.test_request_context('/'):
+            resources = uas_ctl.get_uas_resources_admin()
+        self.assertIsInstance(resources, list)
+
+    def __create_test_resource(self):
+        """Create a test resource through the API and make sure that works,
+        return the resource ID so that it can be used for subsequent
+        activities.
+
+        """
+        limit = json.dumps(
+            {
+                'cpu': "200m",
+                'memory': "500Mi"
+            }
+        )
+        request = json.dumps(
+            {
+                'cpu': "100m",
+                'memory': "200Mi"
+            }
+        )
+        with app.test_request_context('/'):
+            resp = uas_ctl.create_uas_resource_admin(
+                comment="test comment",
+                limit=limit,
+                request=request
+            )
+        self.assertIsInstance(resp, dict)
+        self.assertIn('resource_id', resp)
+        return resp['resource_id']
+
+    def __delete_test_resource(self, resource_id):
+        """Delete a resource by its resource_id and verify the result.
+
+        """
+        with app.test_request_context('/'):
+            resp = uas_ctl.delete_uas_resource_admin(resource_id=resource_id)
+        self.assertIn('resource_id', resp)
+        self.assertEqual(resource_id, resp['resource_id'])
+
+    # pylint: disable=missing-docstring
+    def test_get_uas_resource_admin(self):
+        with app.test_request_context('/'):
+            resp = uas_ctl.get_uas_resource_admin(resource_id=None)
+            self.assertEqual(resp, "Must provide resource_id to get.")
+            with self.assertRaises(werkzeug.exceptions.NotFound):
+                _ = uas_ctl.get_uas_resource_admin(resource_id=str(uuid4()))
+
+    # pylint: disable=missing-docstring
+    def test_update_uas_resource_admin(self):
+        with app.test_request_context('/'):
+            resp = uas_ctl.update_uas_resource_admin(resource_id=None)
+            self.assertEqual(resp, "Must provide resource_id to update.")
+            with self.assertRaises(werkzeug.exceptions.NotFound):
+                _ = uas_ctl.update_uas_resource_admin(resource_id=str(uuid4()))
+            resource_id = self.__create_test_resource()
+            limit = json.dumps(
+                {
+                    'cpu': "200m",
+                    'memory': "500Mi"
+                }
+            )
+            resp = uas_ctl.update_uas_resource_admin(
+                resource_id=resource_id,
+                limit=limit
+            )
+            self.assertIsInstance(resp, dict)
+            self.assertIn('resource_id', resp)
+            self.assertEqual(resource_id, resp['resource_id'])
+            self.assertIn('limit', resp)
+            self.assertIn("cpu", resp['limit'])
+            self.assertIn("200m", resp['limit'])
+            request = json.dumps(
+                {
+                    'cpu': "100m",
+                    'memory': "200Mi"
+                }
+            )
+            resp = uas_ctl.update_uas_resource_admin(
+                resource_id=resource_id,
+                request=request
+            )
+            self.assertIsInstance(resp, dict)
+            self.assertIn('resource_id', resp)
+            self.assertEqual(resource_id, resp['resource_id'])
+            self.assertIn('request', resp)
+            self.assertIn("cpu", resp['request'])
+            self.assertIn("100m", resp['request'])
+            self.__delete_test_resource(resource_id)
+
+    # pylint: disable=missing-docstring
+    def test_delete_uas_resource_admin(self):
+        with app.test_request_context('/'):
+            resp = uas_ctl.delete_uas_resource_admin(resource_id=None)
+            self.assertEqual(resp, "Must provide resource_id to delete.")
+            resp = uas_ctl.delete_uas_resource_admin(resource_id="")
+            self.assertEqual(resp, "Must provide resource_id to delete.")
+            with self.assertRaises(werkzeug.exceptions.NotFound):
+                _ = uas_ctl.delete_uas_resource_admin(resource_id=str(uuid4()))
+
+    # pylint: disable=missing-docstring
     def test_delete_local_config_admin(self):
         with app.test_request_context('/'):
             # Make sure there is something in the local configuration
-            volume_id = self.__create_test_volume()
-            resp = uas_ctl.get_uas_volume_admin(volume_id=volume_id)
-            self.assertIn('volume_id', resp)
-            self.assertEqual(volume_id, resp['volume_id'])
+            resource_id = self.__create_test_resource()
+            resp = uas_ctl.get_uas_resource_admin(resource_id=resource_id)
+            self.assertIn('resource_id', resp)
+            self.assertEqual(resource_id, resp['resource_id'])
             image_id = self.__create_test_image("locally_configured_image")
             resp = uas_ctl.get_uas_image_admin(image_id=image_id)
             self.assertIn('image_id', resp)
             self.assertEqual(image_id, resp['image_id'])
             resp = uas_ctl.delete_local_config_admin()
             with self.assertRaises(werkzeug.exceptions.NotFound):
-                _ = uas_ctl.get_uas_volume_admin(volume_id=volume_id)
+                _ = uas_ctl.get_uas_resource_admin(resource_id=resource_id)
             with self.assertRaises(werkzeug.exceptions.NotFound):
                 _ = uas_ctl.get_uas_image_admin(image_id=image_id)
 

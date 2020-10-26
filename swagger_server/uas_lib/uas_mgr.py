@@ -10,6 +10,7 @@ from flask import abort
 from swagger_server.uas_lib.uas_base import UasBase
 from swagger_server.uas_data_model.uai_image import UAIImage
 from swagger_server.uas_data_model.uai_volume import UAIVolume
+from swagger_server.uas_data_model.uai_resource import UAIResource
 from swagger_server.uas_data_model.populated_config import PopulatedConfig
 
 class UasManager(UasBase):
@@ -295,6 +296,146 @@ class UasManager(UasBase):
             for vol in vols
         ]
 
+    def delete_resource(self, resource_id):
+        """Delete resource limit / request config
+
+        """
+        self.uas_cfg.get_config()
+        resource = UAIResource.get(resource_id)
+        if resource is None:
+            abort(404, "resource config '%s' does not exist" % resource_id)
+        resource.remove() # don't use x.delete() you actually want it removed
+        return {
+            'resource_id': resource.resource_id,
+            'comment': resource.comment,
+            'limit': resource.limit,
+            'request': resource.request
+        }
+
+    def create_resource(self, comment=None, limit=None, request=None):
+        """Create a UAI resource limit / request config
+
+        """
+        self.uas_cfg.get_config()
+        # If 'limit' is specified convert it from a JSON string to a dictionary
+        if limit is not None:
+            try:
+                _ = json.loads(limit)
+            except json.decoder.JSONDecodeError as err:
+                abort(
+                    400,
+                    "Resource limit '%s' failed JSON decoding "
+                    "- %s" % (limit, str(err))
+                )
+        # If 'request' is specified convert it from a JSON string to a
+        # dictionary
+        if request is not None:
+            try:
+                _ = json.loads(request)
+            except json.decoder.JSONDecodeError as err:
+                abort(
+                    400,
+                    "Resource request '%s' failed JSON decoding "
+                    "- %s" % (request, str(err))
+                )
+        # Create it and store it...
+        resource = UAIResource(
+            comment=comment,
+            limit=limit,
+            request=request
+        )
+        resource.put()
+        return {
+            'resource_id': resource.resource_id,
+            'comment': resource.comment,
+            'limit': resource.limit,
+            'request': resource.request
+        }
+
+    def update_resource(self, resource_id,
+                        comment=None,
+                        limit=None,
+                        request=None):
+        """Update a resource limit / request config
+
+        """
+        self.uas_cfg.get_config()
+        resource = UAIResource.get(resource_id)
+        if resource is None:
+            abort(
+                404,
+                "Resource %s not found" % resource_id
+            )
+        changed = False
+        if comment is not None:
+            resource.comment = comment
+            changed = True
+        if limit is not None:
+            try:
+                _ = json.loads(limit)
+            except json.decoder.JSONDecodeError as err:
+                abort(
+                    400,
+                    "Resource limit '%s' failed JSON decoding "
+                    "- %s" % (limit, str(err))
+                )
+            resource.limit = limit
+            changed = True
+        if request is not None:
+            try:
+                _ = json.loads(request)
+            except json.decoder.JSONDecodeError as err:
+                abort(
+                    400,
+                    "Resource request '%s' failed JSON decoding "
+                    "- %s" % (request, str(err))
+                )
+            resource.request = request
+            changed = True
+        if changed:
+            resource.put()
+        return {
+            'resource_id': resource.resource_id,
+            'comment': resource.comment,
+            'limit': resource.limit,
+            'request': resource.request
+        }
+
+    def get_resource(self, resource_id):
+        """Get info on a specific resource limit / request config
+
+        """
+        self.uas_cfg.get_config()
+        resource = UAIResource.get(resource_id)
+        if resource is None:
+            abort(
+                404,
+                "Unknown resource '%s'" % resource_id
+            )
+        return {
+            'resource_id': resource.resource_id,
+            'comment': resource.comment,
+            'limit': resource.limit,
+            'request': resource.request
+        }
+
+    def get_resources(self):
+        """Get info on all resource limit / request configs
+
+        """
+        self.uas_cfg.get_config()
+        resources = UAIResource.get_all()
+        resources = [] if resources is None else resources
+        return [
+            {
+                'resource_id': resource.resource_id,
+                'comment': resource.comment,
+                'limit': resource.limit,
+                'request': resource.request
+            }
+            for resource in resources
+        ]
+
     def factory_reset(self):
         """Delete all the local configuration so that the next operation
         reloads config from the configmap configuration.
@@ -302,11 +443,18 @@ class UasManager(UasBase):
         """
         self.uas_cfg.get_config()
         vols = UAIVolume.get_all()
+        vols = [] if vols is None else vols
         for vol in vols:
             vol.remove()
         imgs = UAIImage.get_all()
+        imgs = [] if imgs is None else imgs
         for img in imgs:
             img.remove()
+        resources = UAIResource.get_all()
+        resources = [] if resources is None else resources
+        for resource in resources:
+            resource.remove()
         cfgs = PopulatedConfig.get_all()
+        cfgs = [] if cfgs is None else cfgs
         for cfg in cfgs:
             cfg.remove()

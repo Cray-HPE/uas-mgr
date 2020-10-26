@@ -49,6 +49,13 @@ info:
     This is where an administrator can list, create, get, modify, or
     delete entries in the list of available volumes.
 
+    ### /admin/config/resources
+
+    This is where an administrator can list, create, get, modify, or
+    delete resource limit / request configurations that can be used on
+    UAI Classes to specify Kubernetes limits for UAIs of a given
+    class.
+
     ## Workflows
 
 
@@ -82,8 +89,8 @@ info:
 
     As an administrator, establish the system-wide configuration, in
     terms of images and volumes, used for UAI creation. Subsequently
-    created UAIs will contain the specified /image and all configured
-    /volumes.  Note that the configuration applies to UAIs
+    created UAIs will contain the specified image and all configured
+    volumes.  Note that the configuration applies to UAIs
     subsequently created.  When the system-wide configuration changes,
     those changes do not affect pre-existing UAIs.
 
@@ -91,21 +98,22 @@ info:
     Currently supported paths under /admin/config are /admin/config/images and
     /admin/config/volumes.
 
-    #### GET /uas
-
-    Get a list of all available UAIs on the system.
-
     #### GET /images
 
     Get a list of container images available for use by a UAI.
 
     #### GET /admin/config/volumes
 
-    Get a list of volumes available for use by UAIs
+    Get a list of volumes available for use by UAIs.
 
     #### GET /admin/config/images
 
-    Get a list of images available for creating UAIs
+    Get a list of images available for creating UAIs.
+
+    #### GET /admin/config/resources
+
+    Get a list of resource limit / request configurations available for
+    creating UAI Classes (UAI Classes are not yet implemented).
 
     #### POST /admin/config/volumes
 
@@ -115,12 +123,10 @@ info:
 
     Add image name to list of valid images.
 
-    #### POST /uas
+    #### POST /admin/config/resources
 
-    Request to create new UAI, having the specified image.  All
-    volumes listed in the configuration are assigned to a new UAI, but
-    only the specified ports are assigned in addition to the SSH port,
-    and then only if they are in the set 80, 443 and 8888.
+    Create a resource limit / request configuration that can be used for
+    creating UAI Classes (UAI Classes are not yet implemented).
 
     #### GET /admin/config/images/{image_id}
 
@@ -129,6 +135,11 @@ info:
     #### GET /admin/config/volumes/{volume-id}
 
     Get information about a specific volume used in UAIs
+
+    #### GET /admin/config/resources/{resource_id}
+
+    Get information about a specific resource limit / request configuration
+    for creating UAI Classes (UAI Classes are not yet implemented).
 
     #### PATCH /admin/config/images/{image_id}
 
@@ -140,6 +151,11 @@ info:
     Update the entry for the specified volume in the list of volumes
     mounted in UAI containers.
 
+    #### PATCH /admin/config/resources/{resource_id}
+
+    Update the contents of a specific resource limit / request configuration
+    for creating UAI Classes (UAI Classes are not yet implemented).
+
     #### DELETE /admin/config/images/{image_id}
 
     Delete the specified image from the list of available UAI
@@ -149,7 +165,12 @@ info:
 
     Delete the specified volume from the list of available volumes.
 
-  version: "1.10.1"
+    #### DELETE /admin/config/resources/{resource_id}
+
+    Delete the specified resource limit / request configuration from the
+    list of available choices.
+
+  version: "1.11.0"
 
 servers:
   - url: "/apis/uas-mgr/v1"
@@ -193,7 +214,9 @@ paths:
 
     post:
       summary: "Create a UAI"
-      description: "Create a new UAI using the specified image.  It will be accessable via ssh, and projected onto ports, if ports are specified."
+      description: |
+        Create a new UAI using the specified image.  It will be accessable
+        via ssh, and projected onto ports, if ports are specified.
       operationId: "create_uai"
       tags:
       - "uas"
@@ -207,7 +230,9 @@ paths:
         example: "docker.local/cray/cray-uas-sles15sp1:latest"
       - name: "ports"
         in: "query"
-        description: "Additional ports to project from the UAI besides ssh. Restricted to ports 80, 443 and 8888."
+        description: |
+          Additional ports to project from the UAI besides ssh. Restricted
+          to ports 80, 443 and 8888.
         required: false
         schema:
           type: "string"
@@ -242,7 +267,8 @@ paths:
     delete:
       summary: "Delete a UAI"
       description: |
-        Delete specified UAI(s). Takes a list of UAI names and deletes the associated UAI(s).
+        Delete specified UAI(s). Takes a list of UAI names and deletes the
+        associated UAI(s).
       operationId: "delete_uai_by_name"
       tags:
       - "uas"
@@ -484,7 +510,8 @@ paths:
 
     patch:
       summary: "Update an image"
-      description: "Update an image, specifically this can set or unset the 'default' flag."
+      description:
+        Update an image, specifically this can set or unset the 'default' flag.
       operationId: "update_uas_image_admin"
       tags:
       - "images"
@@ -532,7 +559,8 @@ paths:
 
     delete:
       summary: "Remove the imagename from set of valid images"
-      description: "Delete the named image from the set of valid UAI container images."
+      description: |
+        Delete the named image from the set of valid UAI container images.
       operationId: "delete_uas_image_admin"
       tags:
       - "images"
@@ -544,7 +572,7 @@ paths:
         schema:
           type: "string"
         description: |
-          The image identifier (UUID) of the image to be updated in the
+          The image identifier (UUID) of the image to be deleted from the
           configuration.
         example: "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
       responses:
@@ -597,22 +625,20 @@ paths:
           you want to a pod.  There are many kinds of
           volumes, the examples given here illustrate some
           options:
-
           {
             "host_path": {
               "path": "/data",
               "type": "DirectoryOrCreate"
             }
           }
-
           or
-           {
+          {
             "secret": {
               "secretName": "my-secret"
             }
           }
           or
-           {
+          {
             "config_map": {
               "name": "my-configmap",
               "items": {
@@ -749,22 +775,20 @@ paths:
           you want to a pod.  There are many kinds of
           volumes, the examples given here illustrate some
           options:
-
           {
             "host_path": {
               "path": "/data",
               "type": "DirectoryOrCreate"
             }
           }
-
           or
-           {
+          {
             "secret": {
               "secretName": "my-secret"
             }
           }
           or
-           {
+          {
             "config_map": {
               "name": "my-configmap",
               "items": {
@@ -828,6 +852,225 @@ paths:
                 $ref: "#/components/schemas/Volume"
         404:
           description: "Failed to delete volume {volume_id}"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+  /admin/config/resources:
+
+    post:
+      summary: "Add a resource limit / request configuration"
+      description: |
+        Add a new resource limit / request configuration for use in
+        creating UAI Classes.  Resource limits and requests are described in
+        the Kubernetes documentation (UAI Classes are not yet implemented).
+      operationId: "create_uas_resource_admin"
+      tags:
+      - "resources"
+      - "config"
+      parameters:
+      - name: "comment"
+        in: "query"
+        description: |
+          A descriptive comment explaining the intended use of the resource
+          limit / request configuration.  Defaults to no description.
+        required: false
+        schema:
+          type: "string"
+        example: |
+          Resource limits for use on UAIs used in large compilation
+          workflows.
+      - name: "limit"
+        in: "query"
+        description: |
+          JSON description of a Kubernetes resource limit to be applied to
+          UAIs created using a UAI Class that references this resource
+          configuration.  This is the JSON equivalent of whatever you would
+          normally apply as a limit to a pod.  For example, to limit
+          a UAI to 300 Millicpus and 250 Mibibytes of memory:
+          { "cpu": "300m", "memory": "250Mi" }
+        required: false
+        schema:
+          type: "string"
+        example: "{ \"cpu\": \"300m\", \"memory\": \"250Mi\" }"
+      - name: "request"
+        in: "query"
+        description: |
+          JSON description of a Kubernetes resource request to be
+          applied to UAIs created using a UAI Class that references
+          this resource configuration.  This is the JSON equivalent of
+          whatever you would normally apply as a request to a pod or
+          deployment.  For example, to request a UAI with 300
+          Millicpus and 250 Mibibytes of memory:
+          { "cpu": "300m", "memory": "250Mi" }
+        required: false
+        schema:
+          type: "string"
+        example: "{ \"cpu\": \"300m\", \"memory\": \"250Mi\" }"
+      responses:
+        201:
+          description: "Resource configuration added"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resource"
+        400:
+          description: "Invalid limit or request specified"
+          content:
+            application/json:
+              schema:
+                type: "string"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+    get:
+      summary: "List Resource Limit / Request Configurations"
+      description: "List all available resource limit / request configurations"
+      operationId: "get_uas_resources_admin"
+      tags:
+      - "resources"
+      - "config"
+      responses:
+        200:
+          description: "UAS Resource Limit / Request Configuration List"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Resource"
+        404:
+          description: "UAS Resource Limit / Request Configuration  not found"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+  /admin/config/resources/{resource_id}:
+
+    get:
+      summary: "Get a Resource Limit / Request Configuration item"
+      description: |
+        Get a description of the specified resource limit / request
+        configuration item.
+      operationId: "get_uas_resource_admin"
+      tags:
+      - "resources"
+      - "config"
+      parameters:
+      - name: "resource_id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+        description: |
+          The resource identifier (UUID) of the resource limit / request
+          config to be retrieved from the configuration.
+        example: "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
+      responses:
+        200:
+          description: "Resource Limit / Request Configuration Item"
+          content:
+            application/json:
+             schema:
+                $ref: "#/components/schemas/Resource"
+        404:
+          description: "Resource Configuration {resource_id} not found"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+    patch:
+      summary: "Update a Resource Limit / Request Configuration Item"
+      description: |
+        Update a resource limit / request configuration item.
+      operationId: "update_uas_resource_admin"
+      tags:
+      - "resources"
+      - "config"
+      parameters:
+      - name: "resource_id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+        description: |
+          The resource identifier (UUID) of the resource limit / request config
+          to be updated in the configuration.
+        example: "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
+      - name: "comment"
+        in: "query"
+        description: |
+          A descriptive comment explaining the intended use of the resource
+          limit / request configuration.  Defaults to no description.
+        required: false
+        schema:
+          type: "string"
+        example: |
+          Resource limits for use on UAIs used in large compilation
+          workflows.
+      - name: "limit"
+        in: "query"
+        description: |
+          JSON description of a Kubernetes resource limit to be applied to
+          UAIs created using a UAI Class that references this resource
+          configuration.  This is the JSON equivalent of whatever you would
+          normally apply as a limit to a pod.  For example, to limit
+          a UAI to 300 Millicpus and 250 Mibibytes of memory:
+          { "cpu": "300m", "memory": "250Mi" }
+        required: false
+        schema:
+          type: "string"
+        example: "{ \"cpu\": \"300m\", \"memory\": \"250Mi\" }"
+      - name: "request"
+        in: "query"
+        description: |
+          JSON description of a Kubernetes resource request to be
+          applied to UAIs created using a UAI Class that references
+          this resource configuration.  This is the JSON equivalent of
+          whatever you would normally apply as a request to a pod or
+          deployment.  For example, to request a UAI with 300
+          Millicpus and 250 Mibibytes of memory:
+          { "cpu": "300m", "memory": "250Mi" }
+        required: false
+        schema:
+          type: "string"
+        example:  "{ \"cpu\": \"300m\", \"memory\": \"250Mi\" }"
+      responses:
+        201:
+          description: "Resource updated"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resource"
+        304:
+          description: "No changes made"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resource"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+    delete:
+      summary: "Remove a Resource Limit / Request Configuration Item"
+      description: |
+        Delete the specified Resource Limit / Request configuration item from
+        the configuration.
+      operationId: "delete_uas_resource_admin"
+      tags:
+      - "resources"
+      - "config"
+      parameters:
+      - name: "resource_id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+        description: |
+          The resource identifier (UUID) of the resource limit / request
+          configuration to be removed from the configuration.
+        example: "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
+      responses:
+        200:
+          description: "Resource configuration removed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resource"
+        404:
+          description: "Failed to delete resource configuration {resource_id}"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
 components:
@@ -896,6 +1139,22 @@ components:
         image_id: "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
         imagename: "node.local/uas-sles15:latest"
         default: false
+    Resource:
+      type: "object"
+      properties:
+        resource_id:
+          type: "string"
+        comment:
+          type: "string"
+        limit:
+          type: "string"
+        request:
+          type: "string"
+      example:
+        resource_id:  "e2918379-7df1-4086-92fe-e3ec777a9b2e"
+        comment: "A resource limit for UAIs that only launch jobs"
+        limit: "{ \"cpu\": \"100m\", \"memory\": \"100Mi\" }"
+        request: "{ \"cpu\": \"100m\", \"memory\": \"100Mi\" }"
     Image_list:
       type: "object"
       properties:
