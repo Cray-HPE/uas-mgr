@@ -425,6 +425,7 @@ class UasManager(UasBase):
         """
         self.uas_cfg.get_config()
         resources = UAIResource.get_all()
+        resources = [] if resources is None else resources
         return [
             {
                 'resource_id': resource.resource_id,

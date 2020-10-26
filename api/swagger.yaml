@@ -958,8 +958,8 @@ paths:
         schema:
           type: "string"
         description: |
-          The resource identifier (UUID) of the image to be retrieved from the
-          configuration.
+          The resource identifier (UUID) of the resource limit / request
+          config to be retrieved from the configuration.
         example: "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
       responses:
         200:
@@ -987,8 +987,8 @@ paths:
         schema:
           type: "string"
         description: |
-          The image identifier (UUID) of the resource to be updated in the
-          configuration.
+          The resource identifier (UUID) of the resource limit / request config
+          to be updated in the configuration.
         example: "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
       - name: "comment"
         in: "query"
@@ -1030,17 +1030,17 @@ paths:
         example:  "{ \"cpu\": \"300m\", \"memory\": \"250Mi\" }"
       responses:
         201:
-          description: "Image updated"
+          description: "Resource updated"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Image"
+                $ref: "#/components/schemas/Resource"
         304:
           description: "No changes made"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Image"
+                $ref: "#/components/schemas/Resource"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
     delete:
