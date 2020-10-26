@@ -259,7 +259,7 @@ info:
     Delete the specified resource limit / request configuration from the
     list of available choices.
 
-  version: "1.11.0"
+  version: "1.11.1"
 
 servers:
   - url: "/apis/uas-mgr/v1"
@@ -1230,10 +1230,10 @@ paths:
         description: |
           Optional Kubernetes priority class name to be assigned to
           all UAIs / Brokers using this class.  The priority class
-          name is used, in Kubernetes to determine scheduling
+          name is used in Kubernetes to determine scheduling
           (i.e. node placement) priority in case of resource
           exhaustion and to associate resource quotas with Kubernetes
-          pods.  If this is omitted, the default class name 'uai_priority'
+          pods.  If this is omitted, the default class name 'uai-priority'
           is used.
         required: false
         schema:
@@ -1408,7 +1408,7 @@ paths:
           of the configured volume mounts and the UAI namespace
           default resource configuration.  Additionally, UAIs created
           in the Administrative Workflow without a specified class will
-          use the default Class.  Defaults to False if not specified.
+          use the default Class.
 
           Setting 'default' to true when another Class is currently
           the default will cause the new Class to become the default
@@ -1443,7 +1443,7 @@ paths:
         description: |
           Optional Kubernetes priority class name to be assigned to
           all UAIs / Brokers using this class.  The priority class
-          name is used, in Kubernetes to determine scheduling
+          name is used in Kubernetes to determine scheduling
           (i.e. node placement) priority in case of resource
           exhaustion and to associate resource quotas with Kubernetes
           pods.
@@ -1454,8 +1454,7 @@ paths:
       - name: "namespace"
         in: "query"
         description: |
-          The K8s namespace where UAIs of this class run.  Defaults to the
-          configured UAI namespace.
+          The K8s namespace where UAIs of this class run.
         required: false
         schema:
           type: "string"
