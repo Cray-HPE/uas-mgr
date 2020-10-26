@@ -442,14 +442,18 @@ class UasManager(UasBase):
         """
         self.uas_cfg.get_config()
         vols = UAIVolume.get_all()
+        vols = [] if vols is None else vols
         for vol in vols:
             vol.remove()
         imgs = UAIImage.get_all()
+        imgs = [] if imgs is None else imgs
         for img in imgs:
             img.remove()
         resources = UAIResource.get_all()
+        resources = [] if resources is None else resources
         for resource in resources:
             resource.remove()
         cfgs = PopulatedConfig.get_all()
+        cfgs = [] if cfgs is None else cfgs
         for cfg in cfgs:
             cfg.remove()

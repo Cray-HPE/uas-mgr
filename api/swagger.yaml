@@ -153,7 +153,7 @@ info:
 
     #### PATCH /admin/config/resources/{resource_id}
 
-    Udate the contents of a specific resource limit / request configuration
+    Update the contents of a specific resource limit / request configuration
     for creating UAI Classes (UAI Classes are not yet implemented).
 
     #### DELETE /admin/config/images/{image_id}
@@ -937,7 +937,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/Resource"
         404:
-          description: "UAS Images not found"
+          description: "UAS Resource Limit / Request Configuration  not found"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
   /admin/config/resources/{resource_id}:
