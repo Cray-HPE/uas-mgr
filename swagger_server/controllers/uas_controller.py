@@ -121,15 +121,85 @@ def delete_all_uais(username=None):
     uai_list = []
 
     if username:
-        for uai in uai_mgr.list_uais('uas=managed,user=%s' % username):
-            uai_list.append(uai.uai_name)
-
+        uai_list = uai_mgr.select_deployments(
+            labels='uas=managed,user=%s' % username
+        )
+        if not uai_list:
+            return "User %s has no UAIs, none deleted"
     uai_resp = uai_mgr.delete_uais(deployment_list=uai_list)
     return uai_resp
 
 
 # Admin API
 #
+# UAIs
+def create_uai_admin(class_id=None,
+                     owner=None,
+                     passwd_str=None,
+                     publickey_str=None):
+    """ Create a UAI Administratively
+
+    :param class_id: the ID (UUID) of the class used to create the UAI
+    :type class_id: str
+    :param owner: the optional username of the owner of the UAI
+    :type owner: str
+    :param passwd_str: the optional /etc/passwd style string describing this owner of the UAI
+    :type passwd_str: str
+    :param publickey: Public ssh key for the user
+    :type publickey: werkzeug.datastructures.FileStorage
+    :rtype: AdminUAI
+    """
+    return UasManager().create_uai(
+        class_id=class_id,
+        owner=owner,
+        passwd_str=passwd_str,
+        public_key_str=publickey_str
+    )
+
+
+def delete_uais_admin(class_id=None, owner=None, uai_list=None):
+    """ Delete UAIs, optionally by class or by owner or both
+
+    :param class_id: the optional ID (UUID) of the class by which to select targets
+    :type class_id: str
+    :param owner: the optional username of the UAI owner by which to select targets
+    :type owner: str
+    :rtype: AdminUAI List
+    """
+    return UasManager().delete_uais(
+        class_id=class_id,
+        owner=owner,
+        uai_list=uai_list
+    )
+
+
+def get_uais_admin(class_id=None, owner=None):
+    """ List UAIs, optionally by class or by owner
+
+    :param class_id: the optional ID (UUID) of the class by which to filter the results
+    :type class_id: str
+    :param owner: the optional username of the UAI owner by which to filter the results
+    :type owner: str
+    :rtype: AdminUAI List
+    """
+    return UasManager().get_uais(
+        class_id=class_id,
+        owner=owner
+    )
+
+
+def get_uai_admin(uai_name=None):
+    """ Retrieve a UAI by its name
+
+    :param uai_name: the name of the UAI to be retrieved
+    :type uai_name: str
+    :rtype: AdminUAI
+    """
+    return UasManager().get_uai(
+        uai_name=uai_name
+    )
+
+
 # Images...
 def create_uas_image_admin(imagename, default=None):
     """Add an image
@@ -482,7 +552,7 @@ def delete_uas_resource_admin(resource_id):
 #pylint: disable=too-many-arguments
 def create_uas_class_admin(comment=None,
                            default=None,
-                           public_ssh=None,
+                           public_ip=None,
                            image_id=None,
                            priority_class_name=None,
                            namespace=None,
@@ -498,8 +568,8 @@ def create_uas_class_admin(comment=None,
     :type comment: str
     :param default: Is this the default UAI Class?
     :type default: bool
-    :param public_ssh: Are UAIs  from this class on a public IP?
-    :type public_ssh: bool
+    :param public_ip: Are UAIs  from this class on a public IP?
+    :type public_ip: bool
     :param image_id: Image ID (UUID) to use creating UAIs  of this class
     :type image_id: str
     :param priority_class_name: K8s priority class name to give UAIs  of this class
@@ -519,7 +589,7 @@ def create_uas_class_admin(comment=None,
     """
     return UasManager().create_class(comment=comment,
                                      default=default,
-                                     public_ssh=public_ssh,
+                                     public_ip=public_ip,
                                      image_id=image_id,
                                      resource_id=resource_id,
                                      namespace=namespace,
@@ -558,7 +628,7 @@ def get_uas_class_admin(class_id=None):
 def update_uas_class_admin(class_id=None,
                            comment=None,
                            default=None,
-                           public_ssh=None,
+                           public_ip=None,
                            image_id=None,
                            priority_class_name=None,
                            namespace=None,
@@ -576,8 +646,8 @@ def update_uas_class_admin(class_id=None,
     :type comment: str
     :param default: Is this the default UAI Class?
     :type default: bool
-    :param public_ssh: Are UAIs  from this class on a public IP?
-    :type public_ssh: bool
+    :param public_ip: Are UAIs  from this class on a public IP?
+    :type public_ip: bool
     :param image_id: Image ID (UUID) to use creating UAIs  of this class
     :type image_id: str
     :param priority_class_name: K8s priority class name to give UAIs  of this class
@@ -599,7 +669,7 @@ def update_uas_class_admin(class_id=None,
     return UasManager().update_class(class_id=class_id,
                                      comment=comment,
                                      default=default,
-                                     public_ssh=public_ssh,
+                                     public_ip=public_ip,
                                      image_id=image_id,
                                      priority_class_name=priority_class_name,
                                      namespace=namespace,

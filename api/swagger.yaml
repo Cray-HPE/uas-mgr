@@ -31,13 +31,25 @@ info:
 
     ### /uas
 
-    Create, delete, or list the User Access Instance(s).
-    When a user requests a new UAI, the UAS service returns status and
-    connection information to the newly created UAI.
+    Create, delete, or list the User Access Instance(s) belonging to
+    the requesting user.  When a user requests a new UAI, the UAS
+    service returns status and connection information about the
+    newly created UAI or previously created UAIs.
 
     ### /uais
 
     List or delete User Access Instance(s).
+
+    ### /admin/uais
+
+    List, retrieve, create, and delete UAIs for all users administratively.
+    This API path permits an administrator or authorized application to
+    create UAIs of a specified class for specified users (as opposed to
+    only creating UAIs for the calling user).  It also permits an
+    administrator or authorized application to list running UAIs optionally
+    filtered by user or class and to retrieve information about any given
+    UAI.  Finally it permits an administrator or authorized application to
+    delete any given UAI.
 
     ### /admin/config/images
 
@@ -115,8 +127,28 @@ info:
 
     ### Administrative Workflow
 
-    The Administrative workflow covers two activities, configuration
-    and admnistrative management of UAIs.
+    The Administrative workflow covers two activities: management of UAIs for
+    users and configuration of the UAS resources used in the creation of UAIs.
+
+    #### UAI Management
+
+    Administrative UAI Management consists of creating, listing,
+    retrieving and deleting UAIs for use by specified users.  It is
+    supported by the following operations:
+
+    #### GET /admin/uais
+
+    Retrieve a list of UAIs with all their attributes and status, optionally
+    filtered by the owning user and / or the class-id used to create the UAI.
+
+    #### Get /admin/uais/{uai_name}
+
+    Retrieve the attributes and status of a specified UAI by name.
+
+    #### POST /admin/uais
+
+    Create a UAI for a specified user, with a specified Class, /etc/password
+    string, and SSH public-key.
 
     #### UAS Configuration
     
@@ -165,11 +197,6 @@ info:
     Class may be marked as 'default' in which case it will be used
     unconditionally for all UAIs created using the Single User
     Workflow.
-
-    #### UAI Management
-
-    The Administrative UAI management APIs are not yet available.
-    This section will be completed when they become avaialable.
 
     #### GET /images
 
@@ -482,6 +509,207 @@ paths:
           description: "All UAIs Deleted"
         404:
           description: "No UAIs found"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+  /admin/uais:
+    get:
+      summary: "List all UAIs"
+      description: |
+        List all UAIs, optionally filtered by Class (specify the Class ID
+        in the call) and / or owning user (specify the username in the call).
+      operationId: "get_uais_admin"
+      tags:
+      - "admin"
+      - "uais"
+      parameters:
+      - name: "class_id"
+        in: "query"
+        description: |
+          The class-id (UUID) of UAIs to retrieve.  If specified only UAIs
+          of this class will be returned.  If omitted, UAIs of all classes
+          and meeting all other filtering constraints will be returned.
+        required: false
+        schema:
+          type: "string"
+        example: "fe59aab4-2657-749f-f48a-9911eba0f3c9"
+      - name: "owner"
+        in: "query"
+        description: |
+          The owning username of UAIs to retrieve.  If specified only UAIs
+          owned by this user will be returned.  If omitted, UAIs owned by any
+          user and meeting all other filtering constraints will be returned.
+        required: false
+        schema:
+          type: "string"
+        example: "swilliams"
+      responses:
+        200:
+          description: "UAI List"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UAI"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+    post:
+      summary: "Create a UAI administratively"
+      description: |
+        Create a UAI of a specified Class for an (optionally) specified user,
+        providing the (optional) /etc/passwd string to be used for that user
+        in the UAI and the (optional) SSH public-key that will be used to
+        access the UAI by the user.
+
+        Both UAIs for use by users and Broker UAIs are consider UAIs within
+        this API.  Some attributes that apply to UAIs for use by users do not
+        apply to Broker UAIs because the function of a Broker UAI is different.
+      operationId: "create_uai_admin"
+      tags:
+      - "admin"
+      - "uais"
+      parameters:
+      - name: "class_id"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+        description: |
+          The Class ID (UUID) of the class to be used as a template for
+          creating the UAI.  If this is omitted and a default Class is
+          configured, the default class will be used.  If a default class
+          is not configured, omitting this results in an error.
+        example: "fea49ab5-6752-4f97-84af-09119ba3e9cf"
+      - name: "owner"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+        description: |
+          The username of the owner of the UAI to be created.  The owner
+          may be omitted for Broker UAIs because Broker UAIs run as
+          UAS system services and allow SSH connections from any
+          user.  Alternatively, the username may be used to label a Broker
+          UAI as needed by the site.  Whether or not the username is used
+          within a UAI is determined by the code running in the UAI Image.
+          Brokers UAIs will generally not be used in the running Broker UAI
+          but will be used in formatting the UAI name and similar activities.
+        example: "swilliams"
+      - name: "passwd_str"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+        description: |
+          The /etc/passwd style string describing the user inside the UAI.
+          The format is: `<name>::<uid>:<gid>::::<full-name>:<home-dir>:<shell>`
+          This can be omitted for Broker UAIs and UAIs that are connected to an
+          external authentication source like LDAP.
+        example: "swilliams::12345:6789::::Steven Williams:/home/users/swilliams:/bin/bash"
+      - name: "publickey_str"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+        description: |
+          The SSH Public key used to authorize use of the UAI through SSH.  This is a
+          string in the form of a public key, for example the contents of an id_rsa.pub
+          file.
+      responses:
+        201:
+          description: "UAI Created"
+          content:
+            application/json:
+             schema:
+                $ref: "#/components/schemas/UAI"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+    delete:
+      summary: "Delete all or selected UAIs"
+      description: |
+        Delete UAIs, optionally selecting by Class (specify the Class
+        ID in the call) and / or owning user (specify the username in
+        the call). Alternatively, delete a list of UAI names.  If a
+        list of UAI names is provided, the other constraints are not
+        applied. If no selection is done, delete all UAIs on the
+        system.
+      operationId: "delete_uais_admin"
+      tags:
+      - "admin"
+      - "uais"
+      parameters:
+      - name: "class_id"
+        in: "query"
+        description: |
+          The class-id (UUID) of UAIs to delete.  If specified only UAIs
+          of this class will be deleted.  If omitted, UAIs of all classes
+          and meeting the other selection criteria will be deleted.
+        required: false
+        schema:
+          type: "string"
+        example: "fe59aab4-2657-749f-f48a-9911eba0f3c9"
+      - name: "owner"
+        in: "query"
+        description: |
+          The owning username of UAIs to delete.  If specified only UAIs
+          owned by this user will be deleted.  If omitted, UAIs owned by any
+          user and meeting the other selection criteria will be deleted.
+        required: false
+        schema:
+          type: "string"
+        example: "swilliams"
+      - name: "uai_list"
+        description: |
+          Comma separated list of UAI names.  If this is supplied 'owner'
+          and 'class-id' are ignored.
+        in: "query"
+        required: false
+        style: form
+        explode: false
+        schema:
+          type: "array"
+          items:
+            type: "string"
+        example: ["uai-asdfgh098","uai-qwerty123"]
+      responses:
+        200:
+          description: "UAIs deleted"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UAI"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+  /admin/uais/{uai_name}:
+    get:
+      summary: "Retrieve information on a UAI"
+      description: |
+        Retrieve information on the specified UAI.
+      operationId: "get_uai_admin"
+      tags:
+      - "admin"
+      - "uais"
+      parameters:
+      - name: "uai_name"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+        description: |
+          The name of the UAI to retrieve.
+        example: "uai-swilliams-cc09d2d2"
+      responses:
+        200:
+          description: "UAI Description"
+          content:
+            application/json:
+             schema:
+                $ref: "#/components/schemas/UAI"
+
+        404:
+          description: "UAI not found"
       x-openapi-router-controller: "swagger_server.controllers.uas_controller"
 
   /admin/config:
@@ -1204,11 +1432,11 @@ paths:
         schema:
           type: boolean
         example: false
-      - name: "public_ssh"
+      - name: "public_ip"
         in: "query"
         description: |
           A flag indicating whether a UAI or Broker created using this
-          class will present SSH on a public IP address or only on a
+          class will present ports on a public IP address or only on a
           cluster visible IP address.  If not provided, the default is
           false, which makes resulting UAIs or Brokers visible only
           within the cluster.
@@ -1417,11 +1645,11 @@ paths:
         schema:
           type: boolean
         example: false
-      - name: "public_ssh"
+      - name: "public_ip"
         in: "query"
         description: |
           A flag indicating whether a UAI or Broker created using this
-          class will present SSH on a public IP address or only on a
+          class will present ports on a public IP address or only on a
           cluster visible IP address.  If not provided, the default is
           false, which makes resulting UAIs or Brokers visible only
           within the cluster.
@@ -1463,7 +1691,7 @@ paths:
         in: "query"
         description: |
           A comma separated list of port numbers on which software running in a
-          UAI created using this class may listen.  Unlike `opt_ports` in the
+          UAI created using this class may listen.  Unlike `ports` in the
           Single User UAI creation API, the port numbers here are not constrained
           by any configured range of available ports.  Any valid port number is
           legal.
@@ -1562,6 +1790,14 @@ components:
           type: "string"
         publickey:
           type: "string"
+        class_id:
+          type: "string"
+        public_ip:
+          type: "boolean"
+        resource_id:
+          type: "string"
+        image_id:
+          type: "string"
         uai_img:
           type: "string"
         uai_status:
@@ -1579,8 +1815,12 @@ components:
         uai_age:
           type: "string"
       example:
-        uai_id: "user-uai-uai_image"
-        username: "user_name"
+        uai_name: "uai-swilliams-cc09d2d2"
+        username: "swilliams"
+        class_id: "83156ef8-4286-4d57-8ffa-46ebf6c8f8b5"
+        resource_id: "6f66edda-625f-4be3-b563-dca5844c85cf"
+        image_id: "32ab9d45-f904-40f8-80a0-0881969a4f6e"
+        public_ip: false
         publickey: "/Users/user/.ssh/id_rsa.pub"
         uai_img: "uai_img"
         uai_status: "Running"
@@ -1642,7 +1882,7 @@ components:
           type: "string"
         default:
           type: "boolean"
-        public_ssh:
+        public_ip:
           type: "boolean"
         priority_class_name:
           type: "string"

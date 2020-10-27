@@ -372,7 +372,7 @@ class TestUasController(unittest.TestCase):
         """
         comment = "Test UAI Class"
         default = True
-        public_ssh = False
+        public_ip = False
         image_id = self.__create_test_image("Test image for test class")
         priority_class_name = "test-priority-class"
         namespace = "test-namespace"
@@ -383,7 +383,7 @@ class TestUasController(unittest.TestCase):
             resp = uas_ctl.create_uas_class_admin(
                 comment=comment,
                 default=default,
-                public_ssh=public_ssh,
+                public_ip=public_ip,
                 image_id=image_id,
                 priority_class_name=priority_class_name,
                 namespace=namespace,
@@ -403,7 +403,7 @@ class TestUasController(unittest.TestCase):
         """
         comment = "Test Broker Class"
         default = False
-        public_ssh = True
+        public_ip = True
         image_id = self.__create_test_image("Test image for broker class")
         priority_class_name = "test-broker-priority-class"
         namespace = "test-broker-namespace"
@@ -414,7 +414,7 @@ class TestUasController(unittest.TestCase):
             resp = uas_ctl.create_uas_class_admin(
                 comment=comment,
                 default=default,
-                public_ssh=public_ssh,
+                public_ip=public_ip,
                 image_id=image_id,
                 priority_class_name=priority_class_name,
                 namespace=namespace,
@@ -468,14 +468,14 @@ class TestUasController(unittest.TestCase):
             class_id = self.__create_test_broker_class()
             comment = "Test Broker Class -- edited comment"
             default = False
-            public_ssh = True
+            public_ip = True
             priority_class_name = "test-broker-priority-other-class"
             namespace = "test-broker--other-namespace"
             resp = uas_ctl.update_uas_class_admin(
                 class_id=class_id,
                 comment=comment,
                 default=default,
-                public_ssh=public_ssh,
+                public_ip=public_ip,
                 priority_class_name=priority_class_name,
                 namespace=namespace
             )
@@ -486,8 +486,8 @@ class TestUasController(unittest.TestCase):
             self.assertEqual(comment, resp['comment'])
             self.assertIn('default', resp)
             self.assertEqual(default, resp['default'])
-            self.assertIn('public_ssh', resp)
-            self.assertEqual(public_ssh, resp['public_ssh'])
+            self.assertIn('public_ip', resp)
+            self.assertEqual(public_ip, resp['public_ip'])
             self.assertIn('priority_class_name', resp)
             self.assertEqual(
                 priority_class_name,

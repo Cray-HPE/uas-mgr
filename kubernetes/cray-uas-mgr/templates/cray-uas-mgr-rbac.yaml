@@ -33,6 +33,36 @@ roleRef:
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  name: cray-uas-mgr
+  namespace: {{ .Release.Namespace }}
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "create", "delete", "patch"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "create", "delete"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: cray-uas-mgr
+  namespace: {{ .Release.Namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: cray-uas-mgr
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: cray-uas-mgr
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
   name: cray-uas-mgr-etcd
   namespace: {{ .Release.Namespace }}
 rules:
@@ -53,3 +83,32 @@ roleRef:
   kind: Role
   name: cray-uas-mgr-etcd
   apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: "cray-uas-mgr"
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "delete"]
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list", "delete"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: "cray-uas-mgr"
+subjects:
+- kind: ServiceAccount
+  name: cray-uas-mgr
+  namespace: {{ .Release.Namespace }}
+  apiGroup: ""
+roleRef:
+  kind: ClusterRole
+  name: "cray-uas-mgr"
+  apiGroup: "rbac.authorization.k8s.io"

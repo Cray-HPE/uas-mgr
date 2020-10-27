@@ -1,13 +1,14 @@
-# Copyright 2020 Hewlett Packard Enterprise Development LP#
-#
 """
 Class that implements UAS functions not requiring user attributes
+
+Copyright 2020 Hewlett Packard Enterprise Development LP
 """
 #pylint: disable=too-many-lines
 
 import json
 from flask import abort
 from swagger_server.uas_lib.uas_base import UasBase
+from swagger_server.uas_lib.uas_base import UAIInstance
 from swagger_server.uas_data_model.uai_image import UAIImage
 from swagger_server.uas_data_model.uai_volume import UAIVolume
 from swagger_server.uas_data_model.uai_resource import UAIResource
@@ -22,6 +23,85 @@ class UasManager(UasBase):
     def __init__(self):
         """ Constructor """
         UasBase.__init__(self)
+
+    def delete_uais(self, class_id=None, owner=None, uai_list=None):
+        """Delete a list of UAIs optionally selected by class and owner
+
+        """
+        self.uas_cfg.get_config()
+        labels = []
+        if not uai_list:
+            if owner is not None:
+                labels.append("user=%s" % owner)
+            if class_id is not None:
+                labels.append("uas-class-id=%s" % class_id)
+            uai_list = self.select_deployments(labels=labels)
+        else:
+            uai_list = [
+                uai_name.strip() for uai_name in uai_list
+                if uai_name.strip() != ""
+            ]
+        resp_list = self.remove_uais(uai_list)
+        return resp_list
+
+    def create_uai(self,
+                   class_id=None,
+                   owner=None,
+                   passwd_str=None,
+                   public_key_str=None):
+        """Create a new UAI
+
+        """
+        self.uas_cfg.get_config()
+        missing = ""
+        if class_id is not None:
+            missing = "No class '%s' found" % class_id
+            uai_class = UAIClass.get(class_id)
+        else:
+            missing = "No class-id and no default UAI found"
+            uai_class = UAIClass.get_default()
+        if uai_class is None:
+            abort(404, missing)
+        uai_instance = UAIInstance(
+            owner=owner,
+            passwd_str=passwd_str,
+            public_key=public_key_str
+        )
+        return self.deploy_uai(uai_class, uai_instance, self.uas_cfg)
+
+    def get_uai(self, uai_name):
+        """Retrieve the named UAI
+
+        """
+        self.uas_cfg.get_config()
+        if uai_name is None:
+            abort(400, "Missing UAI Name argument")
+        candidate_list = self.select_deployments(
+            labels=["app=%s" % uai_name]
+        )
+        if not candidate_list:
+            abort(404, "UAI Named '%s' not found" % uai_name)
+        resp_list = self.get_uai_list([uai_name])
+        if not resp_list:
+            abort(
+                404,
+                "no UAI information found for UAI '%s'" % uai_name
+            )
+        return resp_list[0]
+
+    def get_uais(self, class_id=None, owner=None):
+        """Get a list of UAIs optionally filtered on class and owner
+
+        """
+        self.uas_cfg.get_config()
+        labels = []
+        if owner is not None:
+            labels.append("user=%s" % owner)
+        if class_id is not None:
+            labels.append("uas-class-id=%s" % class_id)
+        uai_list = self.select_deployments(labels=labels)
+        resp_list = self.get_uai_list(uai_list)
+        return resp_list
 
     def delete_image(self, image_id):
         """Delete a UAI image from the config
@@ -520,9 +600,9 @@ class UasManager(UasBase):
         """
         comment = "" if uai_class.comment is None else uai_class.comment
         default = False if uai_class.default is None else uai_class.default
-        public_ssh = (
-            False if uai_class.public_ssh is None
-            else uai_class.public_ssh
+        public_ip = (
+            False if uai_class.public_ip is None
+            else uai_class.public_ip
         )
         volume_mounts = (
             [] if uai_class.volume_list is None
@@ -539,7 +619,7 @@ class UasManager(UasBase):
             'class_id': uai_class.class_id,
             'comment': comment,
             'default': default,
-            'public_ssh': public_ssh,
+            'public_ip': public_ip,
             'priority_class_name': uai_class.priority_class_name,
             'namespace': uai_class.namespace,
             'opt_ports': uai_class.opt_ports,
@@ -564,7 +644,7 @@ class UasManager(UasBase):
     def create_class(self,
                      comment=None,
                      default=None,
-                     public_ssh=None,
+                     public_ip=None,
                      image_id=None,
                      priority_class_name=None,
                      namespace=None,
@@ -597,19 +677,23 @@ class UasManager(UasBase):
             )
         if volume_list:
             self._validate_volume_list(volume_list)
+        opt_ports_list = [
+            port.strip()
+            for port in opt_ports.split(',')
+        ] if opt_ports else []
         try:
-            opt_ports_list = [int(i) for i in opt_ports.split(',')] if opt_ports else []
+            _ = [int(port) for port in opt_ports_list]
         except ValueError:
             abort(
                 400,
-                "Failed to parse 'opt_ports' value '%s', must be "
-                "comma separated integer list",
-                opt_ports
+                "illegal port number in '%s', "
+                "all optional port values must be integers"
+                % (opt_ports)
             )
         volume_list = [] if volume_list is None else volume_list
         comment = "" if comment is None else comment
         default = False if default is None else default
-        public_ssh = False if public_ssh is None else public_ssh
+        public_ip = False if public_ip is None else public_ip
         priority_class_name = ("uai-priority"
                                if priority_class_name is None
                                else priority_class_name)
@@ -622,7 +706,7 @@ class UasManager(UasBase):
         uai_class = UAIClass(
             comment=comment,
             default=default,
-            public_ssh=public_ssh,
+            public_ip=public_ip,
             image_id=image_id,
             priority_class_name=priority_class_name,
             namespace=namespace,
@@ -642,12 +726,12 @@ class UasManager(UasBase):
         uai_class.put()
         return self._expanded_uai_class(uai_class)
 
-    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-branches,too-many-locals
     def update_class(self,
                      class_id,
                      comment=None,
                      default=None,
-                     public_ssh=None,
+                     public_ip=None,
                      image_id=None,
                      priority_class_name=None,
                      namespace=None,
@@ -672,8 +756,8 @@ class UasManager(UasBase):
         if default is not None:
             uai_class.default = default
             changed = True
-        if public_ssh is not None:
-            uai_class.public_ssh = public_ssh
+        if public_ip is not None:
+            uai_class.public_ip = public_ip
             changed = True
         if priority_class_name is not None:
             uai_class.priority_class_name = priority_class_name
@@ -681,15 +765,20 @@ class UasManager(UasBase):
         if namespace is not None:
             uai_class.namespace = namespace
             changed = True
-        if opt_ports is not None:
+        if opt_ports:
+            uai_class.opt_ports = [
+                port.strip()
+                for port in opt_ports.split(',')
+            ] if opt_ports else []
+            # check validity of ports (i.e. they must be ints)
             try:
-                uai_class.opt_ports = [int(i) for i in opt_ports.split(',')]
+                _ = [int(port) for port in uai_class.opt_ports]
             except ValueError:
                 abort(
                     400,
-                    "Failed to parse 'opt_ports' value '%s', must be "
-                    "comma separated integer list",
-                    opt_ports
+                    "illegal port number in '%s', "
+                    "all optional port values must be integers"
+                    % (opt_ports)
                 )
             changed = True
         if uai_creation_class is not None:

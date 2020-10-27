@@ -1,7 +1,6 @@
-"""Data Model for UAI Images
+"""Data Model Base Class for UAS Configuration
 
 Copyright 2020, Cray Inc. All rights reserved.
-
 """
 from __future__ import absolute_import
 from etcd3_model import Etcd3Model

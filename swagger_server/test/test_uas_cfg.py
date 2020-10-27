@@ -23,9 +23,6 @@ class TestUasCfg(unittest.TestCase):
         uas_cfg='swagger_server/test/cray-uas-mgr-empty.yaml'
     )
     uas_cfg_svc = UasCfg(uas_cfg='swagger_server/test/cray-uas-mgr-svc.yaml')
-    uas_cfg_port_range = UasCfg(
-        uas_cfg='swagger_server/test/cray-uas-mgr-port-range.yaml'
-    )
 
     @classmethod
     def __reset_runtime_config(cls, new_config=None):
@@ -199,11 +196,11 @@ class TestUasCfg(unittest.TestCase):
         self.assertEqual(1, len(port_list))
         self.assertEqual(30123, port_list[0].port)
 
-        optional_ports = [80, 443]
+        opt_ports = [80, 443]
         port_list = self.uas_cfg.gen_port_list(
             service_type="ssh",
             service=False,
-            optional_ports=optional_ports
+            opt_ports=opt_ports
         )
         self.assertEqual(3, len(port_list))
         for port in port_list:
@@ -250,14 +247,6 @@ class TestUasCfg(unittest.TestCase):
         for pl in port_list:
             self.assertIsInstance(pl, client.V1ContainerPort)
             self.assertEqual(30123, pl.container_port)
-        self.__reset_runtime_config()
-
-    # pylint: disable=missing-docstring
-    def test_uas_ports_range_gen_port_list(self):
-        self.__reset_runtime_config(self.uas_cfg_port_range)
-        with self.assertRaises(ValueError):
-            self.uas_cfg_port_range.gen_port_list(service_type="ssh",
-                                                  service=False)
         self.__reset_runtime_config()
 
     # pylint: disable=missing-docstring

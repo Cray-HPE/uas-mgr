@@ -16,7 +16,6 @@ import flask
 from swagger_server.uas_lib.uai_mgr import UaiManager
 from swagger_server.uas_lib.uas_mgr import UasManager
 from swagger_server.uas_lib.uas_base import UAIInstance
-from swagger_server.models.uai import UAI
 from swagger_server.uas_data_model.uai_class import UAIClass
 from swagger_server.uas_data_model.uai_image import UAIImage
 
@@ -30,19 +29,19 @@ class TestUasMgr(unittest.TestCase):
     """
     os.environ["KUBERNETES_SERVICE_PORT"] = "443"
     os.environ["KUBERNETES_SERVICE_HOST"] = "127.0.0.1"
+    public_key_str = (
+        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCzpYg4QF8sj479"
+        "cBdhLf6qyZPSueaQ9T7r96ejD7TUpwrjDxZFneZGm6dbFIRBR1P5"
+        "/0TYbGBWvvHGZvunsp+wjVx6MlpUmaC4oQlPS9Re01NI60zI6den"
+        "RofAGa2hlCRq6CtEX7IG2r8uKJa7intjQmyeUKCju6HKjZbamYBx"
+        "7kxSdaKbsIzwwURL7g7od6dVh+R3XaFHLDWbS52wwsD09T4mIiUB"
+        "O3wvs/ShApFsUmuG1DFgUfdCV+m2S67gr2VDUwmeZeV7mPDZRmCS"
+        "UNCTuRM5RNjYBtaRPb6POl/wDKQQz3Q0hdlzg0jxiID//C3BASfK"
+        "9i+UNWq7o3BSHNSj test-user@host.mydomain.com"
+    )
     public_key = io.BytesIO()
     public_key.write(
-        bytes(
-            "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCzpYg4QF8sj479"
-            "cBdhLf6qyZPSueaQ9T7r96ejD7TUpwrjDxZFneZGm6dbFIRBR1P5"
-            "/0TYbGBWvvHGZvunsp+wjVx6MlpUmaC4oQlPS9Re01NI60zI6den"
-            "RofAGa2hlCRq6CtEX7IG2r8uKJa7intjQmyeUKCju6HKjZbamYBx"
-            "7kxSdaKbsIzwwURL7g7od6dVh+R3XaFHLDWbS52wwsD09T4mIiUB"
-            "O3wvs/ShApFsUmuG1DFgUfdCV+m2S67gr2VDUwmeZeV7mPDZRmCS"
-            "UNCTuRM5RNjYBtaRPb6POl/wDKQQz3Q0hdlzg0jxiID//C3BASfK"
-            "9i+UNWq7o3BSHNSj test-user@host.mydomain.com",
-            encoding='utf8'
-        )
+        bytes(public_key_str, encoding='utf8')
     )
     with app.test_request_context('/'):
         uai_mgr = UaiManager()
@@ -67,6 +66,23 @@ class TestUasMgr(unittest.TestCase):
             # If the key is in expected we have already checked that
             # it is correct in actual.  If not, we will fail here.
             self.assertIn(key, expected)
+
+    # pylint: disable=missing-docstring
+    def test_construct_uai_class(self):
+        uai_image = UAIImage(imagename="my-image-name", default=False)
+        image_id= uai_image.image_id
+        uai_image.put()
+        uai_class = self.uai_mgr.construct_uai_class(
+            imagename=uai_image.imagename,
+            namespace="my-namespace",
+            opt_ports=[1, 2, 3, 4]
+        )
+        self.assertEqual(image_id, uai_class.image_id)
+        self.assertEqual("my-namespace", uai_class.namespace)
+        self.assertEqual([1, 2, 3, 4], uai_class.opt_ports)
+        self.assertEqual(False, uai_class.default)
+        self.assertEqual(True, uai_class.public_ip)
+        uai_image.remove()
 
     # pylint: disable=missing-docstring
     def test_gen_labels(self):
@@ -99,7 +115,7 @@ class TestUasMgr(unittest.TestCase):
         )
         uai_class = UAIClass(
             uai_creation_class=str(uuid.uuid4()),
-            public_ssh=True
+            public_ip=True
         )
         labels = uai_instance.gen_labels(uai_class)
         self.__compare_dicts(
@@ -108,7 +124,7 @@ class TestUasMgr(unittest.TestCase):
                 "uas": "managed",
                 "user": uai_instance.owner,
                 "uas-uai-creation-class": uai_class.uai_creation_class,
-                "uas-public-ssh": str(uai_class.public_ssh),
+                "uas-public-ip": str(uai_class.public_ip),
                 "uas-class-id": uai_class.class_id
             },
             labels
@@ -129,6 +145,29 @@ class TestUasMgr(unittest.TestCase):
         # Make sure everything expected was in the environment
         for key in expected:
             self.assertIn(key, found)
+
+    #pylint: disable=missing-docstring
+    def test_uai_instance(self):
+        passwd_str = "user::1234:5678:User Name:/user/home/directory:/user/shell"
+        # Test with an io.Bytes() public key
+        self.public_key.seek(0)
+        uai_instance = UAIInstance(
+            owner="test_user",
+            passwd_str=passwd_str,
+            public_key=self.public_key
+        )
+        self.assertEqual(uai_instance.owner, "test_user")
+        self.assertEqual(uai_instance.passwd_str, passwd_str)
+        self.assertEqual(uai_instance.public_key_str, self.public_key_str)
+        # Test with a string public key
+        uai_instance = UAIInstance(
+            owner="test_user",
+            passwd_str=passwd_str,
+            public_key=self.public_key_str
+        )
+        self.assertEqual(uai_instance.owner, "test_user")
+        self.assertEqual(uai_instance.passwd_str, passwd_str)
+        self.assertEqual(uai_instance.public_key_str, self.public_key_str)
 
     #pylint: disable=missing-docstring
     def test_get_env(self):
@@ -167,7 +206,7 @@ class TestUasMgr(unittest.TestCase):
         uai_class = UAIClass(
             comment="A Class to test deployment object creation",
             default=False,
-            public_ssh=False,
+            public_ip=False,
             namespace="my-namespace",
             uai_creation_class=None,
             image_id=image_id,
@@ -243,7 +282,7 @@ class TestUasMgr(unittest.TestCase):
         uai_class = UAIClass(
             comment="A Class to test service object creation",
             default=False,
-            public_ssh=False,
+            public_ip=False,
             namespace="my-namespace",
             uai_creation_class=None,
             image_id=str(uuid.uuid4()),
@@ -278,25 +317,29 @@ class TestUasMgr(unittest.TestCase):
 
     # pylint: disable=missing-docstring
     def test_gen_connection_string(self):
-        uai = UAI()
-        uai.username = "testuser"
-        uai.uai_port = 12345
-        uai.uai_ip = "1.2.3.4"
-        uai.uai_connect_string = self.uai_mgr.gen_connection_string(uai)
-
+        username = "testuser"
+        uai_port = 12345
+        uai_ip = "1.2.3.4"
+        uai_connect_string = self.uai_mgr.gen_connection_string(
+            username,
+            uai_ip,
+            uai_port
+        )
         self.assertEqual("ssh testuser@1.2.3.4 -p 12345",
-                         uai.uai_connect_string)
+                         uai_connect_string)
 
     # pylint: disable=missing-docstring
     def test_gen_connection_string_no_port(self):
-        uai = UAI()
-        uai.username = "testuser"
-        uai.uai_port = 22
-        uai.uai_ip = "1.2.3.4"
-        uai.uai_connect_string = self.uai_mgr.gen_connection_string(uai)
-
+        username = "testuser"
+        uai_port = 22
+        uai_ip = "1.2.3.4"
+        uai_connect_string = self.uai_mgr.gen_connection_string(
+            username,
+            uai_ip,
+            uai_port
+        )
         self.assertEqual("ssh testuser@1.2.3.4",
-                         uai.uai_connect_string)
+                         uai_connect_string)
 
     def test_image_lifecycle(self):
         """Test create_image, get_image, get_images, update_image,
