@@ -1248,6 +1248,18 @@ paths:
         schema:
           type: "string"
         example: "user"
+      - name: "opt_ports"
+        in: "query"
+        description: |
+          A comma separated list of port numbers on which software running in a
+          UAI created using this class may listen.  Unlike `ports` in the
+          Single User UAI creation API, the port numbers here are not constrained
+          by any configured range of available ports.  Any valid port number is
+          legal.
+        required: false
+        schema:
+          type: "string"
+        example: "80,443"
       - name: "uai_creation_class"
         in: "query"
         description: |
@@ -1448,6 +1460,18 @@ paths:
         schema:
           type: "string"
         example: "user"
+      - name: "opt_ports"
+        in: "query"
+        description: |
+          A comma separated list of port numbers on which software running in a
+          UAI created using this class may listen.  Unlike `opt_ports` in the
+          Single User UAI creation API, the port numbers here are not constrained
+          by any configured range of available ports.  Any valid port number is
+          legal.
+        required: false
+        schema:
+          type: "string"
+        example: "8080,80"
       - name: "uai_creation_class"
         in: "query"
         description: |
@@ -1624,6 +1648,8 @@ components:
         priority_class_name:
           type: "string"
         namespace:
+          type: "string"
+        opt_ports:
           type: "string"
         uai_creation_class:
           type: "string"

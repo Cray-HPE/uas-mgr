@@ -486,6 +486,7 @@ def create_uas_class_admin(comment=None,
                            image_id=None,
                            priority_class_name=None,
                            namespace=None,
+                           opt_ports=None,
                            uai_creation_class=None,
                            resource_id=None,
                            volume_list=None):
@@ -505,6 +506,8 @@ def create_uas_class_admin(comment=None,
     :type priority_class_name: str
     :param namespace: K8s namespace where  of this class run
     :type namespace: str
+    :param opt_ports: Comma separated list of optional additional port numbers
+    :type opt_ports: str
     :param uai_creation_class: Class ID (UUID) of UAIs created by this Broker
     :type uai_creation_class: str
     :param resource_id: Resource ID (UUID)  to use in UAIs  of this class
@@ -520,6 +523,7 @@ def create_uas_class_admin(comment=None,
                                      image_id=image_id,
                                      resource_id=resource_id,
                                      namespace=namespace,
+                                     opt_ports=opt_ports,
                                      uai_creation_class=uai_creation_class,
                                      priority_class_name=priority_class_name,
                                      volume_list=volume_list)
@@ -558,6 +562,7 @@ def update_uas_class_admin(class_id=None,
                            image_id=None,
                            priority_class_name=None,
                            namespace=None,
+                           opt_ports=None,
                            uai_creation_class=None,
                            resource_id=None,
                            volume_list=None):
@@ -579,6 +584,8 @@ def update_uas_class_admin(class_id=None,
     :type priority_class_name: str
     :param namespace: K8s namespace where  of this class run
     :type namespace: str
+    :param opt_ports: Comma separated list of optional additional port numbers
+    :type opt_ports: str
     :param uai_creation_class: Class ID (UUID) of UAIs created by this Broker
     :type uai_creation_class: str
     :param resource_id: Resource ID (UUID)  to use in UAIs  of this class
@@ -596,6 +603,7 @@ def update_uas_class_admin(class_id=None,
                                      image_id=image_id,
                                      priority_class_name=priority_class_name,
                                      namespace=namespace,
+                                     opt_ports=opt_ports,
                                      uai_creation_class=uai_creation_class,
                                      resource_id=resource_id,
                                      volume_list=volume_list)

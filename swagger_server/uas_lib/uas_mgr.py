@@ -542,6 +542,7 @@ class UasManager(UasBase):
             'public_ssh': public_ssh,
             'priority_class_name': uai_class.priority_class_name,
             'namespace': uai_class.namespace,
+            'opt_ports': uai_class.opt_ports,
             'uai_creation_class': uai_class.uai_creation_class,
             'uai_image': UAIImage.get(uai_class.image_id).expand(),
             'resource_config': resource_config,
@@ -559,7 +560,7 @@ class UasManager(UasBase):
         uai_class.remove() # don't use x.delete() you actually want it removed
         return self._expanded_uai_class(uai_class)
 
-    #pylint: disable=too-many-arguments
+    #pylint: disable=too-many-arguments,too-many-statements
     def create_class(self,
                      comment=None,
                      default=None,
@@ -567,6 +568,7 @@ class UasManager(UasBase):
                      image_id=None,
                      priority_class_name=None,
                      namespace=None,
+                     opt_ports=None,
                      uai_creation_class=None,
                      resource_id=None,
                      volume_list=None):
@@ -595,6 +597,15 @@ class UasManager(UasBase):
             )
         if volume_list:
             self._validate_volume_list(volume_list)
+        try:
+            opt_ports_list = [int(i) for i in opt_ports.split(',')] if opt_ports else []
+        except ValueError:
+            abort(
+                400,
+                "Failed to parse 'opt_ports' value '%s', must be "
+                "comma separated integer list",
+                opt_ports
+            )
         volume_list = [] if volume_list is None else volume_list
         comment = "" if comment is None else comment
         default = False if default is None else default
@@ -615,6 +626,7 @@ class UasManager(UasBase):
             image_id=image_id,
             priority_class_name=priority_class_name,
             namespace=namespace,
+            opt_ports=opt_ports_list,
             uai_creation_class=uai_creation_class,
             resource_id=resource_id,
             volume_list=volume_list
@@ -639,6 +651,7 @@ class UasManager(UasBase):
                      image_id=None,
                      priority_class_name=None,
                      namespace=None,
+                     opt_ports=None,
                      uai_creation_class=None,
                      resource_id=None,
                      volume_list=None):
@@ -667,6 +680,17 @@ class UasManager(UasBase):
             changed = True
         if namespace is not None:
             uai_class.namespace = namespace
+            changed = True
+        if opt_ports is not None:
+            try:
+                uai_class.opt_ports = [int(i) for i in opt_ports.split(',')]
+            except ValueError:
+                abort(
+                    400,
+                    "Failed to parse 'opt_ports' value '%s', must be "
+                    "comma separated integer list",
+                    opt_ports
+                )
             changed = True
         if uai_creation_class is not None:
             if UAIClass.get(uai_creation_class) is None:

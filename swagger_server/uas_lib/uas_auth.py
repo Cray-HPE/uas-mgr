@@ -108,6 +108,8 @@ class UasAuth:
             self.authError(500, e)
 
         if self.username in userinfo:
-            UAS_AUTH_LOGGER.info("UasAuth lookup complete for user %s",
-                                 userinfo[self.username])
+            UAS_AUTH_LOGGER.info(
+                "UasAuth lookup complete for user %s",
+                userinfo[self.username]
+            )
         return userinfo

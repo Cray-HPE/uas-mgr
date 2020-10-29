@@ -151,6 +151,7 @@ class TestUasController(unittest.TestCase):
                 encoding='utf8'
             )
         )
+        vol_desc.seek(0)
         with app.test_request_context('/'):
             resp = uas_ctl.create_uas_volume_admin(
                 volumename=volume_name,

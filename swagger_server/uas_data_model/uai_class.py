@@ -51,6 +51,10 @@ class UAIClass(UASDataModel):
     # The namespace UAIs of this class will be placed in when created.
     namespace = Etcd3Attr(default=None)
 
+    # The list of optional additional ports that UAIs of this class
+    # will listen on when created.
+    opt_ports = Etcd3Attr(default=None)
+
     # The class that UAIs created by a Broker of this class will be
     # created with.  This is for broker UAIs only and has no meaning
     # for non-broker UAIs.
@@ -98,6 +102,7 @@ class UAIClass(UASDataModel):
             'default': self.default,
             'public_ssh': self.public_ssh,
             'namespace': self.namespace,
+            'opt_ports': self.opt_ports,
             'uai_creation_class': self.uai_creation_class,
             'image_id': self.image_id,
             'resource_id': self.resource_id,

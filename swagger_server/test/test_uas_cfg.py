@@ -8,9 +8,11 @@ import unittest
 
 from kubernetes import client
 from swagger_server.uas_lib.uas_cfg import UasCfg
+from swagger_server.uas_lib.uas_base import UAIInstance
 from swagger_server.uas_data_model.uai_volume import UAIVolume
 from swagger_server.uas_data_model.uai_image import UAIImage
 from swagger_server.uas_data_model.populated_config import PopulatedConfig
+
 
 class TestUasCfg(unittest.TestCase):
     """Tester for the UasCfg class
@@ -300,11 +302,11 @@ class TestUasCfg(unittest.TestCase):
     # pylint: disable=missing-docstring
     def test_validate_ssh_key(self):
         self.__reset_runtime_config(self.uas_cfg)
-        self.assertFalse(self.uas_cfg.validate_ssh_key(None))
-        self.assertFalse(self.uas_cfg.validate_ssh_key(""))
-        self.assertFalse(self.uas_cfg.validate_ssh_key("cray"))
-        self.assertFalse(self.uas_cfg.validate_ssh_key("\n"))
-        self.assertFalse(self.uas_cfg.validate_ssh_key("   \t\n"))
+        self.assertFalse(UAIInstance.validate_ssh_key(None))
+        self.assertFalse(UAIInstance.validate_ssh_key(""))
+        self.assertFalse(UAIInstance.validate_ssh_key("cray"))
+        self.assertFalse(UAIInstance.validate_ssh_key("\n"))
+        self.assertFalse(UAIInstance.validate_ssh_key("   \t\n"))
 
         # try a random non-key file
         # pylint: disable=invalid-name
@@ -312,21 +314,21 @@ class TestUasCfg(unittest.TestCase):
                 "/usr/src/app/swagger_server/test/version-check.sh", "r"
         ) as f:
             nonKey = f.read()
-            self.assertFalse(self.uas_cfg.validate_ssh_key(nonKey))
+            self.assertFalse(UAIInstance.validate_ssh_key(nonKey))
 
         # pylint: disable=invalid-name
         with open("/usr/src/app/swagger_server/test/test_rsa.pub", "r") as f:
             publicKey = f.read()
-            self.assertTrue(self.uas_cfg.validate_ssh_key(publicKey))
+            self.assertTrue(UAIInstance.validate_ssh_key(publicKey))
             # pick some random substrings from the key - it should only
             # validate a full key and not a partial one
-            self.assertFalse(self.uas_cfg.validate_ssh_key(publicKey[3:56]))
-            self.assertFalse(self.uas_cfg.validate_ssh_key(publicKey[0:58]))
+            self.assertFalse(UAIInstance.validate_ssh_key(publicKey[3:56]))
+            self.assertFalse(UAIInstance.validate_ssh_key(publicKey[0:58]))
 
         # pylint: disable=invalid-name
         with open("/usr/src/app/swagger_server/test/test_rsa", "r") as f:
             privateKey = f.read()
-            self.assertFalse(self.uas_cfg.validate_ssh_key(privateKey))
+            self.assertFalse(UAIInstance.validate_ssh_key(privateKey))
         self.__reset_runtime_config()
 
     # pylint: disable=missing-docstring

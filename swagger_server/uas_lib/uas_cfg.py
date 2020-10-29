@@ -6,27 +6,14 @@
 """
 
 
-import logging
-import sys
 import yaml
 from flask import abort
-import sshpubkeys
-import sshpubkeys.exceptions as sshExceptions
 from kubernetes import client
+from swagger_server.uas_lib.uas_logging import logger
 from swagger_server.uas_data_model.uai_volume import UAIVolume
 from swagger_server.uas_data_model.uai_image import UAIImage
 
 
-UAS_CFG_LOGGER = logging.getLogger('uas_cfg')
-UAS_CFG_LOGGER.setLevel(logging.INFO)
-# pylint: disable=invalid-name
-handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.INFO)
-# pylint: disable=invalid-name
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s"
-                              " - %(message)s")
-handler.setFormatter(formatter)
-UAS_CFG_LOGGER.addHandler(handler)
 UAS_CFG_DEFAULT_PORT = 30123
 UAS_CFG_OPTIONAL_PORTS = [80, 443, 8888]
 UAS_CFG_DEFAULT_UAI_NAMESPACE = "default"
@@ -228,7 +215,7 @@ class UasCfg:
         # argument is ever modified.
         if optional_ports is None:
             optional_ports = []
-        UAS_CFG_LOGGER.info("optional_ports: %s", optional_ports)
+        logger.info("optional_ports: %s", optional_ports)
         cfg = self.get_config()
         port_list = []
         if not cfg:
@@ -268,7 +255,7 @@ class UasCfg:
                     for port in optional_ports:
                         cfg_port_list.append(port)
 
-        UAS_CFG_LOGGER.info("cfg_port_list: %s", cfg_port_list)
+        logger.info("cfg_port_list: %s", cfg_port_list)
         for port in cfg_port_list:
             # check if a port range was given
             if isinstance(port, str):
@@ -338,27 +325,6 @@ class UasCfg:
                               tcp_socket=socket)
 
     @staticmethod
-    def validate_ssh_key(ssh_key):
-        """
-        checks whether the ssh_key is a valid public key
-        ssh_key input is expected to be a string
-        :return: returns True if valid public key
-        :rtype bool
-        """
-        try:
-            ssh = sshpubkeys.SSHKey(ssh_key, strict=False,
-                                    skip_option_parsing=True)
-            ssh.parse()
-            return True
-        except (NotImplementedError, sshExceptions.MalformedDataError) as err:
-            UAS_CFG_LOGGER.error("Invalid key: %s", err)
-        except sshExceptions.InvalidKeyError as err:
-            UAS_CFG_LOGGER.error("Unknown key type: %s", err)
-        except Exception as err:  # pylint: disable=broad-except
-            UAS_CFG_LOGGER.error("Invalid non-key input: %s", err)
-        return False
-
-    @staticmethod
     def get_valid_optional_ports():
         """
         Return list of valid optional ports.
@@ -381,7 +347,9 @@ class UasCfg:
         try:
             return cfg['uai_namespace']
         except (TypeError, KeyError):
-            UAS_CFG_LOGGER.info("configuration uai_namespace not found, "
-                                "using %s namespace for UAIs",
-                                UAS_CFG_DEFAULT_UAI_NAMESPACE)
+            logger.info(
+                "configuration uai_namespace not found, "
+                "using %s namespace for UAIs",
+                UAS_CFG_DEFAULT_UAI_NAMESPACE
+            )
             return UAS_CFG_DEFAULT_UAI_NAMESPACE
