@@ -45,6 +45,21 @@ and open your browser to here:
 http://localhost:8080/v1/mgr-info
 ```
 
+## Building a Development Image and Running Unit tests
+
+The unit tests, lint, and coverage can be checked at the shell in
+your development repository directory by running:
+
+```
+./dev_deploy.sh
+```
+
+This will also build you a new image that you can push to whatever
+container registry you want for use.  By default, this builds a
+container image tagged as `cray/cray-uas-mgr:latest`.  You can
+change the tag to whatever you want using the `-t <tag>` option
+to the command.
+
 ## Running the Integration Tests
 
 To launch the integration tests, use tox:
