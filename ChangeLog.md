@@ -6,8 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.11.2] - 2020-11-10
+- CASMUAS-183 Add Administrative UAI Managememt APIs to UAS
+
 ## [1.11.1] - 2020-10-26
-- CASMUAS-181 Add support for configured UIA / Broker Classes in UAS
+- CASMUAS-182 Add support for configured UIA / Broker Classes in UAS
 
 ## [1.11.0] - 2020-10-26
 - CASMUAS-181 Add support for configured Resource Limit / Request overrides in UAS
