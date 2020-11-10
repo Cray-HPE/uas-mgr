@@ -30,7 +30,9 @@ def create_uai(publickey=None, imagename=None, ports=None):
 
     :rtype: UAI
     """
-    uai_response = UaiManager().create_uai(publickey, imagename, ports)
+    uai_response = UaiManager().create_uai(public_key=publickey,
+                                           imagename=imagename,
+                                           opt_ports=ports)
     return uai_response
 
 
@@ -46,7 +48,7 @@ def delete_uai_by_name(uai_list):
     """
     if not uai_list:
         return "Must provide a list of UAI names to delete."
-    uai_resp = UaiManager().delete_uais(uai_list)
+    uai_resp = UaiManager().delete_uais(deployment_list=uai_list)
     return uai_resp
 
 
@@ -104,7 +106,7 @@ def get_all_uais(username=None, host=None):
     if username:
         label += ',user=%s' % username
 
-    uai_resp = UaiManager().list_uais(label, host)
+    uai_resp = UaiManager().list_uais(label=label, host=host)
     return uai_resp
 
 
@@ -122,7 +124,7 @@ def delete_all_uais(username=None):
         for uai in uai_mgr.list_uais('uas=managed,user=%s' % username):
             uai_list.append(uai.uai_name)
 
-    uai_resp = uai_mgr.delete_uais(uai_list)
+    uai_resp = uai_mgr.delete_uais(deployment_list=uai_list)
     return uai_resp
 
 
@@ -147,7 +149,8 @@ def create_uas_image_admin(imagename, default=None):
         return "Must provide imagename to create."
     if default is None:
         default = False
-    return UasManager().create_image(imagename, default)
+    return UasManager().create_image(imagename=imagename,
+                                     default=default)
 
 
 def get_uas_images_admin():
@@ -173,7 +176,7 @@ def get_uas_image_admin(image_id):
     """
     if not image_id:
         return "Must provide image_id to get."
-    return UasManager().get_image(image_id)
+    return UasManager().get_image(image_id=image_id)
 
 
 def update_uas_image_admin(image_id, imagename=None, default=None):
@@ -194,7 +197,9 @@ def update_uas_image_admin(image_id, imagename=None, default=None):
     """
     if not image_id:
         return "Must provide image_id to update."
-    return UasManager().update_image(image_id, imagename, default)
+    return UasManager().update_image(image_id=image_id,
+                                     imagename=imagename,
+                                     default=default)
 
 def delete_uas_image_admin(image_id):
     """Remove the imagename from set of valid images
@@ -210,7 +215,7 @@ def delete_uas_image_admin(image_id):
     """
     if not image_id:
         return "Must provide image_id to delete."
-    return UasManager().delete_image(image_id)
+    return UasManager().delete_image(image_id=image_id)
 
 # Volumes...
 def create_uas_volume_admin(volumename, mount_path,
@@ -265,9 +270,9 @@ def create_uas_volume_admin(volumename, mount_path,
         # It is an io.BytesIO, get the value as a string
         volume_description = volume_description.getvalue()
     return UasManager().create_volume(
-        volumename,
-        mount_path,
-        volume_description
+        volumename=volumename,
+        mount_path=mount_path,
+        vol_desc=volume_description
     )
 
 
@@ -297,7 +302,7 @@ def get_uas_volume_admin(volume_id):
     """
     if not volume_id:
         return "Must provide volume_id to get."
-    return UasManager().get_volume(volume_id)
+    return UasManager().get_volume(volume_id=volume_id)
 
 
 def update_uas_volume_admin(volume_id, volumename=None, mount_path=None,
@@ -351,10 +356,10 @@ def update_uas_volume_admin(volume_id, volumename=None, mount_path=None,
             # It is an io.BytesIO, get the value as a string
             volume_description = volume_description.getvalue()
     return UasManager().update_volume(
-        volume_id,
-        volumename,
-        mount_path,
-        volume_description
+        volume_id=volume_id,
+        volumename=volumename,
+        mount_path=mount_path,
+        vol_desc=volume_description
     )
 
 
@@ -373,7 +378,7 @@ def delete_uas_volume_admin(volume_id):
     """
     if not volume_id:
         return "Must provide volume_id to delete."
-    return UasManager().delete_volume(volume_id)
+    return UasManager().delete_volume(volume_id=volume_id)
 
 def delete_local_config_admin():
     """Remove all local configuration and reset to defaults
@@ -401,7 +406,9 @@ def create_uas_resource_admin(comment=None, limit=None, request=None):
     :rtype: Resource
 
     """
-    return UasManager().create_resource(comment, limit, request)
+    return UasManager().create_resource(comment=comment,
+                                        limit=limit,
+                                        request=request)
 
 
 def get_uas_resources_admin():
@@ -427,7 +434,7 @@ def get_uas_resource_admin(resource_id):
     """
     if not resource_id:
         return "Must provide resource_id to get."
-    return UasManager().get_resource(resource_id)
+    return UasManager().get_resource(resource_id=resource_id)
 
 
 def update_uas_resource_admin(resource_id,
@@ -453,7 +460,10 @@ def update_uas_resource_admin(resource_id,
     """
     if not resource_id:
         return "Must provide resource_id to update."
-    return UasManager().update_resource(resource_id, comment, limit, request)
+    return UasManager().update_resource(resource_id=resource_id,
+                                        comment=comment,
+                                        limit=limit,
+                                        request=request)
 
 def delete_uas_resource_admin(resource_id):
     """Remove the specified resource limit / request configuration
@@ -466,4 +476,147 @@ def delete_uas_resource_admin(resource_id):
     """
     if not resource_id:
         return "Must provide resource_id to delete."
-    return UasManager().delete_resource(resource_id)
+    return UasManager().delete_resource(resource_id=resource_id)
+
+# UAI Classes
+#pylint: disable=too-many-arguments
+def create_uas_class_admin(comment=None,
+                           default=None,
+                           public_ssh=None,
+                           image_id=None,
+                           priority_class_name=None,
+                           namespace=None,
+                           opt_ports=None,
+                           uai_creation_class=None,
+                           resource_id=None,
+                           volume_list=None):
+    """Add a UAI Class
+
+    Add a UAI Class to the UAS configuration
+
+    :param comment: Comment describing UAI Class (optional)
+    :type comment: str
+    :param default: Is this the default UAI Class?
+    :type default: bool
+    :param public_ssh: Are UAIs  from this class on a public IP?
+    :type public_ssh: bool
+    :param image_id: Image ID (UUID) to use creating UAIs  of this class
+    :type image_id: str
+    :param priority_class_name: K8s priority class name to give UAIs  of this class
+    :type priority_class_name: str
+    :param namespace: K8s namespace where  of this class run
+    :type namespace: str
+    :param opt_ports: Comma separated list of optional additional port numbers
+    :type opt_ports: str
+    :param uai_creation_class: Class ID (UUID) of UAIs created by this Broker
+    :type uai_creation_class: str
+    :param resource_id: Resource ID (UUID)  to use in UAIs  of this class
+    :type resource_id: str
+    :param volume_list: List of Volume IDs (UUIDs) mounted in UAIs  of this class
+    :type volume_list: list
+    :rtype: UAIClass
+
+    """
+    return UasManager().create_class(comment=comment,
+                                     default=default,
+                                     public_ssh=public_ssh,
+                                     image_id=image_id,
+                                     resource_id=resource_id,
+                                     namespace=namespace,
+                                     opt_ports=opt_ports,
+                                     uai_creation_class=uai_creation_class,
+                                     priority_class_name=priority_class_name,
+                                     volume_list=volume_list)
+
+
+def get_uas_classes_admin():
+    """List UAI Classes
+
+    List all available UAI Classes
+
+    :rtype: UAIClass
+    """
+    return UasManager().get_classes()
+
+
+def get_uas_class_admin(class_id=None):
+    """Get the specified UAI Class
+
+    Get a description of the specified UAI Class
+
+    :param class_id:
+    :type class_id: str
+
+    :rtype: Resource
+    """
+    if not class_id:
+        return "Must provide class_id (UUID) to get."
+    return UasManager().get_class(class_id=class_id)
+
+
+#pylint: disable=too-many-arguments
+def update_uas_class_admin(class_id=None,
+                           comment=None,
+                           default=None,
+                           public_ssh=None,
+                           image_id=None,
+                           priority_class_name=None,
+                           namespace=None,
+                           opt_ports=None,
+                           uai_creation_class=None,
+                           resource_id=None,
+                           volume_list=None):
+    """Update the specified UAI Class
+
+    Update the specified UAI Class with new values.  This can set the
+    comment, default setting, image_id, resource_id and volume_list of
+    the UAI class.
+
+    :param comment: Comment describing UAI Class (optional)
+    :type comment: str
+    :param default: Is this the default UAI Class?
+    :type default: bool
+    :param public_ssh: Are UAIs  from this class on a public IP?
+    :type public_ssh: bool
+    :param image_id: Image ID (UUID) to use creating UAIs  of this class
+    :type image_id: str
+    :param priority_class_name: K8s priority class name to give UAIs  of this class
+    :type priority_class_name: str
+    :param namespace: K8s namespace where  of this class run
+    :type namespace: str
+    :param opt_ports: Comma separated list of optional additional port numbers
+    :type opt_ports: str
+    :param uai_creation_class: Class ID (UUID) of UAIs created by this Broker
+    :type uai_creation_class: str
+    :param resource_id: Resource ID (UUID)  to use in UAIs  of this class
+    :type resource_id: str
+    :param volume_list: List of Volume IDs (UUIDs) useed in UAIs of this class
+    :type volume_list: list
+    :rtype: UAIClass
+    """
+    if not class_id:
+        return "Must provide class_id of the UAI Class to update."
+    return UasManager().update_class(class_id=class_id,
+                                     comment=comment,
+                                     default=default,
+                                     public_ssh=public_ssh,
+                                     image_id=image_id,
+                                     priority_class_name=priority_class_name,
+                                     namespace=namespace,
+                                     opt_ports=opt_ports,
+                                     uai_creation_class=uai_creation_class,
+                                     resource_id=resource_id,
+                                     volume_list=volume_list)
+
+def delete_uas_class_admin(class_id):
+    """Remove the specified UAI Class
+
+    :param class_id:
+    :type class_id: str
+
+    :rtype: UAIClass
+
+    """
+    if not class_id:
+        return "Must provide class_id of UAI Class to delete."
+    return UasManager().delete_class(class_id=class_id)

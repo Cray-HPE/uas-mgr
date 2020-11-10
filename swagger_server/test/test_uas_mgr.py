@@ -7,13 +7,19 @@
 
 import unittest
 import os
+import io
 from datetime import datetime, timezone, timedelta
 import json
+import uuid
 import werkzeug
 import flask
 from swagger_server.uas_lib.uai_mgr import UaiManager
 from swagger_server.uas_lib.uas_mgr import UasManager
+from swagger_server.uas_lib.uas_base import UAIInstance
 from swagger_server.models.uai import UAI
+from swagger_server.uas_data_model.uai_class import UAIClass
+from swagger_server.uas_data_model.uai_image import UAIImage
+
 
 app = flask.Flask(__name__)  # pylint: disable=invalid-name
 
@@ -24,7 +30,20 @@ class TestUasMgr(unittest.TestCase):
     """
     os.environ["KUBERNETES_SERVICE_PORT"] = "443"
     os.environ["KUBERNETES_SERVICE_HOST"] = "127.0.0.1"
-    deployment_name = "hal-234a85"
+    public_key = io.BytesIO()
+    public_key.write(
+        bytes(
+            "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCzpYg4QF8sj479"
+            "cBdhLf6qyZPSueaQ9T7r96ejD7TUpwrjDxZFneZGm6dbFIRBR1P5"
+            "/0TYbGBWvvHGZvunsp+wjVx6MlpUmaC4oQlPS9Re01NI60zI6den"
+            "RofAGa2hlCRq6CtEX7IG2r8uKJa7intjQmyeUKCju6HKjZbamYBx"
+            "7kxSdaKbsIzwwURL7g7od6dVh+R3XaFHLDWbS52wwsD09T4mIiUB"
+            "O3wvs/ShApFsUmuG1DFgUfdCV+m2S67gr2VDUwmeZeV7mPDZRmCS"
+            "UNCTuRM5RNjYBtaRPb6POl/wDKQQz3Q0hdlzg0jxiID//C3BASfK"
+            "9i+UNWq7o3BSHNSj test-user@host.mydomain.com",
+            encoding='utf8'
+        )
+    )
     with app.test_request_context('/'):
         uai_mgr = UaiManager()
         uas_mgr = UasManager()
@@ -33,19 +52,229 @@ class TestUasMgr(unittest.TestCase):
     def test_uas_mgr_init(self):
         return
 
+    def __compare_dicts(self, expected, actual):
+        """ Compare two dictionaries and fail if they are different.
+
+        """
+        for key in expected:
+            self.assertIn(key, actual)
+            if isinstance(expected[key], dict):
+                self.assertIsInstance(actual[key], dict)
+                self.__compare_dicts(expected[key], actual[key])
+            else:
+                self.assertEqual(expected[key], actual[key])
+        for key in actual:
+            # If the key is in expected we have already checked that
+            # it is correct in actual.  If not, we will fail here.
+            self.assertIn(key, expected)
+
     # pylint: disable=missing-docstring
     def test_gen_labels(self):
-        labels = self.uai_mgr.gen_labels(self.deployment_name)
-        self.assertEqual(labels, {"app": self.deployment_name,
-                                  "uas": "managed"})
-        labels = self.uai_mgr.gen_labels(self.deployment_name, None)
-        self.assertEqual(labels, {"app": self.deployment_name,
-                                  "uas": "managed"})
-        labels = self.uai_mgr.gen_labels(self.deployment_name, "test_user")
-        self.assertEqual(labels, {"app": self.deployment_name,
-                                  "uas": "managed",
-                                  "user": "test_user"})
+        uai_instance = UAIInstance()
+        labels = uai_instance.gen_labels()
+        self.__compare_dicts(
+            {
+                "app": uai_instance.deployment_name,
+                "uas": "managed"
+            },
+            labels
+        )
+        labels = uai_instance.gen_labels()
+        self.__compare_dicts(
+            {
+                "app": uai_instance.deployment_name,
+                "uas": "managed"
+            },
+            labels
+        )
+        uai_instance = UAIInstance(owner="test_user")
+        labels = uai_instance.gen_labels()
+        self.__compare_dicts(
+            {
+                "app": uai_instance.deployment_name,
+                "uas": "managed",
+                "user": uai_instance.owner
+            },
+            labels
+        )
+        uai_class = UAIClass(
+            uai_creation_class=str(uuid.uuid4()),
+            public_ssh=True
+        )
+        labels = uai_instance.gen_labels(uai_class)
+        self.__compare_dicts(
+            {
+                "app": uai_instance.deployment_name,
+                "uas": "managed",
+                "user": uai_instance.owner,
+                "uas-uai-creation-class": uai_class.uai_creation_class,
+                "uas-public-ssh": str(uai_class.public_ssh),
+                "uas-class-id": uai_class.class_id
+            },
+            labels
+        )
 
+    def __check_env(self, expected, env):
+        """ Verify that, given a K8s environment list, the items in the list
+        are the expected ones and have the expected values.
+
+        """
+        found = []
+        # Make sure everything in the environment is expected and has
+        # the right value
+        for item in env:
+            self.assertIn(item.name, expected)
+            self.assertEqual(item.value, expected[item.name])
+            found.append(item.name)
+        # Make sure everything expected was in the environment
+        for key in expected:
+            self.assertIn(key, found)
+
+    #pylint: disable=missing-docstring
+    def test_get_env(self):
+        self.public_key.seek(0)
+        uai_instance = UAIInstance(
+            owner="test_user",
+            passwd_str="user::1234:5678:User Name:/user/home/directory:/user/shell",
+            public_key=self.public_key
+        )
+        uai_class = UAIClass(
+            uai_creation_class=str(uuid.uuid4())
+        )
+        env = uai_instance.get_env(uai_class)
+        self.__check_env(
+            {
+                'UAS_NAME': uai_instance.get_service_name(),
+                'UAS_PASSWD': uai_instance.passwd_str,
+                'UAS_PUBKEY': uai_instance.public_key_str,
+                'UAI_CREATION_CLASS': uai_class.uai_creation_class
+            },
+            env
+        )
+
+    #pylint: disable=missing-docstring
+    def test_create_deployment_object(self):
+        self.uai_mgr.uas_cfg.get_config()
+        image = UAIImage(imagename="my-image-name", default=False)
+        image_id = image.image_id
+        image.put()
+        self.public_key.seek(0)
+        uai_instance = UAIInstance(
+            owner="test_user",
+            passwd_str="user::1234:5678:User Name:/user/home/directory:/user/shell",
+            public_key=self.public_key
+        )
+        uai_class = UAIClass(
+            comment="A Class to test deployment object creation",
+            default=False,
+            public_ssh=False,
+            namespace="my-namespace",
+            uai_creation_class=None,
+            image_id=image_id,
+            priority_class_name="my-priority-class",
+            resource_id=None,
+            volume_list=[]
+        )
+        obj = uai_instance.create_deployment_object(
+            uai_class,
+            self.uai_mgr.uas_cfg
+        )
+        image.remove()
+        # Spot check the deployment, since exhaustive checking is
+        # probably impractical
+        self.assertEqual(obj.api_version, "apps/v1")
+        self.assertEqual(obj.kind, "Deployment")
+        metadata = obj.metadata
+        spec = obj.spec
+        template=spec.template
+        self.__compare_dicts(
+            {
+                'matchLabels': {
+                    'app': uai_instance.deployment_name
+                }
+            },
+            spec.selector
+        )
+        self.assertEqual(
+            uai_class.priority_class_name,
+            template.spec.priority_class_name
+        )
+        self.assertEqual(
+            [],
+            template.spec.volumes
+        )
+        self.assertEqual(
+            uai_instance.deployment_name,
+            template.spec.containers[0].name
+        )
+        self.__check_env(
+            {
+                'UAS_NAME': uai_instance.get_service_name(),
+                'UAS_PASSWD': uai_instance.passwd_str,
+                'UAS_PUBKEY': uai_instance.public_key_str,
+            },
+            template.spec.containers[0].env
+        )
+        self.assertEqual(
+            [],
+            template.spec.containers[0].volume_mounts
+        )
+        self.__compare_dicts(
+            uai_instance.gen_labels(uai_class),
+            metadata.labels
+        )
+        self.assertEqual(
+            uai_instance.deployment_name,
+            metadata.name
+        )
+        self.__compare_dicts(
+            uai_instance.gen_labels(uai_class),
+            template.metadata.labels
+        )
+
+    #pylint: disable=missing-docstring
+    def test_create_service_object(self):
+        self.public_key.seek(0)
+        uai_instance = UAIInstance(
+            owner="test_user",
+            passwd_str="user::1234:5678:User Name:/user/home/directory:/user/shell",
+            public_key=self.public_key
+        )
+        uai_class = UAIClass(
+            comment="A Class to test service object creation",
+            default=False,
+            public_ssh=False,
+            namespace="my-namespace",
+            uai_creation_class=None,
+            image_id=str(uuid.uuid4()),
+            priority_class_name="my-priority-class",
+            resource_id=None,
+            volume_list=[]
+        )
+        obj = uai_instance.create_service_object(
+            uai_class,
+            self.uai_mgr.uas_cfg
+        )
+        # Spot check the deployment, since exhaustive checking is
+        # probably impractical
+        self.assertEqual(obj.api_version, "v1")
+        self.assertEqual(obj.kind, "Service")
+        metadata = obj.metadata
+        spec = obj.spec
+        self.__compare_dicts(
+            {
+                'app': uai_instance.deployment_name
+            },
+            spec.selector
+        )
+        self.assertEqual(
+            uai_instance.get_service_name(),
+            metadata.name
+        )
+        self.__compare_dicts(
+            uai_instance.gen_labels(uai_class),
+            metadata.labels
+        )
 
     # pylint: disable=missing-docstring
     def test_gen_connection_string(self):
@@ -55,7 +284,7 @@ class TestUasMgr(unittest.TestCase):
         uai.uai_ip = "1.2.3.4"
         uai.uai_connect_string = self.uai_mgr.gen_connection_string(uai)
 
-        self.assertEqual("ssh testuser@1.2.3.4 -p 12345 -i ~/.ssh/id_rsa",
+        self.assertEqual("ssh testuser@1.2.3.4 -p 12345",
                          uai.uai_connect_string)
 
     # pylint: disable=missing-docstring
@@ -66,7 +295,7 @@ class TestUasMgr(unittest.TestCase):
         uai.uai_ip = "1.2.3.4"
         uai.uai_connect_string = self.uai_mgr.gen_connection_string(uai)
 
-        self.assertEqual("ssh testuser@1.2.3.4 -i ~/.ssh/id_rsa",
+        self.assertEqual("ssh testuser@1.2.3.4",
                          uai.uai_connect_string)
 
     def test_image_lifecycle(self):

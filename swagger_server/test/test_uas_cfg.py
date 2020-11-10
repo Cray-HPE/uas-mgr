@@ -8,9 +8,11 @@ import unittest
 
 from kubernetes import client
 from swagger_server.uas_lib.uas_cfg import UasCfg
+from swagger_server.uas_lib.uas_base import UAIInstance
 from swagger_server.uas_data_model.uai_volume import UAIVolume
 from swagger_server.uas_data_model.uai_image import UAIImage
 from swagger_server.uas_data_model.populated_config import PopulatedConfig
+
 
 class TestUasCfg(unittest.TestCase):
     """Tester for the UasCfg class
@@ -26,7 +28,7 @@ class TestUasCfg(unittest.TestCase):
     )
 
     @classmethod
-    def __reset_runtime_config(cls):
+    def __reset_runtime_config(cls, new_config=None):
         """Reset the stored (etcd) configuration that results from actions on
         a given configuration.  This module acts on several different
         configurations expecting different results from each, so
@@ -48,6 +50,8 @@ class TestUasCfg(unittest.TestCase):
         if configs is not None:
             for cfg in configs:
                 cfg.remove()
+        if new_config is not None:
+            new_config.get_config()
 
     # pylint: disable=missing-docstring
     def test_get_config(self):
@@ -63,13 +67,13 @@ class TestUasCfg(unittest.TestCase):
 
     # pylint: disable=missing-docstring
     def test_get_images(self):
-        self.__reset_runtime_config()
+        self.__reset_runtime_config(self.uas_cfg)
         images = self.uas_cfg.get_images()
         self.assertEqual(
             images,
             ['dtr.dev.cray.com:443/cray/cray-uas-sles15:latest']
         )
-        self.__reset_runtime_config()
+        self.__reset_runtime_config(self.uas_cfg_empty)
         images = self.uas_cfg_empty.get_images()
         self.__reset_runtime_config()
         self.assertEqual(images, None)
@@ -77,20 +81,20 @@ class TestUasCfg(unittest.TestCase):
 
     # pylint: disable=missing-docstring
     def test_get_default_image(self):
-        self.__reset_runtime_config()
+        self.__reset_runtime_config(self.uas_cfg)
         image = self.uas_cfg.get_default_image()
         self.assertEqual(
             image,
             'dtr.dev.cray.com:443/cray/cray-uas-sles15:latest'
         )
-        self.__reset_runtime_config()
+        self.__reset_runtime_config(self.uas_cfg_empty)
         image = self.uas_cfg_empty.get_default_image()
         self.assertEqual(image, None)
         self.__reset_runtime_config()
 
     # pylint: disable=missing-docstring
     def test_validate_image_true(self):
-        self.__reset_runtime_config()
+        self.__reset_runtime_config(self.uas_cfg)
         self.assertTrue(
             self.uas_cfg.validate_image(
                 'dtr.dev.cray.com:443/cray/cray-uas-sles15:latest'
@@ -100,54 +104,73 @@ class TestUasCfg(unittest.TestCase):
 
     # pylint: disable=missing-docstring
     def test_validate_image_false(self):
-        self.__reset_runtime_config()
+        self.__reset_runtime_config(self.uas_cfg)
         self.assertFalse(self.uas_cfg.validate_image('not-an-image'))
         self.assertFalse(self.uas_cfg.validate_image(''))
         self.__reset_runtime_config()
 
     # pylint: disable=missing-docstring
     def test_get_external_ip(self):
-        self.__reset_runtime_config()
+        self.__reset_runtime_config(self.uas_cfg)
         self.assertEqual('10.100.240.14',
                          self.uas_cfg.get_external_ip())
-        self.__reset_runtime_config()
+        self.__reset_runtime_config(self.uas_cfg_empty)
         self.assertEqual(self.uas_cfg_empty.get_external_ip(), None)
         self.__reset_runtime_config()
 
     # pylint: disable=missing-docstring
     def test_gen_volume_mounts(self):
-        self.__reset_runtime_config()
-        self.assertEqual(5, len(self.uas_cfg_svc.gen_volume_mounts()))
-        self.__reset_runtime_config()
-        self.assertEqual([], self.uas_cfg_empty.gen_volume_mounts())
+        self.__reset_runtime_config(self.uas_cfg_svc)
+        volumes = UAIVolume.get_all()
+        volumes = [] if volumes is None else volumes
+        volume_list = [volume.volume_id for volume in volumes]
+        self.assertEqual(
+            5,
+            len(self.uas_cfg_svc.gen_volume_mounts(volume_list))
+        )
+        self.__reset_runtime_config(self.uas_cfg_empty)
+        volumes = UAIVolume.get_all()
+        volumes = [] if volumes is None else volumes
+        volume_list = [volume.volume_id for volume in volumes]
+        self.assertEqual(
+            [],
+            self.uas_cfg_empty.gen_volume_mounts(volume_list)
+        )
         self.__reset_runtime_config()
 
     # pylint: disable=missing-docstring
     def test_get_volumes(self):
-        self.__reset_runtime_config()
-        vs = self.uas_cfg_svc.gen_volumes()  # pylint: disable=invalid-name
-        for v in vs:  # pylint: disable=invalid-name
-            if hasattr(v, 'host_path'):
-                if v.host_path:
-                    if v.name == 'time':
-                        self.assertEqual('FileOrCreate', v.host_path.type)
+        self.__reset_runtime_config(self.uas_cfg_svc)
+        volumes = UAIVolume.get_all()
+        volumes = [] if volumes is None else volumes
+        volume_list = [volume.volume_id for volume in volumes]
+        vols = self.uas_cfg_svc.gen_volumes(volume_list)
+        for vol in vols:  # pylint: disable=invalid-name
+            if hasattr(vol, 'host_path'):
+                if vol.host_path:
+                    if vol.name == 'time':
+                        self.assertEqual('FileOrCreate', vol.host_path.type)
                     else:
-                        self.assertEqual('DirectoryOrCreate', v.host_path.type)
-        self.assertEqual(5, len(vs))
-        self.__reset_runtime_config()
-        self.assertEqual([], self.uas_cfg_empty.gen_volumes())
+                        self.assertEqual('DirectoryOrCreate',
+                                         vol.host_path.type)
+        self.assertEqual(5, len(vols))
+        self.__reset_runtime_config(self.uas_cfg_empty)
+        volumes = UAIVolume.get_all()
+        volumes = [] if volumes is None else volumes
+        volume_list = [volume.volume_id for volume in volumes]
+        self.assertEqual([], self.uas_cfg_empty.gen_volumes(volume_list))
         self.__reset_runtime_config()
 
     # pylint: disable=missing-docstring
     def test_gen_port_entry(self):
-        self.__reset_runtime_config()
+        self.__reset_runtime_config(self.uas_cfg)
         dcp = self.uas_cfg.gen_port_entry(
             self.uas_cfg.get_default_port(),
             False
         )
         self.assertEqual(dcp.container_port, self.uas_cfg.get_default_port())
         self.assertIsInstance(dcp, client.V1ContainerPort)
-        self.__reset_runtime_config()
+        self.__reset_runtime_config(self.uas_cfg)
 
         # pylint: disable=invalid-name
         cp = self.uas_cfg.gen_port_entry(12345, False)
@@ -164,7 +187,7 @@ class TestUasCfg(unittest.TestCase):
 
     # pylint: disable=missing-docstring
     def test_uas_cfg_gen_port_list(self):
-        self.__reset_runtime_config()
+        self.__reset_runtime_config(self.uas_cfg)
         port_list = self.uas_cfg.gen_port_list(
             service_type="ssh",
             service=False
@@ -190,21 +213,20 @@ class TestUasCfg(unittest.TestCase):
             service_type="service",
             service=False
         )
-        self.assertEqual([], port_list)
+        self.assertEqual(1, len(port_list))
+        self.assertEqual(30123, port_list[0].container_port)
 
         port_list = self.uas_cfg.gen_port_list(
             service_type="service",
             service=True
         )
-        self.assertEqual([], port_list)
-
         self.assertEqual(1, len(self.uas_cfg.gen_port_list()))
         self.__reset_runtime_config()
 
     # pylint: disable=missing-docstring
     def test_uas_cfg_svc_gen_port_list(self):
         # a slightly different way of testing from above
-        self.__reset_runtime_config()
+        self.__reset_runtime_config(self.uas_cfg_svc)
         port_list = self.uas_cfg_svc.gen_port_list(
             service_type="ssh",
             service=False
@@ -232,7 +254,7 @@ class TestUasCfg(unittest.TestCase):
 
     # pylint: disable=missing-docstring
     def test_uas_ports_range_gen_port_list(self):
-        self.__reset_runtime_config()
+        self.__reset_runtime_config(self.uas_cfg_port_range)
         with self.assertRaises(ValueError):
             self.uas_cfg_port_range.gen_port_list(service_type="ssh",
                                                   service=False)
@@ -240,7 +262,7 @@ class TestUasCfg(unittest.TestCase):
 
     # pylint: disable=missing-docstring
     def test_create_readiness_probe(self):
-        self.__reset_runtime_config()
+        self.__reset_runtime_config(self.uas_cfg)
         probe = self.uas_cfg.create_readiness_probe()
         self.assertIsInstance(probe, client.V1Probe)
         self.assertIsInstance(probe.tcp_socket, client.V1TCPSocketAction)
@@ -248,22 +270,22 @@ class TestUasCfg(unittest.TestCase):
 
     # pylint: disable=missing-docstring
     def test_get_valid_optional_ports(self):
-        self.__reset_runtime_config()
+        self.__reset_runtime_config(self.uas_cfg)
         port_list = self.uas_cfg.get_valid_optional_ports()
         self.assertListEqual(port_list, [80, 443, 8888])
         self.__reset_runtime_config()
 
     # pylint: disable=missing-docstring
     def test_get_service_type(self):
-        self.__reset_runtime_config()
+        self.__reset_runtime_config(self.uas_cfg)
         svc_type = self.uas_cfg.get_svc_type(service_type="ssh")
         self.assertEqual(svc_type['svc_type'], "NodePort")
         self.assertEqual(svc_type['ip_pool'], None)
-        self.__reset_runtime_config()
+        self.__reset_runtime_config(self.uas_cfg_empty)
         svc_type = self.uas_cfg_empty.get_svc_type(service_type="ssh")
         self.assertEqual(svc_type['svc_type'], "NodePort")
         self.assertEqual(svc_type['ip_pool'], None)
-        self.__reset_runtime_config()
+        self.__reset_runtime_config(self.uas_cfg_svc)
         svc_type = self.uas_cfg_svc.get_svc_type(service_type="ssh")
         self.assertEqual(svc_type['ip_pool'], "customer")
         self.assertEqual(svc_type['svc_type'], "LoadBalancer")
@@ -279,12 +301,12 @@ class TestUasCfg(unittest.TestCase):
 
     # pylint: disable=missing-docstring
     def test_validate_ssh_key(self):
-        self.__reset_runtime_config()
-        self.assertFalse(self.uas_cfg.validate_ssh_key(None))
-        self.assertFalse(self.uas_cfg.validate_ssh_key(""))
-        self.assertFalse(self.uas_cfg.validate_ssh_key("cray"))
-        self.assertFalse(self.uas_cfg.validate_ssh_key("\n"))
-        self.assertFalse(self.uas_cfg.validate_ssh_key("   \t\n"))
+        self.__reset_runtime_config(self.uas_cfg)
+        self.assertFalse(UAIInstance.validate_ssh_key(None))
+        self.assertFalse(UAIInstance.validate_ssh_key(""))
+        self.assertFalse(UAIInstance.validate_ssh_key("cray"))
+        self.assertFalse(UAIInstance.validate_ssh_key("\n"))
+        self.assertFalse(UAIInstance.validate_ssh_key("   \t\n"))
 
         # try a random non-key file
         # pylint: disable=invalid-name
@@ -292,21 +314,21 @@ class TestUasCfg(unittest.TestCase):
                 "/usr/src/app/swagger_server/test/version-check.sh", "r"
         ) as f:
             nonKey = f.read()
-            self.assertFalse(self.uas_cfg.validate_ssh_key(nonKey))
+            self.assertFalse(UAIInstance.validate_ssh_key(nonKey))
 
         # pylint: disable=invalid-name
         with open("/usr/src/app/swagger_server/test/test_rsa.pub", "r") as f:
             publicKey = f.read()
-            self.assertTrue(self.uas_cfg.validate_ssh_key(publicKey))
+            self.assertTrue(UAIInstance.validate_ssh_key(publicKey))
             # pick some random substrings from the key - it should only
             # validate a full key and not a partial one
-            self.assertFalse(self.uas_cfg.validate_ssh_key(publicKey[3:56]))
-            self.assertFalse(self.uas_cfg.validate_ssh_key(publicKey[0:58]))
+            self.assertFalse(UAIInstance.validate_ssh_key(publicKey[3:56]))
+            self.assertFalse(UAIInstance.validate_ssh_key(publicKey[0:58]))
 
         # pylint: disable=invalid-name
         with open("/usr/src/app/swagger_server/test/test_rsa", "r") as f:
             privateKey = f.read()
-            self.assertFalse(self.uas_cfg.validate_ssh_key(privateKey))
+            self.assertFalse(UAIInstance.validate_ssh_key(privateKey))
         self.__reset_runtime_config()
 
     # pylint: disable=missing-docstring
@@ -457,8 +479,9 @@ class TestUasCfg(unittest.TestCase):
 
     # pylint: disable=missing-docstring
     def test_get_uai_namespace(self):
-        self.__reset_runtime_config()
+        self.__reset_runtime_config(self.uas_cfg)
         self.assertEqual(self.uas_cfg.get_uai_namespace(), "somens")
+        self.__reset_runtime_config(self.uas_cfg_svc)
         self.assertEqual(self.uas_cfg_svc.get_uai_namespace(), "default")
         self.__reset_runtime_config()
 

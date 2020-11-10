@@ -53,16 +53,44 @@ info:
 
     This is where an administrator can list, create, get, modify, or
     delete resource limit / request configurations that can be used on
-    UAI Classes to specify Kubernetes limits for UAIs of a given
+    UAI / Broker Classes to specify Kubernetes limits for UAIs of a given
     class.
+
+    ### /admin/config/classes
+
+    This is where an administrator can list, create, get, modify, or
+    delete UAI / Broker Class definitions.  UAI / Broker Classes
+    provide templates for different UAI or Broker configurations,
+    allowing an administrator to assign specific volumes, resource
+    configurations, and images to all UAIs or brokers created using
+    a given class.
 
     ## Workflows
 
 
     ### Single User Workflow
 
-    As an individual user, create a UAI for your own use and delete it when
-    no longer needed.
+    The single user workflow allows individual users to create UAIs
+    directly through the UAS API that run on behalf of the creating
+    user and are controlled by the creating user.  To be authorized as
+    a creating user or to use a UAI in this workflow, a user must have
+    Linux user attributes configured in the API Gateway authenticator:
+    uidNumber, gidNumber, userName, name, homeDirectory and
+    loginShell.  The user may then authenticate with the API Gateway
+    authenticator and make the calls in this workflow to create and
+    manage UAIs owned by that user.
+
+    There are two modes of operation of the single user workflow,
+    which are determined by the configuration of the UAS.  The default
+    mode preserves legacy behavior in which creating a UAI using a
+    POST operation to the /uas path creates a UAI belonging to the
+    authenticated user using all configured volumes, the default
+    resource limits and requests on the UAI Kubernetes namespace, and
+    the specified (or default) UAI image.  This happens if no default
+    Class is configured (see Administrative Workflow).  If a
+    default Class is configured, a POST on the /uas path creates a
+    UAI using the UAI Image, volume list and resource limits and
+    requests (if any) configured in the default Class.
 
     #### GET /uas
 
@@ -85,18 +113,63 @@ info:
 
     Cleanup your own UAI.  This operation is restricted to owner of the UAI.
 
-    ### Admin Workflow
+    ### Administrative Workflow
 
-    As an administrator, establish the system-wide configuration, in
-    terms of images and volumes, used for UAI creation. Subsequently
-    created UAIs will contain the specified image and all configured
-    volumes.  Note that the configuration applies to UAIs
-    subsequently created.  When the system-wide configuration changes,
-    those changes do not affect pre-existing UAIs.
+    The Administrative workflow covers two activities, configuration
+    and admnistrative management of UAIs.
 
-    These operations are available under the /admin/config prefix.
-    Currently supported paths under /admin/config are /admin/config/images and
-    /admin/config/volumes.
+    #### UAS Configuration
+    
+    UAS Configuration covers the following:
+
+    * UAI Images
+    * Volume Mounts
+    * Resource Limits and Requests
+    * UAI / Broker Classes
+
+    UAI Images are the container images used to create UAIs.  In the
+    Single User Workflow (above) when no default Class is defined,
+    the user can request a specific UAI Image to be used.  In the
+    Administrative Workflow, a UAI Image can be associated with a UAI / Broker
+    Class and will then be used to create any UAI based on that class.
+    At most 1 UAI Image may be marked as the 'default' image, which
+    will cause it to be used when creating a UAI in the Single User
+    Workflow if no image is specified in the POST on the /uas path and
+    no default Class is configured.
+
+    Volume Mounts are used in UAIs to make external data available to
+    the UAI container.  More information about different types of
+    Volume Mounts can be found in the Kubernetes documentation.  In
+    the Single User workflow, when no default Class is configured,
+    all configured volume mounts are mounted on any UAI created. Each
+    UAI / Broker Class contains a list of volume mounts which can be any subset
+    of the total set configured.  When a UAI is created using a UAI / Broker
+    Class, either administratively or via a default Class in the
+    single user workflow, only those volumes listed in the Class
+    are mounted in the resulting UAI.
+
+    Resource Limit / Request configurations allow a UAI to override
+    the default Kubernetes resource limits and requests configured on
+    the UAI Kubernetes namespace.  For more information on Kubernetes
+    resource limits and requests, see the Kubernetes documentation.  A
+    Resource Limit / Request configuration can be associated with a
+    UAI / Broker Class, in which case any UAI created using that class, either
+    administratively or using the single user workflow and a default
+    UAI / Broker Class, will use the specified resource limits and requests
+    instead of the UAI namespace default setting.
+
+    UAI / Broker Classes allow administrators to define templates for creating
+    UAIs that define the UAI Image to be used, the list of Volume
+    Mounts to be mounted in the UAI and the Resource Limits and
+    Requests to be used when scheduling the UAI.  At most one UAI / Broker
+    Class may be marked as 'default' in which case it will be used
+    unconditionally for all UAIs created using the Single User
+    Workflow.
+
+    #### UAI Management
+
+    The Administrative UAI management APIs are not yet available.
+    This section will be completed when they become avaialable.
 
     #### GET /images
 
@@ -104,16 +177,20 @@ info:
 
     #### GET /admin/config/volumes
 
-    Get a list of volumes available for use by UAIs.
+    Get a list of volumes available for use by UAIs and UAI / Broker Classes
 
     #### GET /admin/config/images
 
-    Get a list of images available for creating UAIs.
+    Get a list of images available for creating UAIs and UAI / Broker Classes
 
     #### GET /admin/config/resources
 
     Get a list of resource limit / request configurations available for
-    creating UAI Classes (UAI Classes are not yet implemented).
+    creating UAI / Broker Classes
+
+    #### GET /admin/config/classes
+
+    Get a list of available UAI / Broker Classes
 
     #### POST /admin/config/volumes
 
@@ -126,7 +203,11 @@ info:
     #### POST /admin/config/resources
 
     Create a resource limit / request configuration that can be used for
-    creating UAI Classes (UAI Classes are not yet implemented).
+    creating UAI / Broker Classes
+
+    #### POST /admin/config/classes
+
+    Create a new UAI / Broker Class
 
     #### GET /admin/config/images/{image_id}
 
@@ -139,7 +220,11 @@ info:
     #### GET /admin/config/resources/{resource_id}
 
     Get information about a specific resource limit / request configuration
-    for creating UAI Classes (UAI Classes are not yet implemented).
+    for creating UAI / Broker Classes
+
+    #### GET /admin/config/classes/{class_id}
+
+    Get information about a specific UAI / Broker Class
 
     #### PATCH /admin/config/images/{image_id}
 
@@ -154,7 +239,11 @@ info:
     #### PATCH /admin/config/resources/{resource_id}
 
     Update the contents of a specific resource limit / request configuration
-    for creating UAI Classes (UAI Classes are not yet implemented).
+    for creating UAI / Broker Classes
+
+    #### PATCH /admin/config/classes/{class_id}
+
+    Update the contents of a specific UAI / Broker Class
 
     #### DELETE /admin/config/images/{image_id}
 
@@ -170,7 +259,7 @@ info:
     Delete the specified resource limit / request configuration from the
     list of available choices.
 
-  version: "1.11.0"
+  version: "1.11.1"
 
 servers:
   - url: "/apis/uas-mgr/v1"
@@ -859,9 +948,9 @@ paths:
     post:
       summary: "Add a resource limit / request configuration"
       description: |
-        Add a new resource limit / request configuration for use in
-        creating UAI Classes.  Resource limits and requests are described in
-        the Kubernetes documentation (UAI Classes are not yet implemented).
+        Add a new resource limit / request configuration for potential use in
+        creating Classes.  Resource limits and requests are described in
+        the Kubernetes documentation.
       operationId: "create_uas_resource_admin"
       tags:
       - "resources"
@@ -882,7 +971,7 @@ paths:
         in: "query"
         description: |
           JSON description of a Kubernetes resource limit to be applied to
-          UAIs created using a UAI Class that references this resource
+          UAIs created using a UAI / Broker Class that references this resource
           configuration.  This is the JSON equivalent of whatever you would
           normally apply as a limit to a pod.  For example, to limit
           a UAI to 300 Millicpus and 250 Mibibytes of memory:
@@ -895,7 +984,7 @@ paths:
         in: "query"
         description: |
           JSON description of a Kubernetes resource request to be
-          applied to UAIs created using a UAI Class that references
+          applied to UAIs created using a UAI / Broker Class that references
           this resource configuration.  This is the JSON equivalent of
           whatever you would normally apply as a request to a pod or
           deployment.  For example, to request a UAI with 300
@@ -1005,7 +1094,7 @@ paths:
         in: "query"
         description: |
           JSON description of a Kubernetes resource limit to be applied to
-          UAIs created using a UAI Class that references this resource
+          UAIs created using a UAI / Broker Class that references this resource
           configuration.  This is the JSON equivalent of whatever you would
           normally apply as a limit to a pod.  For example, to limit
           a UAI to 300 Millicpus and 250 Mibibytes of memory:
@@ -1018,7 +1107,7 @@ paths:
         in: "query"
         description: |
           JSON description of a Kubernetes resource request to be
-          applied to UAIs created using a UAI Class that references
+          applied to UAIs created using a UAI / Broker Class that references
           this resource configuration.  This is the JSON equivalent of
           whatever you would normally apply as a request to a pod or
           deployment.  For example, to request a UAI with 300
@@ -1061,6 +1150,395 @@ paths:
         description: |
           The resource identifier (UUID) of the resource limit / request
           configuration to be removed from the configuration.
+        example: "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
+      responses:
+        200:
+          description: "Resource configuration removed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resource"
+        404:
+          description: "Failed to delete resource configuration {resource_id}"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+  /admin/config/classes:
+
+    post:
+      summary: "Add a UAI / Broker Class"
+      description: |
+        Add a new UAI class for use as a template to construct UAIs
+        administratively.
+      operationId: "create_uas_class_admin"
+      tags:
+      - "classes"
+      - "config"
+      parameters:
+      - name: "comment"
+        in: "query"
+        description: |
+          A descriptive comment explaining the intended use of the Class.
+          Defaults to no description.
+        required: false
+        schema:
+          type: "string"
+        example: |
+          UAI used to build applications for testing and development.
+      - name: "default"
+        in: "query"
+        description: |
+          Optionally specify whether this is the default UAI / Broker
+          Class. There can be at most one default Class in effect
+          at any given time.  If a default Class is present, then
+          UAIs created using the Single User Workflow will use that
+          Class instead of accepting an image name and using all
+          of the configured volume mounts and the UAI namespace
+          default resource configuration.  Additionally, UAIs created
+          in the Administrative Workflow without a specified class will
+          use the default Class.  Defaults to False if not specified.
+
+          Setting 'default' to true when another UAI / Broker Class is
+          currently the default will cause the new Class to become
+          the default and the previous default to stop being the default.
+        required: false
+        schema:
+          type: boolean
+        example: false
+      - name: "public_ssh"
+        in: "query"
+        description: |
+          A flag indicating whether a UAI or Broker created using this
+          class will present SSH on a public IP address or only on a
+          cluster visible IP address.  If not provided, the default is
+          false, which makes resulting UAIs or Brokers visible only
+          within the cluster.
+        required: false
+        schema:
+          type: boolean
+        example: false
+      - name: "image_id"
+        in: "query"
+        description: |
+          The image-id of the image to be used in UAIs created from
+          this UAI / Broker Class.
+        required: true
+        schema:
+          type: "string"
+        example: "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
+      - name: "priority_class_name"
+        in: "query"
+        description: |
+          Optional Kubernetes priority class name to be assigned to
+          all UAIs / Brokers using this class.  The priority class
+          name is used in Kubernetes to determine scheduling
+          (i.e. node placement) priority in case of resource
+          exhaustion and to associate resource quotas with Kubernetes
+          pods.  If this is omitted, the default class name 'uai-priority'
+          is used.
+        required: false
+        schema:
+          type: "string"
+        example:  "uai-priority"
+      - name: "namespace"
+        in: "query"
+        description: |
+          The K8s namespace where UAIs of this class run.  Defaults to the
+          configured UAI namespace.
+        required: false
+        schema:
+          type: "string"
+        example: "user"
+      - name: "opt_ports"
+        in: "query"
+        description: |
+          A comma separated list of port numbers on which software running in a
+          UAI created using this class may listen.  Unlike `ports` in the
+          Single User UAI creation API, the port numbers here are not constrained
+          by any configured range of available ports.  Any valid port number is
+          legal.
+        required: false
+        schema:
+          type: "string"
+        example: "80,443"
+      - name: "uai_creation_class"
+        in: "query"
+        description: |
+          For Brokers only, the class ID (UUID)  used to create UAIs
+          created by Brokers of this class.  If this is not specified
+          on a Broker, and there is a default class specified, the default
+          class will be used.  If there is no default class, the
+          broker will fail to create UAIs.  If this is specified on a
+          non-Broker UAI it has no meaningful effect.
+        required: false
+        schema:
+          type: "string"
+        example: "f4e59aab-2765-7f49-f84a-9911eba30f9c"
+      - name: "resource_id"
+        in: "query"
+        description: |
+          Optional resource-id of the resource limit / request configuration
+          to be used with UAIs created using this Class.  Default is no
+          resource limit / request configuration, in which case UAIs created
+          with this Class use the UAI namespace default limits and
+          requests.
+        required: false
+        schema:
+          type: "string"
+        example:  "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
+      - name: "volume_list"
+        description: |
+          Optional comma separated list of volume-ids specifying the
+          volume mounts to be included in the UAIs created using this
+          Class.  Defaults to an empty list if not specified, in
+          which case none of the available volume mounts will be mounted
+          in UAIs created using this Class.
+        in: "query"
+        required: false
+        style: form
+        explode: false
+        schema:
+          type: "array"
+          items:
+            type: "string"
+        example: ["af4e59ab-6275-47f9-8f4a-90911eba3f9c","4e5f9aba-2675-7f49-f48a-0119b9a3f9ec"]
+      responses:
+        201:
+          description: "UAI / Broker Class added"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UAIClass"
+        400:
+          description: "Invalid UAI / Broker Class specified"
+          content:
+            application/json:
+              schema:
+                type: "string"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+    get:
+      summary: "List Available UAI / Broker Classes"
+      description: "List all available UAI / Broker Classes"
+      operationId: "get_uas_classes_admin"
+      tags:
+      - "classes"
+      - "config"
+      responses:
+        200:
+          description: "UAI / Broker Class List"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UAIClass"
+        404:
+          description: "UAI / Broker Classes not found"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+  /admin/config/classes/{class_id}:
+
+    get:
+      summary: "Get a UAI / Broker Class"
+      description: |
+        Get a description of a UAI / Broker Class
+      operationId: "get_uas_class_admin"
+      tags:
+      - "classes"
+      - "config"
+      parameters:
+      - name: "class_id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+        description: |
+          The class identifier (UUID) UAI / Broker Class to be retrieved
+          from the configuration.
+        example: "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
+      responses:
+        200:
+          description: "UAI / Broker Class"
+          content:
+            application/json:
+             schema:
+                $ref: "#/components/schemas/UAIClass"
+        404:
+          description: "UAI / Broker Class {class_id} not found"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+    patch:
+      summary: "Update a UAI / Broker Class"
+      description: |
+        Update the contents of a specified Class.  Changes to a Class
+        only affect subsequently created UAIs.  UAIs already created using the
+        class continue to use settings from the previous contents of the
+        UAI / Broker Class.
+      operationId: "update_uas_class_admin"
+      tags:
+      - "classes"
+      - "config"
+      parameters:
+      - name: "class_id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+        description: |
+          The image identifier (UUID) of the UAI / Broker Class to be updated
+        example: "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
+      - name: "comment"
+        in: "query"
+        description: |
+          A descriptive comment explaining the intended use of the Class.
+          Defaults to no description.
+        required: false
+        schema:
+          type: "string"
+        example: |
+          UAI used to build applications for testing and development.
+      - name: "default"
+        in: "query"
+        description: |
+          Optionally specify whether this is the default
+          Class. There can be at most one default Class in effect
+          at any given time.  If a default Class is present, then
+          UAIs created using the Single User Workflow will use that
+          Class instead of accepting an image name and using all
+          of the configured volume mounts and the UAI namespace
+          default resource configuration.  Additionally, UAIs created
+          in the Administrative Workflow without a specified class will
+          use the default Class.
+
+          Setting 'default' to true when another Class is currently
+          the default will cause the new Class to become the default
+          and the previous default to stop being the default.
+        required: false
+        schema:
+          type: boolean
+        example: false
+      - name: "public_ssh"
+        in: "query"
+        description: |
+          A flag indicating whether a UAI or Broker created using this
+          class will present SSH on a public IP address or only on a
+          cluster visible IP address.  If not provided, the default is
+          false, which makes resulting UAIs or Brokers visible only
+          within the cluster.
+        required: false
+        schema:
+          type: boolean
+        example: false
+      - name: "image_id"
+        in: "query"
+        description: |
+          The image-id of the image to be used in UAIs created from
+          this UAI / Broker Class.
+        required: false
+        schema:
+          type: "string"
+        example: "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
+      - name: "priority_class_name"
+        in: "query"
+        description: |
+          Optional Kubernetes priority class name to be assigned to
+          all UAIs / Brokers using this class.  The priority class
+          name is used in Kubernetes to determine scheduling
+          (i.e. node placement) priority in case of resource
+          exhaustion and to associate resource quotas with Kubernetes
+          pods.
+        required: false
+        schema:
+          type: "string"
+        example:  "uai-priority"
+      - name: "namespace"
+        in: "query"
+        description: |
+          The K8s namespace where UAIs of this class run.
+        required: false
+        schema:
+          type: "string"
+        example: "user"
+      - name: "opt_ports"
+        in: "query"
+        description: |
+          A comma separated list of port numbers on which software running in a
+          UAI created using this class may listen.  Unlike `opt_ports` in the
+          Single User UAI creation API, the port numbers here are not constrained
+          by any configured range of available ports.  Any valid port number is
+          legal.
+        required: false
+        schema:
+          type: "string"
+        example: "8080,80"
+      - name: "uai_creation_class"
+        in: "query"
+        description: |
+          For Brokers only, the class ID (UUID)  used to create UAIs
+          created by Brokers of this class.  If this is not specified
+          on a Broker, and there is a default class specified, the default
+          class will be used.  If there is no default class, the
+          broker will fail to create UAIs.  If this is specified on a
+          non-Broker UAI it has no meaningful effect.
+        required: false
+        schema:
+          type: "string"
+        example: "f4e59aab-2765-7f49-f84a-9911eba30f9c"
+      - name: "resource_id"
+        in: "query"
+        description: |
+          Optional resource-id of the resource limit / request configuration
+          to be used with UAIs created using this UAI / Broker Class.
+        required: false
+        schema:
+          type: "string"
+        example:  "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
+      - name: "volume_list"
+        description: |
+          Comma separated list of volume-ids specifying the
+          volume mounts to be included in the UAIs created using this
+          UAI / Broker Class.
+        in: "query"
+        required: false
+        style: form
+        explode: false
+        schema:
+          type: "array"
+          items:
+            type: "string"
+        example: ["af4e59ab-6275-47f9-8f4a-90911eba3f9c","4e5f9aba-2675-7f49-f48a-0119b9a3f9ec"]
+      responses:
+        201:
+          description: "UAI / Broker Class updated"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UAIClass"
+        304:
+          description: "No changes made"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UAIClass"
+      x-openapi-router-controller: "swagger_server.controllers.uas_controller"
+
+    delete:
+      summary: "Remove a UAI / Broker Class"
+      description: |
+        Delete the specified UAI / Broker Class
+      operationId: "delete_uas_class_admin"
+      tags:
+      - "classes"
+      - "config"
+      parameters:
+      - name: "class_id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+        description: |
+          The class identifier (UUID) of the UAI / Broker Class to be
+          removed from the configuration.
         example: "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
       responses:
         200:
@@ -1155,6 +1633,42 @@ components:
         comment: "A resource limit for UAIs that only launch jobs"
         limit: "{ \"cpu\": \"100m\", \"memory\": \"100Mi\" }"
         request: "{ \"cpu\": \"100m\", \"memory\": \"100Mi\" }"
+    UAIClass:
+      type: "object"
+      properties:
+        class_id:
+          type: "string"
+        comment:
+          type: "string"
+        default:
+          type: "boolean"
+        public_ssh:
+          type: "boolean"
+        priority_class_name:
+          type: "string"
+        namespace:
+          type: "string"
+        opt_ports:
+          type: "string"
+        uai_creation_class:
+          type: "string"
+        uai_image:
+          type: "object"
+          properties:
+            option:
+              $ref: "#/components/schemas/Image"
+        resource_config:
+          type: "object"
+          properties:
+            option:
+              $ref: "#/components/schemas/Resource"
+        volume_mounts:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              option:
+                $ref: "#/components/schemas/Volume"
     Image_list:
       type: "object"
       properties:

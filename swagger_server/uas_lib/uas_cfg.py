@@ -6,27 +6,14 @@
 """
 
 
-import logging
-import sys
 import yaml
 from flask import abort
-import sshpubkeys
-import sshpubkeys.exceptions as sshExceptions
 from kubernetes import client
+from swagger_server.uas_lib.uas_logging import logger
 from swagger_server.uas_data_model.uai_volume import UAIVolume
 from swagger_server.uas_data_model.uai_image import UAIImage
 
 
-UAS_CFG_LOGGER = logging.getLogger('uas_cfg')
-UAS_CFG_LOGGER.setLevel(logging.INFO)
-# pylint: disable=invalid-name
-handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.INFO)
-# pylint: disable=invalid-name
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s"
-                              " - %(message)s")
-handler.setFormatter(formatter)
-UAS_CFG_LOGGER.addHandler(handler)
 UAS_CFG_DEFAULT_PORT = 30123
 UAS_CFG_OPTIONAL_PORTS = [80, 443, 8888]
 UAS_CFG_DEFAULT_UAI_NAMESPACE = "default"
@@ -97,10 +84,7 @@ class UasCfg:
         imgs = UAIImage.get_all()
         if not imgs:
             return None
-        images = []
-        for img in imgs:
-            images.append(img.imagename)
-        return images
+        return [img.imagename for img in imgs]
 
     def get_default_image(self):
         """Retrieve the name of the default image.
@@ -108,6 +92,7 @@ class UasCfg:
         """
         _ = self.get_config()
         imgs = UAIImage.get_all()
+        imgs = [] if imgs is None else imgs
         for img in imgs:
             if img.default:
                 return img.imagename
@@ -119,6 +104,7 @@ class UasCfg:
         """
         _ = self.get_config()
         imgs = UAIImage.get_all()
+        imgs = [] if imgs is None else imgs
         for img in imgs:
             if imagename == img.imagename:
                 return True
@@ -140,32 +126,29 @@ class UasCfg:
             ext_ip = None
         return ext_ip
 
-    def gen_volume_mounts(self):
+    def gen_volume_mounts(self, volume_list):
         """Generate a list of volume mounts from the configuration.  Return
         the K8s volume mount for each.
 
         """
         _ = self.get_config()
-        volume_mount_list = []
-        volume_mounts = UAIVolume.get_all()
-        for mnt in volume_mounts:
-            volume_mount_list.append(
-                client.V1VolumeMount(
-                    name=mnt.volumename,
-                    mount_path=mnt.mount_path
-                )
-            )
+        volume_mounts = [UAIVolume.get(volume_id) for volume_id in volume_list]
+        volume_mount_list = [
+            client.V1VolumeMount(name=mnt.volumename,
+                                 mount_path=mnt.mount_path)
+            for mnt in volume_mounts
+        ]
         return volume_mount_list
 
-    def gen_volumes(self):
+    def gen_volumes(self, volume_list):
         """Generate a list of volumes from the configuration.  Return the K8s
         volume definitions for each.
 
         """
         _ = self.get_config()
-        volume_list = []
-        volume_mounts = UAIVolume.get_all()
-        for vol in volume_mounts:
+        volume_mounts = [UAIVolume.get(volume_id) for volume_id in volume_list]
+        ret = []
+        for volume_mount in volume_mounts:
             # Okay, this is magic, so it requires a bit of
             # explanation. The 'client.V1Volume()' call takes a long
             # list of different arguments, one for each supported type
@@ -179,13 +162,13 @@ class UasCfg:
             # defined, then pass the dictionary instead of explicit
             # arguments.
             volume_args = {}
-            volume_args['name'] = vol.volumename
-            volume_source_key = list(vol.volume_description.keys())[0]
+            volume_args['name'] = volume_mount.volumename
+            volume_source_key = list(volume_mount.volume_description.keys())[0]
             volume_args[volume_source_key] = UAIVolume.get_volume_source(
-                vol.volume_description
+                volume_mount.volume_description
             )
-            volume_list.append(client.V1Volume(**volume_args))
-        return volume_list
+            ret.append(client.V1Volume(**volume_args))
+        return ret
 
     def gen_port_entry(self, port, service):
         """Generate a port entry for the service object """
@@ -232,7 +215,7 @@ class UasCfg:
         # argument is ever modified.
         if optional_ports is None:
             optional_ports = []
-        UAS_CFG_LOGGER.info("optional_ports: %s", optional_ports)
+        logger.info("optional_ports: %s", optional_ports)
         cfg = self.get_config()
         port_list = []
         if not cfg:
@@ -243,7 +226,7 @@ class UasCfg:
             # numbers to be processed into kubernetes port entry
             # objects
             try:
-                cfg_port_list = cfg['uas_svc_ports']
+                cfg_port_list = cfg['uas_ports']
                 if optional_ports:
                     # Add any optional ports to the cfg_port_list
                     for port in optional_ports:
@@ -272,7 +255,7 @@ class UasCfg:
                     for port in optional_ports:
                         cfg_port_list.append(port)
 
-        UAS_CFG_LOGGER.info("cfg_port_list: %s", cfg_port_list)
+        logger.info("cfg_port_list: %s", cfg_port_list)
         for port in cfg_port_list:
             # check if a port range was given
             if isinstance(port, str):
@@ -342,27 +325,6 @@ class UasCfg:
                               tcp_socket=socket)
 
     @staticmethod
-    def validate_ssh_key(ssh_key):
-        """
-        checks whether the ssh_key is a valid public key
-        ssh_key input is expected to be a string
-        :return: returns True if valid public key
-        :rtype bool
-        """
-        try:
-            ssh = sshpubkeys.SSHKey(ssh_key, strict=False,
-                                    skip_option_parsing=True)
-            ssh.parse()
-            return True
-        except (NotImplementedError, sshExceptions.MalformedDataError) as err:
-            UAS_CFG_LOGGER.error("Invalid key: %s", err)
-        except sshExceptions.InvalidKeyError as err:
-            UAS_CFG_LOGGER.error("Unknown key type: %s", err)
-        except Exception as err:  # pylint: disable=broad-except
-            UAS_CFG_LOGGER.error("Invalid non-key input: %s", err)
-        return False
-
-    @staticmethod
     def get_valid_optional_ports():
         """
         Return list of valid optional ports.
@@ -385,7 +347,9 @@ class UasCfg:
         try:
             return cfg['uai_namespace']
         except (TypeError, KeyError):
-            UAS_CFG_LOGGER.info("configuration uai_namespace not found, "
-                                "using %s namespace for UAIs",
-                                UAS_CFG_DEFAULT_UAI_NAMESPACE)
+            logger.info(
+                "configuration uai_namespace not found, "
+                "using %s namespace for UAIs",
+                UAS_CFG_DEFAULT_UAI_NAMESPACE
+            )
             return UAS_CFG_DEFAULT_UAI_NAMESPACE

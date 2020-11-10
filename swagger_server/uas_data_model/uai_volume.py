@@ -4,15 +4,12 @@ Copyright 2020, Cray Inc. All rights reserved.
 
 """
 from __future__ import absolute_import
-import logging
 import re
 from kubernetes import client
 from etcd3_model import Etcd3Attr
+from swagger_server.uas_lib.uas_logging import logger
 from swagger_server import ETCD_INSTANCE, ETCD_PREFIX, version
 from swagger_server.uas_data_model.uas_data_model import UASDataModel
-
-UAS_CFG_LOGGER = logging.getLogger('uas_cfg')
-
 
 def host_path_errors(vol_desc):
     """Sanity check a Host Path volume description and return a string for
@@ -331,13 +328,13 @@ class UAIVolume(UASDataModel):
         vol_desc = {}
         name = vol.get('name', None)
         if name is None:
-            UAS_CFG_LOGGER.error(
+            logger.error(
                 "Volume with no name (skipped): %s",
                 str(vol)
             )
             return
         if not UAIVolume.is_valid_volume_name(name):
-            UAS_CFG_LOGGER.error(
+            logger.error(
                 "Volume '%s' has invalid name (skipped) "
                 "- Names must consist of "
                 "lower case alphanumeric characters or '-', and "
@@ -349,7 +346,7 @@ class UAIVolume(UASDataModel):
             return
         mount_path = vol.get('mount_path', None)
         if mount_path is None:
-            UAS_CFG_LOGGER.error(
+            logger.error(
                 "Volume '%s' has no mount path (skipped)",
                 name
             )
@@ -379,7 +376,7 @@ class UAIVolume(UASDataModel):
                 vol_desc[source] = desc[source]
         err = UAIVolume.vol_desc_errors(vol_desc)
         if err is not None:
-            UAS_CFG_LOGGER.error(
+            logger.error(
                 "Volume '%s' has an invalid source type or volume description (skipped) - %s",
                 name,
                 err
@@ -407,5 +404,18 @@ class UAIVolume(UASDataModel):
 
         """
         vols = cls.get_all()
+        vols = [] if vols is None else vols
         vol_dict = {vol.volumename: vol for vol in vols}
         return vol_dict.get(volumename, None)
+
+    def expand(self):
+        """Produce a dictionary of the publicly viewable elements of the
+        object.
+
+        """
+        return {
+            'volume_id': self.volume_id,
+            'volumename': self.volumename,
+            'mount_path': self.mount_path,
+            'volume_description': self.volume_description
+        }

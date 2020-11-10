@@ -51,5 +51,17 @@ class UAIImage(UASDataModel):
 
         """
         imgs = cls.get_all()
+        imgs = [] if imgs is None else imgs
         img_dict = {img.imagename: img for img in imgs}
         return img_dict.get(imagename, None)
+
+    def expand(self):
+        """Produce a dictionary of the publicly viewable elements of the
+        object.
+
+        """
+        return {
+            'image_id': self.image_id,
+            'imagename': self.imagename,
+            'default': self.default
+        }
