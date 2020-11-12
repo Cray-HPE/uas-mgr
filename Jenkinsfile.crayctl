@@ -2,7 +2,7 @@
 rpmBuild (
     channel: "casm-cloud-alerts",
     slack_notify: ['FAILURE'],
-    product: "shasta-premium",
+    product: "csm",
     target_node: "ncn",
     recv_triggers: ["cme-premium-cf"],
     fanout_params: ["sle15sp1"],
