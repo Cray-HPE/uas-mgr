@@ -38,7 +38,11 @@ info:
 
     ### /uais
 
-    List or delete User Access Instance(s).
+    List or delete User Access Instance(s).  The operations here are
+    a subset of what is available in /admin/uais, which provides more
+    flexible parameterization of searches and deletes.  That path should
+    be used instead of this.  This path is deprecated but will be kept
+    for the foreseeable future to support legacy procedures and code.
 
     ### /admin/uais
 
@@ -455,7 +459,10 @@ paths:
 
     get:
       summary: "List UAIs"
-      description: "List all UAIs on the system."
+      description: |
+        List all UAIs on the system.  There is a more general purpose way to
+        list UAIs that implements a superset of this functionality under the
+        /admin/uais path.  This path is deprecated in favor of that path.
       operationId: "get_all_uais"
       tags:
       - "uais"
@@ -491,7 +498,11 @@ paths:
 
     delete:
       summary: "Delete UAIs"
-      description: "Delete all UAIs on the system."
+      description: |
+        Delete all UAIs on the system.  There is a more general purpose version
+        of this operation under the /admin/uais path which implements a superset
+        of the functionality found here.  This path is deprecated in favor of
+        /admin/uais.
       operationId: "delete_all_uais"
       tags:
       - "uais"

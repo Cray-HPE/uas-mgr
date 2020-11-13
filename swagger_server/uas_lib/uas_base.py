@@ -182,11 +182,6 @@ class UasBase:
                 deployment.metadata.name,
                 namespace
             )
-            logger.info(
-                "Deployment %s looks like\n%s",
-                deployment.metadata.name,
-                deployment
-            )
             resp = self.apps_v1.create_namespaced_deployment(
                 body=deployment,
                 namespace=namespace
@@ -279,10 +274,6 @@ class UasBase:
         } if opt_ports else {}
         uai_host = pod.spec.node_name
         uai_age = self.get_pod_age(pod.status.start_time)
-        logger.info("Age str for %s[%s] is %s",
-                    pod.status.start_time,
-                    type(pod.status.start_time),
-                    uai_age)
         uai_img = [
             ctr.image
             for ctr in pod.spec.containers
