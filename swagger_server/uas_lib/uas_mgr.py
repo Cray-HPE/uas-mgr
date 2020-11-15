@@ -615,6 +615,10 @@ class UasManager(UasBase):
             None if uai_class.resource_id is None
             else UAIResource.get(uai_class.resource_id).expand()
         )
+        uai_compute_network = (
+            False if uai_class.uai_compute_network is None
+            else uai_class.uai_compute_network
+        )
         return {
             'class_id': uai_class.class_id,
             'comment': comment,
@@ -624,6 +628,7 @@ class UasManager(UasBase):
             'namespace': uai_class.namespace,
             'opt_ports': uai_class.opt_ports,
             'uai_creation_class': uai_class.uai_creation_class,
+            'uai_compute_network': uai_compute_network,
             'uai_image': UAIImage.get(uai_class.image_id).expand(),
             'resource_config': resource_config,
             'volume_mounts': volume_mounts
@@ -640,7 +645,7 @@ class UasManager(UasBase):
         uai_class.remove() # don't use x.delete() you actually want it removed
         return self._expanded_uai_class(uai_class)
 
-    #pylint: disable=too-many-arguments,too-many-statements
+    #pylint: disable=too-many-arguments,too-many-statements,too-many-locals
     def create_class(self,
                      comment=None,
                      default=None,
@@ -650,6 +655,7 @@ class UasManager(UasBase):
                      namespace=None,
                      opt_ports=None,
                      uai_creation_class=None,
+                     uai_compute_network=None,
                      resource_id=None,
                      volume_list=None):
         """Create a UAI Class
@@ -694,6 +700,7 @@ class UasManager(UasBase):
         comment = "" if comment is None else comment
         default = False if default is None else default
         public_ip = False if public_ip is None else public_ip
+        uai_compute_network = True if uai_compute_network is None else uai_compute_network
         priority_class_name = ("uai-priority"
                                if priority_class_name is None
                                else priority_class_name)
@@ -712,6 +719,7 @@ class UasManager(UasBase):
             namespace=namespace,
             opt_ports=opt_ports_list,
             uai_creation_class=uai_creation_class,
+            uai_compute_network=uai_compute_network,
             resource_id=resource_id,
             volume_list=volume_list
         )
@@ -737,6 +745,7 @@ class UasManager(UasBase):
                      namespace=None,
                      opt_ports=None,
                      uai_creation_class=None,
+                     uai_compute_network=None,
                      resource_id=None,
                      volume_list=None):
         """Update a UAI Class
@@ -789,6 +798,9 @@ class UasManager(UasBase):
                     % (uai_creation_class, class_id)
                 )
             uai_class.uai_creation_class = uai_creation_class
+            changed = True
+        if uai_compute_network is not None:
+            uai_class.uai_compute_network = uai_compute_network
             changed = True
         if image_id is not None:
             if UAIImage.get(image_id) is None:

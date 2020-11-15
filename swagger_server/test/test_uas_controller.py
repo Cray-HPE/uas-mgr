@@ -377,6 +377,7 @@ class TestUasController(unittest.TestCase):
         priority_class_name = "test-priority-class"
         namespace = "test-namespace"
         uai_creation_class = None
+        uai_compute_network = True
         resource_id = self.__create_test_resource()
         volume_list = [self.__create_test_volume("my-uai-volume")]
         with app.test_request_context('/'):
@@ -388,6 +389,7 @@ class TestUasController(unittest.TestCase):
                 priority_class_name=priority_class_name,
                 namespace=namespace,
                 uai_creation_class=uai_creation_class,
+                uai_compute_network=uai_compute_network,
                 resource_id=resource_id,
                 volume_list=volume_list
             )
@@ -408,6 +410,7 @@ class TestUasController(unittest.TestCase):
         priority_class_name = "test-broker-priority-class"
         namespace = "test-broker-namespace"
         uai_creation_class = self.__create_test_uai_class()
+        uai_compute_network = False
         resource_id = self.__create_test_resource()
         volume_list = [self.__create_test_volume("my-broker-volume")]
         with app.test_request_context('/'):
@@ -419,6 +422,7 @@ class TestUasController(unittest.TestCase):
                 priority_class_name=priority_class_name,
                 namespace=namespace,
                 uai_creation_class=uai_creation_class,
+                uai_compute_network=uai_compute_network,
                 resource_id=resource_id,
                 volume_list=volume_list
             )
@@ -435,6 +439,7 @@ class TestUasController(unittest.TestCase):
             self.assertIn('class_id', resp)
             self.assertEqual(class_id, resp['class_id'])
             uai_creation_class = resp.get('uai_creation_class', None)
+            self.assertIn('uai_compute_network', resp)
             resource_id = resp.get('resource_id', None)
             volume_list = resp.get('volume_list', [])
             image_id = resp.get("image_id", None)

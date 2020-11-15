@@ -59,6 +59,10 @@ class UAIClass(UASDataModel):
     # for non-broker UAIs.
     uai_creation_class = Etcd3Attr(default=None)
 
+    # A flag indicating whether UAIs should be given a compute network
+    # route for job launch capabilities
+    uai_compute_network = Etcd3Attr(default=True)
+
     # The UAI Image ID of the UAI Image to be used by UAIs created
     # using the UAI Class.
     image_id = Etcd3Attr(default=None)
@@ -103,6 +107,7 @@ class UAIClass(UASDataModel):
             'namespace': self.namespace,
             'opt_ports': self.opt_ports,
             'uai_creation_class': self.uai_creation_class,
+            'uai_compute_network': self.uai_compute_network,
             'image_id': self.image_id,
             'resource_id': self.resource_id,
             'volume_list': self.volume_list

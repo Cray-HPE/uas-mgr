@@ -290,7 +290,7 @@ info:
     Delete the specified resource limit / request configuration from the
     list of available choices.
 
-  version: "1.11.2"
+  version: "1.11.3"
 
 servers:
   - url: "/apis/uas-mgr/v1"
@@ -1512,6 +1512,17 @@ paths:
         schema:
           type: "string"
         example: "f4e59aab-2765-7f49-f84a-9911eba30f9c"
+      - name: "uai_compute_network"
+        in: "query"
+        description: |
+          A flag indicating whether a UAI or Broker created using this
+          class will include a network route to compute nodes. This option
+          is likely not necessary for Brokers. Single User UAIs will require
+          this flag for job launch capabilities.
+        required: false
+        schema:
+          type: boolean
+        example: true
       - name: "resource_id"
         in: "query"
         description: |
@@ -1723,6 +1734,17 @@ paths:
         schema:
           type: "string"
         example: "f4e59aab-2765-7f49-f84a-9911eba30f9c"
+      - name: "uai_compute_network"
+        in: "query"
+        description: |
+          A flag indicating whether a UAI or Broker created using this
+          class will include a network route to compute nodes. This option
+          is likely not necessary for Brokers. Single User UAIs will require
+          this flag for job launch capabilities.
+        required: false
+        schema:
+          type: boolean
+        example: true
       - name: "resource_id"
         in: "query"
         description: |
@@ -1903,6 +1925,8 @@ components:
           type: "string"
         uai_creation_class:
           type: "string"
+        uai_compute_network:
+          type: "boolean"
         uai_image:
           type: "object"
           properties:

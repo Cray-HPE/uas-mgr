@@ -558,6 +558,7 @@ def create_uas_class_admin(comment=None,
                            namespace=None,
                            opt_ports=None,
                            uai_creation_class=None,
+                           uai_compute_network=None,
                            resource_id=None,
                            volume_list=None):
     """Add a UAI Class
@@ -580,6 +581,8 @@ def create_uas_class_admin(comment=None,
     :type opt_ports: str
     :param uai_creation_class: Class ID (UUID) of UAIs created by this Broker
     :type uai_creation_class: str
+    :param uai_compute_network: Does this Class require a compute network route?
+    :type uai_compute_network: bool
     :param resource_id: Resource ID (UUID)  to use in UAIs  of this class
     :type resource_id: str
     :param volume_list: List of Volume IDs (UUIDs) mounted in UAIs  of this class
@@ -595,6 +598,7 @@ def create_uas_class_admin(comment=None,
                                      namespace=namespace,
                                      opt_ports=opt_ports,
                                      uai_creation_class=uai_creation_class,
+                                     uai_compute_network=uai_compute_network,
                                      priority_class_name=priority_class_name,
                                      volume_list=volume_list)
 
@@ -634,6 +638,7 @@ def update_uas_class_admin(class_id=None,
                            namespace=None,
                            opt_ports=None,
                            uai_creation_class=None,
+                           uai_compute_network=None,
                            resource_id=None,
                            volume_list=None):
     """Update the specified UAI Class
@@ -658,6 +663,8 @@ def update_uas_class_admin(class_id=None,
     :type opt_ports: str
     :param uai_creation_class: Class ID (UUID) of UAIs created by this Broker
     :type uai_creation_class: str
+    :param uai_compute_network: Does this Class require a compute network route?
+    :type uai_compute_network: bool
     :param resource_id: Resource ID (UUID)  to use in UAIs  of this class
     :type resource_id: str
     :param volume_list: List of Volume IDs (UUIDs) useed in UAIs of this class
@@ -675,6 +682,7 @@ def update_uas_class_admin(class_id=None,
                                      namespace=namespace,
                                      opt_ports=opt_ports,
                                      uai_creation_class=uai_creation_class,
+                                     uai_compute_network=uai_compute_network,
                                      resource_id=resource_id,
                                      volume_list=volume_list)
 
