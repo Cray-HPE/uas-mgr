@@ -21,7 +21,8 @@ class UAI(Model):
                  publickey: str = None, uai_img: str = None,
                  uai_status: str = None, uai_msg: str = None,
                  uai_connect_string: str = None, uai_portmap: dict = {},
-                 uai_host: str = None, uai_age: str = None):
+                 uai_host: str = None, uai_age: str = None,
+                 uai_ip: str = None):
         """UAI - a model defined in Swagger
 
         :param uai_name: The uai_name of this UAI.
@@ -45,6 +46,8 @@ class UAI(Model):
         :type uai_host: str
         :param uai_age: Age of the UAI.
         :type uai_age: str
+        :param uai_ip: IP Address of the UAI
+        :type uai_ip: str
         """
 
         self.swagger_types = {
@@ -57,7 +60,8 @@ class UAI(Model):
             'uai_connect_string': str,
             'uai_portmap': Dict[str, int],
             'uai_host': str,
-            'uai_age': str
+            'uai_age': str,
+            'uai_ip': str,
         }
 
         self.attribute_map = {
@@ -70,7 +74,8 @@ class UAI(Model):
             'uai_connect_string': 'uai_connect_string',
             'uai_portmap': 'uai_portmap',
             'uai_host': 'uai_host',
-            'uai_age': 'uai_age'
+            'uai_age': 'uai_age',
+            'uai_ip': 'uai_ip'
         }
         self._uai_name = uai_name
         self._username = username
@@ -82,6 +87,7 @@ class UAI(Model):
         self._uai_portmap = uai_portmap
         self._uai_host = uai_host
         self._uai_age = uai_age
+        self._uai_ip = uai_ip
 
     @classmethod
     def from_dict(cls, dikt) -> 'UAI':
@@ -303,3 +309,24 @@ class UAI(Model):
         """
 
         self._uai_age = uai_age
+
+    @property
+    def uai_ip(self) -> str:
+        """Gets the uai_ip of this UAI.
+
+
+        :return: The uai_ip of this UAI.
+        :rtype: str
+        """
+        return self._uai_ip
+
+    @uai_ip.setter
+    def uai_ip(self, uai_ip: str):
+        """Sets the uai_ip of this UAI.
+
+
+        :param uai_ip: The uai_ip of this UAI.
+        :type uai_ip: str
+        """
+
+        self._uai_ip = uai_ip

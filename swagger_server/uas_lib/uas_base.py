@@ -2,6 +2,8 @@
 #
 """
 Base Class for User Access Service Operations
+
+Copyright 2020 Hewlett Packard Enterprise Development LP
 """
 
 import os
@@ -55,6 +57,7 @@ class UasBase:
         """
         # on new UAI start the start_time can be None
         if start_time is None:
+            logger.info("No start time provided from pod")
             return None
 
         try:
@@ -78,8 +81,8 @@ class UasBase:
         if days == 0:
             minutes = remainder / 60
             retstr += "{:d}m".format(int(minutes))
-
         return retstr
+
     def create_service(self, service_name, service_body, namespace):
         """Create the service
 
@@ -213,7 +216,9 @@ class UasBase:
                 namespace=namespace,
                 body=client.V1DeleteOptions(
                     propagation_policy='Background',
-                    grace_period_seconds=5))
+                    grace_period_seconds=5
+                )
+            )
         except ApiException as err:
             if err.status != 404:
                 logger.error(
@@ -233,63 +238,104 @@ class UasBase:
         return resp
 
     @staticmethod
-    def gen_connection_string(uai):
+    def gen_connection_string(username, ip_addr, tcp_port):
         """
         This function generates the uai.uai_connect_string for creating a
         ssh connection to the uai.
 
         The string will look like:
           ssh uai.username@uai.uai_ip -p uai.uai_port
-
-        :param uai:
-        :type uai: uai
-        :return: uai:
         """
-        port_string = " -p " + str(uai.uai_port) if uai.uai_port != 22 else ""
-
-        return "ssh %s@%s%s" % (
-            uai.username,
-            uai.uai_ip,
+        uai_port = str(tcp_port) if tcp_port is not None else "<pending port>"
+        uai_ip = ip_addr if ip_addr else "<pending IP Address>"
+        port_string = (" -p %s" % uai_port) if tcp_port != 22 else ""
+        user_string = ("%s@" % username) if username is not None else ""
+        return "ssh %s%s%s" % (
+            user_string,
+            uai_ip,
             port_string
         )
 
-    # pylint: disable=too-many-branches,too-many-statements
-    def get_pod_info(
-            self,
-            deployment_name,
-            namespace=None,
-            host=None
-    ):
+    def compose_uai_from_pod(self, pod):
+        """ Compose a UAI Model object from the data in a pod returned from k8s
+
+        """
+        username = pod.metadata.labels.get("user", None)
+        uai_name = pod.metadata.labels.get(
+            "app",
+            "<internal error getting deployment name>"
+        )
+        opt_ports = pod.metadata.labels.get(
+            "uas-uai-opt-ports",
+            ""
+        )
+        uai_portmap = {
+            int(port): int(port) for port in opt_ports.split('-')
+        } if opt_ports else {}
+        uai_host = pod.spec.node_name
+        uai_age = self.get_pod_age(pod.status.start_time)
+        uai_img = [
+            ctr.image
+            for ctr in pod.spec.containers
+            if ctr.name == uai_name
+        ][0]
+        if pod.status.phase == 'Pending':
+            uai_status = 'Pending'
+        status_list = (
+            []
+            if not pod.status.container_statuses
+            else pod.status.container_statuses
+        )
+        status_list = [
+            status
+            for status in status_list
+            if status.name == uai_name
+        ]
+        uai_msg = ""
+        for status in status_list:
+            if status.state.running:
+                ready_list = [
+                    cond
+                    for cond in pod.status.conditions
+                    if cond.type == 'Ready'
+                ]
+                for cond in ready_list:
+                    if pod.metadata.deletion_timestamp:
+                        uai_status = 'Terminating'
+                    elif cond.status == 'True':
+                        uai_status = 'Running: Ready'
+                    else:
+                        uai_status = 'Running: Not Ready'
+                        uai_msg = cond.message
+            if status.state.terminated:
+                uai_status = 'Terminated'
+            if status.state.waiting:
+                uai_status = 'Waiting'
+                uai_msg = status.state.waiting.reason
+        return UAI(
+            username=username,
+            uai_name=uai_name,
+            uai_portmap=uai_portmap,
+            uai_host=uai_host,
+            uai_age=uai_age,
+            uai_img=uai_img,
+            uai_status=uai_status,
+            uai_msg=uai_msg
+        )
+
+    def get_pod_info(self, deployment_name):
         """Retrieve pod information for a UAI pod from configuration.
 
         """
         pod_resp = None
-
-        if not namespace:
-            namespace = self.uas_cfg.get_uai_namespace()
-            logger.info(
-                "get_pod_info - UAIs will be gathered from"
-                " the %s namespace.",
-                namespace
-            )
         try:
             logger.info(
-                "getting pod info %s in namespace %s"
-                " on host %s",
-                deployment_name,
-                namespace,
-                host
+                "getting pod info %s",
+                deployment_name
             )
-            if host:
-                pod_resp = self.api.list_namespaced_pod(
-                    namespace=namespace,
-                    label_selector="app=%s" % deployment_name,
-                    field_selector="spec.nodeName=%s" % host)
-            else:
-                pod_resp = self.api.list_namespaced_pod(
-                    namespace=namespace,
-                    label_selector="app=%s" % deployment_name
-                )
+            pod_resp = self.api.list_pod_for_all_namespaces(
+                label_selector="app=%s" % deployment_name,
+            )
         except ApiException as err:
             logger.error(
                 "Failed to get pod info %s: %s",
@@ -303,11 +349,8 @@ class UasBase:
                     err.reason
                 )
             )
-
-        # previously this code could return an empty UAI object,
-        # but with the host filter, we could legitimately get 0
-        # results and returning an empty object puts an empty object
-        # into the return list.
+        # Handle the case where we got no results gracefully.  It
+        # should not happen but it is better to fail cleanly.
         if not pod_resp.items:
             return None
         if len(pod_resp.items) > 1:
@@ -316,51 +359,20 @@ class UasBase:
                 "deployment %s",
                 deployment_name
             )
+        # Only take the first one (there should only ever be one)
         pod = pod_resp.items[0]
-
-        uai = UAI()
-        uai.uai_portmap = {}
-        uai.uai_name = deployment_name
-        uai.uai_host = pod.spec.node_name
-        age_str = self.get_pod_age(pod.status.start_time)
-        if age_str:
-            uai.uai_age = age_str
-        uai.username = deployment_name.split('-')[1]
-        for ctr in pod.spec.containers:
-            if ctr.name == deployment_name:
-                uai.uai_img = ctr.image
-        if pod.status.phase == 'Pending':
-            uai.uai_status = 'Pending'
-        # pylint: disable=too-many-nested-blocks
-        if pod.status.container_statuses:
-            for status in pod.status.container_statuses:
-                if status.name == deployment_name:
-                    if status.state.running:
-                        for cond in pod.status.conditions:
-                            if cond.type == 'Ready':
-                                if pod.metadata.deletion_timestamp:
-                                    uai.uai_status = 'Terminating'
-                                elif cond.status == 'True':
-                                    uai.uai_status = 'Running: Ready'
-                                else:
-                                    uai.uai_status = 'Running: Not Ready'
-                                    uai.uai_msg = cond.message
-                    if status.state.terminated:
-                        uai.uai_status = 'Terminated'
-                    if status.state.waiting:
-                        uai.uai_status = 'Waiting'
-                        uai.uai_msg = status.state.waiting.reason
+        uai = self.compose_uai_from_pod(pod)
         srv_resp = None
         try:
             logger.info(
                 "getting service info for %s-ssh in "
                 "namespace %s",
                 deployment_name,
-                namespace
+                pod.metadata.namespace
             )
             srv_resp = self.api.read_namespaced_service(
                 name=deployment_name + "-ssh",
-                namespace=namespace
+                namespace=pod.metadata.namespace
             )
         except ApiException as err:
             if err.status != 404:
@@ -377,22 +389,51 @@ class UasBase:
                         err.reason
                     )
                 )
-            return uai
-
+        # Might not have gotten service information.  If we did,
+        # fill out the rest of the UAI information.  If not, then
+        # return back an incomplete UAI, since there is something
+        # out there.
+        uai.uai_port = None
         if srv_resp:
+            ports = srv_resp.spec.ports if srv_resp.spec.ports else []
             svc_type = self.uas_cfg.get_svc_type('ssh')
-            if svc_type['svc_type'] == "LoadBalancer":
-                uai.uai_ip = srv_resp.status.load_balancer.ingress[0].ip
-                uai.uai_port = 22
-            else:
+            public_ip = srv_resp.metadata.labels.get('uas-public-ip', "True") == "True"
+            if svc_type['svc_type'] == "LoadBalancer" and public_ip:
+                # There is a race condition that can lead 'ingress' to be
+                # None at this point, in which case we crash when we try to
+                # get the UAI info.  If ingress is None or empty, skip this
+                # for now.
+                if srv_resp.status.load_balancer.ingress:
+                    uai.uai_ip = srv_resp.status.load_balancer.ingress[0].ip
+                    uai.uai_port = 22
+            elif public_ip:
                 uai.uai_ip = self.uas_cfg.get_external_ip()
-                for srv_port in srv_resp.spec.ports:
-                    if srv_port.port in self.uas_cfg.get_valid_optional_ports():
-                        uai.uai_portmap[srv_port.port] = srv_port.node_port
-                    else:
-                        uai.uai_port = srv_port.node_port
-
-        uai.uai_connect_string = self.gen_connection_string(uai)
+            else:
+                uai.uai_ip = (
+                    srv_resp.spec.cluster_ip
+                    if srv_resp.spec.cluster_ip
+                    else None
+                )
+            # Skip the loop below if we already know the UAI port
+            ports = ports if uai.uai_port is None else []
+            for srv_port in ports:
+                # There should be one port that is not in the
+                # optional ports, which is the port that K8s
+                # assigned to this service.  It will be the one
+                # not found in the UAI portmap (which was derived
+                # from the 'uas-uai-opt-ports' label on the pod).
+                # That is the SSH port and should go in
+                # uai.uai_port.
+                uai.uai_port = (
+                    srv_port.port
+                    if srv_port.port not in uai.uai_portmap
+                    else uai.uai_port
+                )
+        uai.uai_connect_string = self.gen_connection_string(
+            uai.username,
+            uai.uai_ip,
+            uai.uai_port
+        )
         return uai
 
     def deploy_uai(self, uai_class, uai_instance, uas_cfg):
@@ -425,13 +466,13 @@ class UasBase:
         except ApiException as err:
             if err.status != 404:
                 logger.error(
-                    "Failed to create deployment %s: %s",
+                    "Failed to read deployment %s: %s",
                     uai_instance.deployment_name,
                     err.reason
                 )
                 abort(
                     err.status,
-                    "Failed to create deployment %s: %s" % (
+                    "Failed to read deployment %s: %s" % (
                         uai_instance.deployment_name,
                         err.reason
                     )
@@ -455,10 +496,7 @@ class UasBase:
                 "failed to create service, deleting UAI %s",
                 uai_instance.deployment_name
             )
-            self.remove_uais(
-                [uai_instance.deployment_name],
-                uai_class.namespace
-            )
+            self.remove_uais([uai_instance.deployment_name])
             abort(
                 404,
                 "Failed to create service: %s" % service_name
@@ -469,8 +507,7 @@ class UasBase:
         delay = 0.5
         while True:
             uai_info = self.get_pod_info(
-                deploy_resp.metadata.name,
-                uai_class.namespace
+                deploy_resp.metadata.name
             )
             if uai_info and uai_info.uai_ip:
                 break
@@ -487,22 +524,26 @@ class UasBase:
             )
         return uai_info
 
-    def get_uai_list(self, label=None, host=None, namespace=None):
-        """Get a list of UAIs from the specified namespace and host (if any)
-        that meet the criteria in the specified label.
+    def select_deployments(self, labels=None, host=None):
+        """Get a list of UAI names from the specified host (if any) that meet
+        the criteria in the specified labels (if any).
 
         """
-        uai_list = []
+        labels = [] if labels is None else labels
+        # Has to be a UAI (uas=managed) at least, along with any other
+        # labels specified.
+        label_selector = "uas=managed"
+        if labels:
+            label_selector = "%s,%s" % (label_selector, ','.join(labels))
         try:
             logger.info(
-                "listing deployments matching: namespace %s,"
-                " label %s",
-                namespace,
-                label
+                "listing deployments matching: host %s,"
+                " labels %s",
+                host,
+                label_selector
             )
-            resp = self.apps_v1.list_namespaced_deployment(
-                namespace=namespace,
-                label_selector=label
+            resp = self.apps_v1.list_deployment_for_all_namespaces(
+                label_selector=label_selector
             )
         except ApiException as err:
             if err.status != 404:
@@ -511,26 +552,63 @@ class UasBase:
                     err.reason
                 )
                 abort(err.status, "Failed to get deployment list")
-        for deployment in resp.items:
-            uai = self.get_pod_info(deployment.metadata.name, namespace, host)
-            if uai:
+        return [deployment.metadata.name for deployment in resp.items]
+
+    def get_uai_namespace(self, deployment_name):
+        """Determine the namespace a named UAI deployment is deployed in.
+
+        """
+        resp = self.apps_v1.list_deployment_for_all_namespaces(
+            label_selector="app=%s" % deployment_name
+        )
+        if resp is None or not resp.items:
+            return None
+        if len(resp.items) > 1:
+            logger.warning(
+                "Oddly found more than one deployment named %s",
+                deployment_name
+            )
+        return resp.items[0].metadata.namespace
+
+    def get_uai_list(self, deploy_names):
+        """Get a list of UAIs from the specified host (if any)
+        that meet the criteria in the specified label (if any).
+
+        """
+        uai_list = []
+        for deployment_name in deploy_names:
+            uai = self.get_pod_info(deployment_name)
+            if uai is not None:
                 uai_list.append(uai)
         return uai_list
 
-    def remove_uais(self, deploy_names, namespace):
+    def remove_uais(self, deploy_names):
         """Remove a list of UAIs by their deployment names from the specified
         namespace.
 
         """
         resp_list = []
-        for uai_dep in deploy_names:
+        for deployment_name in deploy_names:
+            namespace = self.get_uai_namespace(deployment_name)
+            if namespace is None:
+                # This deployment doesn't exist or doesn't have a
+                # namespace (I dont think the latter is possible).
+                # Skip it.
+                continue
+
             # Do services first so that we don't orphan one if they abort
-            service_resp = self.delete_service(uai_dep + "-ssh", namespace)
-            deploy_resp = self.delete_deployment(uai_dep, namespace)
+            service_resp = self.delete_service(
+                deployment_name + "-ssh",
+                namespace
+            )
+            deploy_resp = self.delete_deployment(
+                deployment_name,
+                namespace
+            )
             if deploy_resp is None and service_resp is None:
-                message = "Failed to delete %s - Not found" % uai_dep
+                message = "Failed to delete %s - Not found" % deployment_name
             else:
-                message = "Successfully deleted %s" % uai_dep
+                message = "Successfully deleted %s" % deployment_name
             resp_list.append(message)
         return resp_list
 
@@ -571,7 +649,14 @@ class UAIInstance:
         public_key_str = None
         if public_key:
             try:
-                public_key_str = public_key.read().decode()
+                # Depending on the API call, the public key may come
+                # in as an 'io.Bytes' object or as a string.  If it is
+                # an 'io.Bytes' object it needs to be turned into a
+                # string.  Otherwise, it can be used as is.
+                if isinstance(public_key, str):
+                    public_key_str = public_key
+                else:
+                    public_key_str = public_key.read().decode()
                 if not self.validate_ssh_key(public_key_str):
                     # do not log the key here even if it's invalid, it
                     # could be a private key accidentally passed in
@@ -587,7 +672,10 @@ class UAIInstance:
 
         """
         self.owner = owner
-        self.public_key_str = self.get_public_key_str(public_key)
+        if isinstance(public_key, str):
+            self.public_key_str = public_key
+        else:
+            self.public_key_str = self.get_public_key_str(public_key)
         self.passwd_str = passwd_str
         dep_id = str(uuid.uuid4().hex[:8])
         dep_owner = "no-owner" if owner is None else self.owner
@@ -649,7 +737,9 @@ class UAIInstance:
         if uai_class is not None:
             if uai_class.uai_creation_class is not None:
                 ret['uas-uai-creation-class'] = uai_class.uai_creation_class
-            ret['uas-public-ssh'] = str(uai_class.public_ssh)
+            if uai_class.opt_ports is not None:
+                ret['uas-uai-opt-ports'] = "-".join(uai_class.opt_ports)
+            ret['uas-public-ip'] = str(uai_class.public_ip)
             ret['uas-class-id'] = uai_class.class_id
         return ret
 
@@ -680,7 +770,9 @@ class UAIInstance:
             resources = None
         container_ports = uas_cfg.gen_port_list(
             service=False,
-            optional_ports=uai_class.opt_ports
+            opt_ports=[
+                int(port) for port in uai_class.opt_ports
+            ] if uai_class.opt_ports is not None else None
         )
         logger.info(
             "UAI Name: %s; Container ports: %s; Optional ports: %s",
@@ -758,7 +850,7 @@ class UAIInstance:
         Create a service object for the deployment of the UAI.
 
         """
-        # Pick the service type based on the value of 'public_ssh' in
+        # Pick the service type based on the value of 'public_ip' in
         # the UAI Class.  This is a lot simpler than it looks if you
         # delve into it, but I am using the code that was here to do
         # this. That code bases the service class (SSH point of
@@ -766,8 +858,8 @@ class UAIInstance:
         # internal ClusterIP) and "ssh" (which basically means a
         # LoadBalncer IP or a NodePort).  Instead of reworking all
         # that logic, I am picking one or the other here based on
-        # whether 'public_ssh' is true or false.
-        service_type = "ssh" if uai_class.public_ssh else "service"
+        # whether 'public_ip' is true or false.
+        service_type = "ssh" if uai_class.public_ip else "service"
         metadata = client.V1ObjectMeta(
             name=self.get_service_name(),
             labels=self.gen_labels(uai_class),
@@ -775,7 +867,9 @@ class UAIInstance:
         ports = uas_cfg.gen_port_list(
             service_type,
             service=True,
-            optional_ports=uai_class.opt_ports
+            opt_ports=[
+                int(port) for port in uai_class.opt_ports
+            ] if uai_class.opt_ports is not None else None
         )
 
         # svc_type is a dict with the following fields:

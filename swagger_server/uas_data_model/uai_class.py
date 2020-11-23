@@ -1,7 +1,6 @@
 """Data Model for UAI Classes
 
-Copyright 2020, Cray Inc. All rights reserved.
-
+Copyright 2020 Hewlett Packard Enterprise Development LP
 """
 from __future__ import absolute_import
 from etcd3_model import Etcd3Attr
@@ -44,9 +43,9 @@ class UAIClass(UASDataModel):
     # A flag indicating whether the UAI Class is the default UAI Class.
     default = Etcd3Attr(default=False)
 
-    # A flag indicating whether UAIs created using this class have SSH
-    # listening on a public IP address or a cluster-only IP address.
-    public_ssh = Etcd3Attr(default=False)
+    # A flag indicating whether UAIs created using this class have ports
+    # open on a public IP address or a cluster-only IP address.
+    public_ip = Etcd3Attr(default=False)
 
     # The namespace UAIs of this class will be placed in when created.
     namespace = Etcd3Attr(default=None)
@@ -100,7 +99,7 @@ class UAIClass(UASDataModel):
             'class_id': self.class_id,
             'comment': self.comment,
             'default': self.default,
-            'public_ssh': self.public_ssh,
+            'public_ip': self.public_ip,
             'namespace': self.namespace,
             'opt_ports': self.opt_ports,
             'uai_creation_class': self.uai_creation_class,

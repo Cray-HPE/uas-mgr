@@ -172,27 +172,32 @@ class UasCfg:
 
     def gen_port_entry(self, port, service):
         """Generate a port entry for the service object """
-        svc_type = self.get_svc_type(service_type="ssh")
         if service:
+            svc_type = self.get_svc_type(service_type="ssh")
+            target_port = None
             if svc_type['svc_type'] == "LoadBalancer":
                 target_port = port
                 if port == UAS_CFG_DEFAULT_PORT:
                     port = 22
                     target_port = UAS_CFG_DEFAULT_PORT
-                return client.V1ServicePort(name='port' + str(port),
-                                            port=port,
-                                            target_port=target_port,
-                                            protocol="TCP")
-            return client.V1ServicePort(name='port' + str(port),
-                                        port=port,
-                                        protocol="TCP")
-        return client.V1ContainerPort(container_port=port)
+            return client.V1ServicePort(
+                name='port' + str(port),
+                port=port,
+                target_port=target_port,
+                protocol="TCP"
+            )
+        # Not a service, compose a container port instead...
+        return client.V1ContainerPort(
+            name='port' + str(port),
+            container_port=port,
+            protocol="TCP"
+        )
 
     # pylint: disable=too-many-branches
     def gen_port_list(self,
                       service_type=None,
                       service=False,
-                      optional_ports=None):
+                      opt_ports=None):
         """
         gen_port_list creates a list of kubernetes port entry objects.
         The type of the port entry object depends on whether the service_type
@@ -204,73 +209,39 @@ class UasCfg:
         :param service: True creates a ServicePort object, False creates a
                         ContainerPort object
         :type service: bool
-        :param optional_ports: An optional list of ports to project in
+        :param opt_ports: An optional list of ports to project in
                                addition to the port used for SSH to the UAI
-        :type optional_ports: list
+        :type opt_ports: list
         :return port_list: A list of kubernetes port entry objects
         :rtype list
         """
         # Avoid using a default value of [] in the call because that can
         # result in modification of the empty-list for the call if the
         # argument is ever modified.
-        if optional_ports is None:
-            optional_ports = []
-        logger.info("optional_ports: %s", optional_ports)
+        opt_ports = [] if opt_ports is None else opt_ports
+        logger.info("opt_ports: %s", opt_ports)
         cfg = self.get_config()
         port_list = []
         if not cfg:
             return port_list
-        if service_type == "service":
-            # Read the configmap for uas_svc_ports (ports to project
-            # to other services) cfg_port_list is a list of port
-            # numbers to be processed into kubernetes port entry
-            # objects
-            try:
-                cfg_port_list = cfg['uas_ports']
-                if optional_ports:
-                    # Add any optional ports to the cfg_port_list
-                    for port in optional_ports:
-                        cfg_port_list.append(port)
-            except KeyError:
-                cfg_port_list = optional_ports
-        else:
+        default_port = self.get_default_port()
+        cfg_ports = cfg.get('uas_ports', [])
+        cfg_ports += [
+            port
+            for port in opt_ports
+            if port != default_port
+        ]
+        if service_type != "service" and default_port not in cfg_ports:
             # Read the configmap for uas_ports (ports to project to
-            # the customer network) cfg_port_list is a list of port
+            # the customer network) cfg_ports is a list of port
             # numbers to be processed into kubernetes port entry
             # objects
-            try:
-                cfg_port_list = cfg['uas_ports']
-                if optional_ports:
-                    # Add any optional ports to the cfg_port_list
-                    for port in optional_ports:
-                        cfg_port_list.append(port)
-                for port in cfg_port_list:
-                    # check if a port range was given
-                    if isinstance(port, str):
-                        raise ValueError("uas_ports does not support ranges")
-            except KeyError:
-                cfg_port_list = [self.get_default_port()]
-                if optional_ports:
-                    # Add any optional ports to the cfg_port_list
-                    for port in optional_ports:
-                        cfg_port_list.append(port)
-
-        logger.info("cfg_port_list: %s", cfg_port_list)
-        for port in cfg_port_list:
-            # check if a port range was given
-            if isinstance(port, str):
-                # Lint thinks port is an 'int' but we know (because we
-                # checked) that its a string.
-                #
-                # pylint: disable=no-member
-                port_range = port.split(':')
-                # build entries for all ports between port_range[0]
-                # and port_range[1]
-                for i in range(int(port_range[0]), int(port_range[1])+1):
-                    port_list.append(self.gen_port_entry(i, service))
-            else:
-                port_list.append(self.gen_port_entry(port, service))
-        return port_list
+            cfg_ports.append(default_port)
+        logger.info("cfg_ports: %s", cfg_ports)
+        return [
+            self.gen_port_entry(port, service)
+            for port in cfg_ports
+        ]
 
     def get_svc_type(self, service_type=None):
         """Get the service type for UAIs from the config.
@@ -315,11 +286,11 @@ class UasCfg:
         """
         cfg = self.get_config()
         try:
-            cfg_port_list = cfg['uas_ports']
+            cfg_ports = cfg['uas_ports']
         except KeyError:
-            cfg_port_list = self.get_default_port()
+            cfg_ports = self.get_default_port()
         # XXX - pick first port, switch when the uas_ports type is changed
-        socket = client.V1TCPSocketAction(port=cfg_port_list[0])
+        socket = client.V1TCPSocketAction(port=cfg_ports[0])
         return client.V1Probe(initial_delay_seconds=2,
                               period_seconds=3,
                               tcp_socket=socket)

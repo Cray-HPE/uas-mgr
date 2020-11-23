@@ -55,7 +55,7 @@ class UaiManager(UasBase):
                 )
 
 
-    def _construct_uai_class(self, imagename, namespace, opt_ports):
+    def construct_uai_class(self, imagename, namespace, opt_ports):
         """Make a UAI class on which to base a User Workflow style UAI.  This
         will use a default UAI Class if there is one, otherwise, it
         will build a temporary UAI Class on which to base the proposed
@@ -91,7 +91,7 @@ class UaiManager(UasBase):
             uai_class = UAIClass(
                 comment=None,
                 default=False,
-                public_ssh=True,
+                public_ip=True,
                 image_id=image_id,
                 resource_id=None,
                 volume_list=volume_list,
@@ -107,21 +107,31 @@ class UaiManager(UasBase):
         return uai_class
 
     # pylint: disable=too-many-branches,too-many-statements,too-many-locals
-    def create_uai(self, public_key, imagename, opt_ports, namespace=None):
+    def create_uai(self, public_key, imagename, opt_ports):
         """Create a new UAI
 
         """
-        opt_ports_list = []
         if not public_key:
             logger.warning("create_uai - missing public key")
             abort(400, "Missing ssh public key.")
         namespace = self.uas_cfg.get_uai_namespace()
-        if opt_ports:
-            opt_ports_list = [int(i) for i in opt_ports.split(',')]
+        opt_ports_list = [
+            port.strip()
+            for port in opt_ports.split(',')
+        ] if opt_ports else []
+        try:
+            _ = [int(port) for port in opt_ports_list]
+        except ValueError:
+            abort(
+                400,
+                "illegal port number in '%s', "
+                "all optional port values must be integers"
+                % (opt_ports)
+            )
         # Restrict ports to valid_ports
         if opt_ports_list:
             for port in opt_ports_list:
-                if port not in self.uas_cfg.get_valid_optional_ports():
+                if int(port) not in self.uas_cfg.get_valid_optional_ports():
                     logger.error(
                         "create_uai - invalid port requested (%s). "
                         "Valid ports are %s.",
@@ -135,7 +145,7 @@ class UaiManager(UasBase):
                             self.uas_cfg.get_valid_optional_ports()
                         )
                     )
-        uai_class = self._construct_uai_class(imagename, namespace, opt_ports_list)
+        uai_class = self.construct_uai_class(imagename, namespace, opt_ports_list)
         uai_instance = UAIInstance(
             owner=self.username,
             public_key=public_key,
@@ -144,31 +154,27 @@ class UaiManager(UasBase):
         return self.deploy_uai(uai_class, uai_instance, self.uas_cfg)
 
 
-    def list_uais(self, label, host=None, namespace=None):
+    def list_uais(self, label=None, host=None):
         """
         Lists the UAIs based on a label and/or field selector and namespace
 
         :param label: Label selector. If empty, use self.username
         :param host: Used to select pods by host, if set,
-            If unset, the default of an empty string will select all.
-            Passed through to get_pod_info().
-        :param namespace: Filters results by a specific namespace
+            If unset, the default of None will select all.
         :return: List of UAI information.
         :rtype: list
         """
-        if not namespace:
-            namespace = self.uas_cfg.get_uai_namespace()
-            logger.info(
-                "list_uais - UAI will be listed from"
-                " the %s namespace.",
-                namespace
-            )
-
         if not label:
-            label = 'user=' + self.username
-        return self.get_uai_list(label, host, namespace)
+            labels = ['user=%s' % self.username]
+        else:
+            labels = label.split(',')
+        deploy_names = self.select_deployments(
+            labels=labels,
+            host=host
+        )
+        return self.get_uai_list(deploy_names=deploy_names)
 
-    def delete_uais(self, deployment_list, namespace=None):
+    def delete_uais(self, deployment_list):
         """
         Deletes the UAIs named in deployment_list.
         If deployment_list is empty, it will delete all UAIs.
@@ -179,23 +185,16 @@ class UaiManager(UasBase):
         :return: List of UAIs deleted.
         :rtype: list
         """
-        if not namespace:
-            namespace = self.uas_cfg.get_uai_namespace()
-            logger.info(
-                "delete_uais - UAI will be deleted from"
-                " the %s namespace.",
-                namespace
-            )
-
         uai_list = []
         if not deployment_list:
-            for uai in self.list_uais('uas=managed'):
-                uai_list.append(uai.uai_name)
+            uai_list = self.select_deployments()
         else:
-            uai_list = [uai for uai in deployment_list if
-                        'uai-'+self.username+'-' in uai]
-        resp_list = self.remove_uais(
-            [dep.strip() for dep in uai_list],
-            namespace
-        )
+            user_uais = self.select_deployments(
+                labels=["user=%s" % self.username]
+            )
+            uai_list = [
+                uai.strip() for uai in deployment_list
+                if uai.strip() in user_uais
+            ]
+        resp_list = self.remove_uais(uai_list)
         return resp_list

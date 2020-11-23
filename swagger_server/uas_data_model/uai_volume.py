@@ -1,7 +1,6 @@
 """Data Model for UAI Volumes
 
-Copyright 2020, Cray Inc. All rights reserved.
-
+Copyright 2020 Hewlett Packard Enterprise Development LP
 """
 from __future__ import absolute_import
 import re
