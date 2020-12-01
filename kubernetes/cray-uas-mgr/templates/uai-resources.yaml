@@ -11,7 +11,7 @@ apiVersion: v1
 kind: ResourceQuota
 metadata:
   name: uai-pod-quotas
-  namespace: user
+  namespace: "{{ .Values.uasConfig.uai_namespace }}"
 spec:
   hard:
     cpu: "{{ .Values.uaiResources.quota.cpu }}"
@@ -37,3 +37,34 @@ spec:
     default:
       cpu: "{{ .Values.uaiResources.default_limits.cpu }}"
       memory: "{{ .Values.uaiResources.default_limits.memory }}"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: broker-pod-quotas
+  namespace: "{{ .Values.uasConfig.broker_namespace }}"
+spec:
+  hard:
+    cpu: "{{ .Values.brokerResources.quota.cpu }}"
+    memory: "{{ .Values.brokerResources.quota.memory }}"
+    pods: "{{ .Values.brokerResources.quota.pods }}"
+  scopeSelector:
+    matchExpressions:
+    - operator : In
+      scopeName: PriorityClass
+      values: ["uai-priority"]
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: cpu-mem-limit-range
+  namespace: "{{ .Values.uasConfig.broker_namespace }}"
+spec:
+  limits:
+  - type: Container
+    defaultRequest:
+      cpu: "{{ .Values.brokerResources.default_request.cpu }}"
+      memory: "{{ .Values.brokerResources.default_request.memory }}"
+    default:
+      cpu: "{{ .Values.brokerResources.default_limits.cpu }}"
+      memory: "{{ .Values.brokerResources.default_limits.memory }}"

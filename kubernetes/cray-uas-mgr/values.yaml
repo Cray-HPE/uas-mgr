@@ -9,6 +9,7 @@ uasConfig:
 
 # UAI namespace
   uai_namespace: "user"
+  broker_namespace: "uas"
 
 # macvlan setttings
   use_macvlan: true
@@ -38,15 +39,26 @@ uasConfig:
 
 uaiResources:
   quota:
-    cpu: 10
+    cpu: 50
     memory: 100Gi
     pods: 100
   default_limits:
-    cpu: 100m
+    cpu: 500m
     memory: 1Gi
   default_request:
-    cpu: 100m
+    cpu: 500m
     memory: 1Gi
+brokerResources:
+  quota:
+    cpu: 1
+    memory: 2Gi
+    pods: 10
+  default_limits:
+    cpu: 100m
+    memory: 200M
+  default_request:
+    cpu: 100m
+    memory: 200M
 
 cray-service:
   type: Deployment

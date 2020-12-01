@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.11.3] - 2020-11-23
+- CASMUAS-196 Add uai_compute_network and sidecar configuration for UAS namespace
+
 ## [1.11.2] - 2020-11-10
 - CASMUAS-183 Add Administrative UAI Managememt APIs to UAS
 

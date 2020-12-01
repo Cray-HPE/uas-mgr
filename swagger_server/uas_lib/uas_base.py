@@ -680,16 +680,6 @@ class UAIInstance:
         dep_id = str(uuid.uuid4().hex[:8])
         dep_owner = "no-owner" if owner is None else self.owner
         self.deployment_name = 'uai-' + dep_owner + '-' + dep_id
-        # If we are using macvlans then we will set that up in an
-        # annotation in the metadata of the deployment, otherwise, the
-        # annotations will be None.  USE_MACVLAN is based on
-        # configuration from the Helm chart that can be set at service
-        # deployment time.
-        self.meta_annotations = None
-        if os.environ.get('USE_MACVLAN', 'true').lower() == 'true':
-            self.meta_annotations = {
-                'k8s.v1.cni.cncf.io/networks': 'macvlan-uas-nmn-conf@nmn1'
-            }
 
     def get_service_name(self):
         """ Compute the service name of a UAI based on UAI parameters.
@@ -748,9 +738,21 @@ class UAIInstance:
         """Construct a deployment for a UAI or Broker
 
         """
+        # If we are using macvlan then we will set that up in an
+        # annotation in the metadata of the deployment, otherwise, the
+        # annotations will be None. USE_MACVLAN is based on
+        # configuration from the Helm chart that can be set at service
+        # deployment time.
+        meta_annotations = None
+        if os.environ.get('USE_MACVLAN', 'true').lower() == 'true' or \
+           uai_class.uai_compute_network:
+            meta_annotations = {
+                'k8s.v1.cni.cncf.io/networks': 'macvlan-uas-nmn-conf@nmn1'
+            }
+
         pod_metadata = client.V1ObjectMeta(
             labels=self.gen_labels(uai_class),
-            annotations=self.meta_annotations
+            annotations=meta_annotations
         )
         deploy_metadata = client.V1ObjectMeta(
             name=self.deployment_name,
