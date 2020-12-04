@@ -1,4 +1,4 @@
-@Library('dst-shared') _
+@Library("dst-shared@release/shasta-1.4") _
 dockerBuildPipeline {
     repository="cray"
     imagePrefix="cray"
