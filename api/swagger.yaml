@@ -290,7 +290,7 @@ info:
     Delete the specified resource limit / request configuration from the
     list of available choices.
 
-  version: "1.11.3"
+  version: "1.11.4"
 
 servers:
   - url: "/apis/uas-mgr/v1"
