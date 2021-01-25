@@ -742,9 +742,11 @@ class UAIInstance:
         # annotation in the metadata of the deployment, otherwise, the
         # annotations will be None. USE_MACVLAN is based on
         # configuration from the Helm chart that can be set at service
-        # deployment time.
+        # deployment time.  We only set this up in UAIs made from a
+        # class that also has the 'uai_compute_network' flag turned
+        # on since some UAIs don't want compute network connectivity.
         meta_annotations = None
-        if os.environ.get('USE_MACVLAN', 'true').lower() == 'true' or \
+        if os.environ.get('USE_MACVLAN', 'true').lower() == 'true' and \
            uai_class.uai_compute_network:
             meta_annotations = {
                 'k8s.v1.cni.cncf.io/networks': 'macvlan-uas-nmn-conf@nmn1'
