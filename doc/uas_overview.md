@@ -2185,7 +2185,7 @@ Create the tarball.
     IMPORTANT: 99-slingshot-network.conf is omitted from the tarball as that prevents the UAI from running sshd as the UAI user with the su command:
 
 ```
-ncn-w001:~ # (cd `pwd`/mount; tar --xattrs --xattrs-include='*' --exclude="99-slingshot-network.conf" -czf "../$SESSION_ID.tar" .) > /dev/null
+ncn-w001:~ # (cd `pwd`/mount; tar --exclude="99-slingshot-network.conf" -cf "../$SESSION_ID.tar" .) > /dev/null
 ```
 
 This may take several minutes.  Notice that this does not create a compressed tarball.  Using an uncompressed format makes it possible to add files if needed once the tarball is made.  It also makes the procedure run just a bit more quickly.  When making the tarball completes, check that the tarball contains './usr/bin/uai-ssh.sh:
