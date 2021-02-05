@@ -25,7 +25,7 @@
             4. [Updating a Resource Specification](#main-uasconfig-resources-update)
             5. [Deleting a Resource Specification](#main-uasconfig-resources-delete)
         4. [UAI Classes](#main-uasconfig-classes)
-            1. [Listing UAI Classes<a name="main-uasconfig-classes-list"></a>](#main-uasconfig-classes-list)
+            1. [Listing UAI Classes](#main-uasconfig-classes-list)
             2. [Adding a UAI Class](#main-uasconfig-classes-add)
             3. [Examinig a UAI Class](#main-uasconfig-classes-examine)
             4. [Updating a UAI Class](#main-uasconfig-classes-update)
@@ -644,7 +644,7 @@ A UAI class is a template from which UAIs can be created.  At a minimum, a UAI c
 * A resource identifier used for UAIs of the class -- not present by default, in which case the namespace resource limits and requests are used
 * A list of volume identifiers used as volumes in UAIs of the class -- default is an empty list
 
-#### Listing UAI Classes<a name="main-uasconfig-classes-list"></a>
+#### Listing UAI Classes <a name="main-uasconfig-classes-list"></a>
 
 To list available UAI classes, use the following command:
 
