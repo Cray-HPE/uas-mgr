@@ -60,9 +60,9 @@
                 1. [Query BOS for a sessiontemplate ID](#main-uaiimages-customenduser-build-templateid)
                 2. [Download a Compute Node squashfs](#main-uaiimages-customenduser-build-squashfs)
                 3. [Mount the squashfs and Create a tarball](#main-uaiimages-customenduser-build-tarball)
-            2. [Create and Push the Container Image](#main-uaiimages-customenduser-build-image)
-                1. [Register the New Container Image With UAS](#main-uaiimages-customenduser-build-register)
-                2. [Cleanup the Mount Directory and tarball](#main-uaiimages-customenduser-build-cleanup)
+                4. [Create and Push the Container Image](#main-uaiimages-customenduser-build-image)
+                5. [Register the New Container Image With UAS](#main-uaiimages-customenduser-build-register)
+                6. [Cleanup the Mount Directory and tarball](#main-uaiimages-customenduser-build-cleanup)
     5. [Troubleshooting](#main-trouble)
         1. [Getting Log Output from UAS](#main-trouble-uaslogs)
         2. [Getting Log Output from UAIs](#main-trouble-uailogs)
@@ -2224,7 +2224,7 @@ results = [ "Successfully deleted uai-vers-32079250",]
 ncn-w001:~ # tar rf 0c0d4081-2e8b-433f-b6f7-e1ef0b907be3.tar ./usr/bin/uai-ssh.sh
 ```
 
-#### Create and Push the Container Image <a name="main-uaiimages-customenduser-build-image"></a>
+##### Create and Push the Container Image <a name="main-uaiimages-customenduser-build-image"></a>
 
 Create a container image using podman or docker and push it to the site container registry. Any container specific modifications may also be done here with a Dockerfile. The ENTRYPOINT layer must be /usr/bin/uai-ssh.sh as that starts SSHD for the user in the UAI container started by UAS.
 
