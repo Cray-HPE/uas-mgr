@@ -6,10 +6,16 @@
         2. [Special Purpose UAIs](#main-concepts-specialpurpose)
         3. [Elements of a UAI](#main-concepts-elements)
         4. [UAI Host Nodes](#main-concepts-hostnodes)
+        5. [UAI Network Attachments (macvlans)](#main-concepts-netattach)
     2. [UAI Host Node Selection](#main-hostnodes)
         1. [Identifying UAI Host Nodes](#main-hostnodes-identifying)
         2. [Specifying UAI Host Nodes](#main-hostnodes-specifying)
-    3. [UAS Configuration to Support UAI Creation](#main-uasconfig)
+    3. [UAI Network Attachments](#main-netattach)
+        1. [CSI Localization Data](#main-netattach-localization)
+        2. [Contents of customizations.yaml](#main-netattach-customizations)
+        3. [UAS Helm Chart](#main-netattach-helm)
+        4. [UAI Network Attachment in Kubernetes](#main-netattach-kubernetes)
+    4. [UAS Configuration to Support UAI Creation](#main-uasconfig)
         1. [UAI Images](#main-uasconfig-images)
             1. [Listing Registered UAI Images](#main-uasconfig-images-list)
             2. [Registering UAI Images](#main-uasconfig-images-add)
@@ -34,7 +40,7 @@
             3. [Examinig a UAI Class](#main-uasconfig-classes-examine)
             4. [Updating a UAI Class](#main-uasconfig-classes-update)
             5. [Deleting a UAI Class](#main-uasconfig-classes-delete)
-    4. [UAI Management](#main-uaimanagement)
+    5. [UAI Management](#main-uaimanagement)
         1. [Administrative Management of UAIs](#main-uaimanagement-adminuai)
             1. [Listing UAIs](#main-uaimanagement-adminuai-list)
             2. [Creating UAIs](#main-uaimanagement-adminuai-create)
@@ -53,7 +59,7 @@
                 1. [An Example of Volumes to Connect broker UAIs to LDAP](#main-uaimanagement-brokermode-brokerclasses-ldap)
             3. [Starting a Broker UAI](#main-uaimanagement-brokermode-startbroker)
             4. [Logging In Through a Broker UAI](#main-uaimanagement-brokermode-loginbroker)
-    5. [UAI Images](#main-uaiimages)
+    6. [UAI Images](#main-uaiimages)
         1. [The Provided Broker UAI Image](#main-uaiimages-providedbroker)
             1. [Customizing the Broker UAI Image](#main-uaiimages-providedbroker-customizingbroker)
                 1. [Customizing the Broker UAI Entrypoint Script](#main-uaiimages-providedbroker-customizingbroker-entrypoint)
@@ -67,7 +73,7 @@
                 4. [Create and Push the Container Image](#main-uaiimages-customenduser-build-image)
                 5. [Register the New Container Image With UAS](#main-uaiimages-customenduser-build-register)
                 6. [Cleanup the Mount Directory and tarball](#main-uaiimages-customenduser-build-cleanup)
-    6. [Troubleshooting](#main-trouble)
+    7. [Troubleshooting](#main-trouble)
         1. [Getting Log Output from UAS](#main-trouble-uaslogs)
         2. [Getting Log Output from UAIs](#main-trouble-uailogs)
         3. [Stale Brokered UAIs](#main-trouble-staleuais)
@@ -116,6 +122,10 @@ All of the above can be customized on a given set of UAIs by defining a UAI clas
 
 UAIs run on Kubernetes worker nodes.  There is a mechanism using Kubernetes labels to prevent UAIs from running on a specific worker node, however.  Any Kubernetes node that is not labeled to prevent UAIs from running on it is considered to be a UAI host node.  The administrator of a given site may control the set of UAI host nodes by labeling kubernetes worker nodes appropriately.
 
+### UAI Network Attachments (macvlans) <a name="main-concepts-netattach"></a>
+
+UAIs need to be able to reach compute nodes across the node managment network (NMN).  When the compute node NMN is structured as multiple subnets, this requires routing form the UAIs to those subnets.  The default route in a UAI goes to the public network through the customer access network (CAN) so that will not work for reaching compute nodes.  To solve this problem, UAS installs Kubernetes network attachments within the Kubernetes `user` namespace, one of which is used by UAIs.  The type of network attachment used on Shasta hardware for this purpose is a `macvlan` network attachment, so this is often referred to on Shasta systems as "macvlans".  This network attachment integrates the UAI into the NMN on the UAI host node where the UAI is running and assigns the UAI an IP address on that network.  It also installs a set of routes in the UAI that are used to reach the compute node subnets on the NMN.
+
 ## UAI Host Node Selection <a name="main-hostnodes"></a>
 
 When selecting UAI host nodes, it is a good idea to take into account the amount of combined load users and system services will bring to those nodes.  UAIs run by default at a lower priority than system services on worker nodes which means that, if the combined load exceeds the capacity of the nodes, Kubernetes will eject UAIs and / or refuse to schedule them to protect system services.  This can be disruptive or frustrating for users.  This section explains how to identify your currently configured UAI host nodes and how to adjust that selection to meet the needs of users.
@@ -153,6 +163,151 @@ ncn-m001-pit:~ # kubectl label node ncn-w001 uas=False --overwrite
 ```
 
 Please note here that setting `uas=True` or any variant of that, while potentially useful for local book keeping purposes, does NOT transform the node into a UAS host node.  With that setting the node will be a UAS node because the value of the `uas` flag is not in the list `False`, `false` or `FALSE`, but unless the node previously had one of the false values, it was a UAI node all along.  Perhaps more to the point, removing the `uas` label from a node labeled `uas=True` does not take the node out of the list of UAI host nodes.  The only way to make a non-master Kubernetes node not be a UAS host node is to explicitly set the label to `False`, `false` or `FALSE`.
+
+## UAI Network Attachments <a name="main-netattach"></a>
+
+The UAI network attachment configuration flows from the CRAY Site Initializer (CSI) localization data through `customizations.yaml` into the UAS Helm chart and, ultimately, into Kubernetes in the form of a "network-attachment-definition".  This section describes the data at each of those stages to show how the final network attachment gets created.
+
+### CSI Localization Data <a name="main-netattach-localization"></a>
+
+The details of CSI localization are beyond the scope of this guide, but here are the important settings, and the values used in the following examples:
+
+- The interface name on which the Kubernetes worker nodes reach their NMN subnet: `vlan002`
+- The network and CIDR configured on that interface: `10.252.0.0/17`
+- The IP address of the gateway to other NMN subnets found on that network: `10.252.0.1`
+- The subnets where compute nodes reside on this system:
+    - `10.92.100.0/24`
+    - `10.106.0.0/17`
+    - `10.104.0.0/17`
+
+### Contents of customizations.yaml <a name="main-netattach-customizations"></a>
+
+When CSI runs it produces the following data structure in the `spec` section of `customizations.yaml`:
+
+```
+spec:
+
+  ...
+  
+  wlm:
+  
+    ...
+    
+    macvlansetup:
+      nmn_subnet: 10.252.2.0/23
+      nmn_supernet: 10.252.0.0/17
+      nmn_supernet_gateway: 10.252.0.1
+      nmn_vlan: vlan002
+      # NOTE: the term DHCP here is misleading, this is merely
+      #       a range of reserved IPs for UAIs that should not
+      #       be handed out to others becase the network
+      #       attachment will hand them out to UAIs.
+      nmn_dhcp_start: 10.252.2.10
+      nmn_dhcp_end: 10.252.3.254
+      routes:
+      - dst: 10.92.100.0/24
+        gw:  10.252.0.1
+      - dst: 10.106.0.0/17
+        gw:  10.252.0.1
+      - dst: 10.104.0.0/17
+        gw: 10.252.0.1
+```
+
+The `nmn_subnet` value shown here is not of interest to this discussion.
+
+These values, in turn, feed into the following translation to UAS Helm chart settings:
+
+```
+      cray-uas-mgr:
+        uasConfig:
+          uai_macvlan_interface: '{{ wlm.macvlansetup.nmn_vlan }}'
+          uai_macvlan_network: '{{ wlm.macvlansetup.nmn_supernet }}'
+          uai_macvlan_range_start: '{{ wlm.macvlansetup.nmn_dhcp_start }}'
+          uai_macvlan_range_end: '{{ wlm.macvlansetup.nmn_dhcp_end }}'
+          uai_macvlan_routes: '{{ wlm.macvlansetup.routes }}'
+```
+
+### UAS Helm Chart <a name="main-netattach-helm"></a>
+
+The inputs above tell the UAS Helm chart how to install the network attachment for UAIs.  While the actual template used for this is more complex, here is a simplified view of the template used to generate the network attachment (if you are reading this document from the UAS source code, you can find the real template in the Helm chart there):
+
+```
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+...
+spec:
+  config: '{
+      "cniVersion": "0.3.0",
+      "type": "macvlan",
+      "master": "{{ .Values.uasConfig.uai_macvlan_interface }}",
+      "mode": "bridge",
+      "ipam": {
+        "type": "host-local",
+        "subnet": "{{ .Values.uasConfig.uai_macvlan_network }}",
+        "rangeStart": "{{ .Values.uasConfig.uai_macvlan_range_start }}",
+        "rangeEnd": "{{ .Values.uasConfig.uai_macvlan_range_end }}",
+        "routes": [
+{{- range $index, $route := .Values.uasConfig.uai_macvlan_routes }}
+  {{- range $key, $value := $route }}
+           {
+              "{{ $key }}": "{{ $value }}",
+           },
+  {{- end }}
+{{- end }}
+        ]
+      }
+  }'
+```
+
+The `range` templating in the `routes` section expands the routes from `customizations.yaml` into the network attachment routes.
+
+### UAI Network Attachment in Kubernetes <a name="main-netattach-kubernetes"></a>
+
+All of this produces a network attachment definition in Kubernetes called `macvlan-uas-nmn-conf` which is used by UAS.  Here are the contents that would result from the above data:
+
+```
+apiVersion: v1
+items:
+- apiVersion: k8s.cni.cncf.io/v1
+  kind: NetworkAttachmentDefinition
+  ...
+  spec:
+    config: '{
+      "cniVersion": "0.3.0",
+      "type": "macvlan",
+      "master": "vlan002",
+      "mode": "bridge",
+      "ipam": {
+        "type": "host-local",
+        "subnet": "10.252.0.0/17",
+        "rangeStart": "10.252.124.10",
+        "rangeEnd": "10.252.125.244",
+        "routes": [
+          {
+            "dst": "10.92.100.0/24",
+            "gw":  "10.252.0.1"
+          },
+          {
+            "dst": "10.106.0.0/17",
+            "gw":  "10.252.0.1"
+          },
+          {
+            "dst": "10.104.0.0/17",
+            "gw": "10.252.0.1"
+          }
+        ]
+      }
+    }'
+...
+```
+
+The above tells Kubernetes to assign UAI IP addresses in the range `10.252.2.10` through `10.252.3.244` on the network attachment, and permits those UAIs to reach compute nodes on any of four possible NMN subnets:
+
+- directly through the NMN subnet hosting the UAI host node itself (`10.252.0.0/17` here)
+- through the gateway in the local NMN subnet (`10.252.0.1` here) to
+    - `10.92.100.0/24`
+    - `10.106.0.0/17`
+    - `10.104.0.0/17`
 
 ## UAS Configuration to Support UAI Creation <a name="main-uasconfig"></a>
 
@@ -1190,7 +1345,7 @@ In the legacy mode, users create and manage their own UAIs through the Shasta CL
 
 The following diagram illustrates a system running with UAIs created in the legacy mode by four users, each of whom has created at least one end-user UAI.  Notice that the user Pat has created two end-user UAIs:
 
-![UAS Legacy Mode](uas_legacy_mode.svg)
+![UAS Legacy Mode](img/uas_legacy_mode.svg)
 
 In the simplest UAS configuration, there is some number of UAI images available for use in legacy mode and there is a set of volumes defined.  In this configuration, when a UAI is created, the user may specify the UAI image to use as an option when creating the UAI, or may allow a default UAI image, if one is assigned, to be used.  Every volume defined at the time the UAI is created will be mounted unconditionally in every newly created UAI if this approach is used.  This can lead to problems with [conflicting volume mount points](#main-trouble-dupmounts) and [unresolvable volumes](#main-trouble-stuckuais) in some configurations of UAS.  Unless UAI classes are used to make UAIs, care must be taken to ensure all volumes have unique mount-path settings and are accessible in the `user` Kubernetes namespace.
 
@@ -1530,7 +1685,7 @@ username = "vers"
 
 A UAI broker is a special kind of UAI whose job is not to host users directly but to field attempts to reach a UAI, locate or create a UAI for the user making the attempt, and then pass the connection on to the correct UAI.  Multiple UAI brokers can be created, each serving a UAI of a different class, making it possible to set up UAIs for varying workflows and environments as needed.  The following illustrates a system using the UAI broker mode of UAI management:
 
-![UAS Broker Mode](uas_broker_mode.svg)
+![UAS Broker Mode](img/uas_broker_mode.svg)
 
 Notice that, unlike in the legacy model, in this model users log into their UAIs through the UAI broker.  After that, each user is assigned an end-user UAI by the broker and the SSH session is forwarded to the end-user UAI.  This is seamless from the user's perspective, as the SSH session is carried through the UAI broker and into the end-user UAI.
 
