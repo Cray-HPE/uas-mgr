@@ -5,7 +5,11 @@
         1. [End-User UAIs](#main-concepts-enduser)
         2. [Special Purpose UAIs](#main-concepts-specialpurpose)
         3. [Elements of a UAI](#main-concepts-elements)
-    2. [UAS Configuration to Support UAI Creation](#main-uasconfig)
+        4. [UAI Host Nodes](#main-concepts-hostnodes)
+    2. [UAI Host Node Selection](#main-hostnodes)
+        1. [Identifying UAI Host Nodes](#main-hostnodes-identifying)
+        2. [Specifying UAI Host Nodes](#main-hostnodes-specifying)
+    3. [UAS Configuration to Support UAI Creation](#main-uasconfig)
         1. [UAI Images](#main-uasconfig-images)
             1. [Listing Registered UAI Images](#main-uasconfig-images-list)
             2. [Registering UAI Images](#main-uasconfig-images-add)
@@ -30,7 +34,7 @@
             3. [Examinig a UAI Class](#main-uasconfig-classes-examine)
             4. [Updating a UAI Class](#main-uasconfig-classes-update)
             5. [Deleting a UAI Class](#main-uasconfig-classes-delete)
-    3. [UAI Management](#main-uaimanagement)
+    4. [UAI Management](#main-uaimanagement)
         1. [Administrative Management of UAIs](#main-uaimanagement-adminuai)
             1. [Listing UAIs](#main-uaimanagement-adminuai-list)
             2. [Creating UAIs](#main-uaimanagement-adminuai-create)
@@ -49,7 +53,7 @@
                 1. [An Example of Volumes to Connect broker UAIs to LDAP](#main-uaimanagement-brokermode-brokerclasses-ldap)
             3. [Starting a Broker UAI](#main-uaimanagement-brokermode-startbroker)
             4. [Logging In Through a Broker UAI](#main-uaimanagement-brokermode-loginbroker)
-    4. [UAI Images](#main-uaiimages)
+    5. [UAI Images](#main-uaiimages)
         1. [The Provided Broker UAI Image](#main-uaiimages-providedbroker)
             1. [Customizing the Broker UAI Image](#main-uaiimages-providedbroker-customizingbroker)
                 1. [Customizing the Broker UAI Entrypoint Script](#main-uaiimages-providedbroker-customizingbroker-entrypoint)
@@ -63,7 +67,7 @@
                 4. [Create and Push the Container Image](#main-uaiimages-customenduser-build-image)
                 5. [Register the New Container Image With UAS](#main-uaiimages-customenduser-build-register)
                 6. [Cleanup the Mount Directory and tarball](#main-uaiimages-customenduser-build-cleanup)
-    5. [Troubleshooting](#main-trouble)
+    6. [Troubleshooting](#main-trouble)
         1. [Getting Log Output from UAS](#main-trouble-uaslogs)
         2. [Getting Log Output from UAIs](#main-trouble-uailogs)
         3. [Stale Brokered UAIs](#main-trouble-staleuais)
@@ -107,6 +111,48 @@ Resource requests and limits tell Kubernetes how much memory and CPU a given UAI
 The smaller configuration items control things like whether the UAI can talk to compute nodes over the high-speed network (needed for workload management), whether the UAI presents a public facing or private facing IP address for SSH, Kubernetes scheduling priority and others.
 
 All of the above can be customized on a given set of UAIs by defining a UAI class.  UAI classes are templates used to create UAIs, and provide access to fine grained configuration and selection of image, volumes and resource specification.  While an end-user UAI can be created by simply specifying its UAI image and the user's public key, to make more precisely constructed UAIs a UAI class must be used.
+
+### UAI Host Nodes <a name="main-concepts-hostnodes"></a>
+
+UAIs run on Kubernetes worker nodes.  There is a mechanism using Kubernetes labels to prevent UAIs from running on a specific worker node, however.  Any Kubernetes node that is not labeled to prevent UAIs from running on it is considered to be a UAI host node.  The administrator of a given site may control the set of UAI host nodes by labeling kubernetes worker nodes appropriately.
+
+## UAI Host Node Selection <a name="main-hostnodes"></a>
+
+When selecting UAI host nodes, it is a good idea to take into account the amount of combined load users and system services will bring to those nodes.  UAIs run by default at a lower priority than system services on worker nodes which means that, if the combined load exceeds the capacity of the nodes, Kubernetes will eject UAIs and / or refuse to schedule them to protect system services.  This can be disruptive or frustrating for users.  This section explains how to identify your currently configured UAI host nodes and how to adjust that selection to meet the needs of users.
+
+### Identifying UAI Host Nodes <a name="main-hostnodes-identifying"></a>
+
+Since UAI host node identification is an exclusive activity, not an inclusive one, it starts by identifying the nodes that could potentially be UAI host nodes by their Kubernetes role:
+
+```
+ncn-m001-pit:~ # kubectl get no | grep -v master
+NAME       STATUS   ROLES    AGE   VERSION
+ncn-w001   Ready    <none>   10d   v1.18.6
+ncn-w002   Ready    <none>   25d   v1.18.6
+ncn-w003   Ready    <none>   23d   v1.18.6
+```
+
+On this system, there are 3 nodes known by Kubernetes that are not running as Kubernetes master nodes.  These are all potential UAI host nodes.  Next, identify the nodes that are excluded from eligibility as UAI host nodes:
+
+```
+ncn-m001-pit:~ # kubectl get no -l uas=False
+NAME       STATUS   ROLES    AGE   VERSION
+ncn-w001   Ready    <none>   10d   v1.18.6
+```
+
+    NOTE: given the fact that labels are textual not boolean, it is a good idea to try various common spellings of false. The ones that will prevent UAIs from running are 'False', 'false' and 'FALSE'.  Repeat the above with all three options to be sure.
+
+Of the non-master nodes, there is one node that is configured to reject UAIs, `ncn-w001`.  So, `ncn-w002` and `ncn-w003` are UAI host nodes.
+
+### Specifying UAI Host Nodes <a name="main-hostnodes-specifying"></a>
+
+UAI host nodes are determined by tainting the nodes against UAIs, so the following:
+
+```
+ncn-m001-pit:~ # kubectl label node ncn-w001 uas=False --overwrite
+```
+
+Please note here that setting `uas=True` or any variant of that, while potentially useful for local book keeping purposes, does NOT transform the node into a UAS host node.  With that setting the node will be a UAS node because the value of the `uas` flag is not in the list `False`, `false` or `FALSE`, but unless the node previously had one of the false values, it was a UAI node all along.  Perhaps more to the point, removing the `uas` label from a node labeled `uas=True` does not take the node out of the list of UAI host nodes.  The only way to make a non-master Kubernetes node not be a UAS host node is to explicitly set the label to `False`, `false` or `FALSE`.
 
 ## UAS Configuration to Support UAI Creation <a name="main-uasconfig"></a>
 
