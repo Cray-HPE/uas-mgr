@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.11.6] - 2021-02-11
+- CASMUAS-210 Helm Chart changes to support multiple macvlan routes
+
 ## [1.11.5] - 2021-01-25
 - CASMUAS-201 Fix uai_compute_network logic in UAI creation
 

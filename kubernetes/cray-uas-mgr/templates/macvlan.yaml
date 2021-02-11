@@ -16,17 +16,29 @@ spec:
       "ipam": {
         "type": "host-local",
         "subnet": "{{ .Values.uasConfig.uai_macvlan_network }}",
+  {{- if hasKey .Values.uasConfig "uai_macvlan_dhcp_start" }}
         "rangeStart": "{{ .Values.uasConfig.uai_macvlan_dhcp_start }}",
-        "rangeEnd": "{{ .Values.uasConfig.uai_macvlan_dhcp_end }}"
-{{- if .Values.uasConfig.uai_macvlan_mtn_network }}
-         ,
-         "routes": [
-                {
-                    "dst": "{{ .Values.uasConfig.uai_macvlan_mtn_network }}",
-                    "gw": "{{ .Values.uasConfig.uai_macvlan_mtn_gateway }}"
-                } 
+        "rangeEnd": "{{ .Values.uasConfig.uai_macvlan_dhcp_end }}",
+  {{- else }}
+        "rangeStart": "{{ .Values.uasConfig.uai_macvlan_range_start }}",
+        "rangeEnd": "{{ .Values.uasConfig.uai_macvlan_range_end }}",
+  {{- end }}
+        "routes": [
+  {{- if hasKey .Values.uasConfig "uai_macvlan_mtn_network" }}
+           {
+             "subnet": "{{ .Values.uasConfig.uai_macvlan_mtn_network }}",
+             "gw: "{{ .Values.uasConfig.uai_macvlan_mtn_gateway }}"
+           }
+  {{- else }}
+    {{- range $index, $route := .Values.uasConfig.uai_macvlan_routes }}
+      {{- range $key, $value := $route }}
+           {
+              "{{ $key }}": "{{ $value }}",
+           },
+      {{- end }}
+    {{- end }}
+  {{- end }}
         ]
-{{- end }}
       }
-    }'
+  }'
 {{- end }}

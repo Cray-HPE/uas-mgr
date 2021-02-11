@@ -15,10 +15,11 @@ uasConfig:
   use_macvlan: true
   uai_macvlan_interface: "vlan002"
   uai_macvlan_network: 10.252.0.0/17
-  uai_macvlan_dhcp_start: 10.252.124.10
-  uai_macvlan_dhcp_end: 10.252.125.244
-  uai_macvlan_mtn_network: 10.100.104.0/23
-  uai_macvlan_mtn_gateway: 10.252.0.1
+  uai_macvlan_range_start: 10.252.124.10
+  uai_macvlan_range_end: 10.252.125.244
+  uai_macvlan_routes:
+  - subnet: 10.100.104.0/23
+    gw: 10.252.0.1
 
 # UAI images
   images:
