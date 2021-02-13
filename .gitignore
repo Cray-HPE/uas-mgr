@@ -6,4 +6,5 @@ tmp
 uas_env
 *.pyc
 swagger_server/swagger.yaml
+doc/toc
 
