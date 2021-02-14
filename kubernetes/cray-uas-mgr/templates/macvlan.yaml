@@ -26,16 +26,16 @@ spec:
         "routes": [
   {{- if hasKey .Values.uasConfig "uai_macvlan_mtn_network" }}
            {
-             "subnet": "{{ .Values.uasConfig.uai_macvlan_mtn_network }}",
+             "dst": "{{ .Values.uasConfig.uai_macvlan_mtn_network }}",
              "gw: "{{ .Values.uasConfig.uai_macvlan_mtn_gateway }}"
            }
   {{- else }}
     {{- range $index, $route := .Values.uasConfig.uai_macvlan_routes }}
-      {{- range $key, $value := $route }}
+           {{- if ne $index 0 }},{{ end }}
            {
-              "{{ $key }}": "{{ $value }}",
-           },
-      {{- end }}
+              "dst": "{{ $route.dst }}",
+              "gw": "{{ $route.gw  }}"
+           }
     {{- end }}
   {{- end }}
         ]
