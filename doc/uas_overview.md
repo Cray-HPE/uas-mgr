@@ -203,7 +203,7 @@ ncn-m001:~ # /opt/cray/csm/scripts/node_management/make_node_groups -N -R -u
 (dry run)cray hsm groups members create uai --id x3000c0s9b0n0
 ```
 
-Notice that when run in dry-run (`-N` option) mode, the script only prints out the CLI commands it will execute withouth actually executing them.  When run with the `-R` option, the script removes any exisiting node groups before recreating them, effectively updating the contents of the node group.  The `-u` option tells the script to create or update only the node group for UAI host nodes.  That node group is named `uai` in the HSM.
+Notice that when run in dry-run (`-N` option) mode, the script only prints out the CLI commands it will execute without actually executing them.  When run with the `-R` option, the script removes any existing node groups before recreating them, effectively updating the contents of the node group.  The `-u` option tells the script to create or update only the node group for UAI host nodes.  That node group is named `uai` in the HSM.
 
 So, to create a new node group or replace an existing one, called `uai`, containing the list of UAI host nodes, use the following command:
 
