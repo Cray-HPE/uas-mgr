@@ -67,6 +67,8 @@ RUN pylint swagger_server
 
 RUN ./swagger_server/test/version-check.sh
 RUN mkdir -p /var/run/secrets/kubernetes.io/
+# Set up a fake K8s config to keep K8s library ops from bombing
+# in tests...
 COPY serviceaccount/ /var/run/secrets/kubernetes.io/serviceaccount/
 ENV ETCD_MOCK_CLIENT yes
 ENTRYPOINT pytest --cov swagger_server --cov-fail-under 75
