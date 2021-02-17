@@ -1,0 +1,1 @@
+This directory contains files for a fake Kubernetes configuration used to support unit testing.  In particular, `token` and `ca.crt` are not valid for anything, but they are legal data so that Kubernetes library operations can be used in unit tests.
