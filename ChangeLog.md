@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.11.8] - 2021-02-17
+- Switch to MIT License in preparation for releasing to GitHub
+
 ## [1.11.7] - 2021-02-14
 - CASMUAS-210 Helm Chart fixes to reapair macvlan route generation
 
