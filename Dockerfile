@@ -39,7 +39,7 @@ RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
 COPY requirements.txt /usr/src/app/
-# don't build cryptography Rust libbrary
+# don't build cryptography Rust library
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST 1
 RUN pip3 install --no-cache-dir \
                  --extra-index https://pypi.org/simple \
