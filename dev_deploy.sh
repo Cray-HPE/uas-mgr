@@ -21,6 +21,9 @@
 # OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
+
+: ${TAG:="cray/cray-uas-mgr:latest"}
+
 usage() {
     (
         echo "usage: local_deploy [-t tag]"
@@ -32,11 +35,13 @@ usage() {
 }
 
 cleanup() {
-    if [ -n "${OUT}" ]; then
-        rm -f ${OUT}
+    if [ -n "${COVGTAG}" ]; then
+        docker rmi --force ${COVGTAG} && true
+    fi
+    if [ -n "${TESTTAG}" ]; then
+        docker rmi --force ${TESTTAG} && true
     fi
 }
-OUT=""
 PUSH=no
 
 trap cleanup EXIT
@@ -62,40 +67,47 @@ for i; do
             break;;
     esac
 done
+NAME=$(echo ${TAG} | sed -e 's/:.*$//')
+VERS=$(echo ${TAG} | sed -e 's/^.*:/:/')
 
-TAG="cray/cray-uas-mgr:latest"
-OUT=$(mktemp)
-
-echo "Building image..."
-##########
-# BUILD  #
-##########
-docker build -t $TAG . 2>&1 | tee ${OUT}
+echo "Building coverage image..."
+# Build a coverage image to check test coverage
+COVGTAG=${NAME}-coverage${VERS}
+docker build --progress plain -t ${COVGTAG} --target coverage .
 if [ $? -ne 0 ]; then
-  echo "Docker build failed"
-  rm ${OUT}
+  echo "Docker build of coverage image failed"
   exit 1
 fi
 
-echo "Running tests..."
-##########
-#  TEST  #
-##########
-# Use the FROM layer after the one we are interesting in 
-# for a more deterministic pattern to match with "-B1"
-test_layer=$(grep -B1 "FROM base as application" $OUT | head -1 | awk '{print $2}')
-coverage_layer=$(grep -B1 "FROM base as testing" $OUT | head -1 | awk '{print $2}')
-docker run $test_layer
+echo "Running unit tests and checking coverage"
+docker run ${COVGTAG}
 if [ $? -ne 0 ]; then
-  echo "Docker test_layer $test_layer failed"
-  exit 1
-fi
-
-echo "Checking test coverage..."
-docker run $coverage_layer
-if [ $? -ne 0 ]; then
-    echo "Docker coverage_layer $coverage_layer failed"
+    echo "Docker coverage check ${COVGTAG} failed"
     exit 1
+fi
+
+echo "Building API test image..."
+# Build an API Test image to check basic API response
+TESTTAG=${NAME}-api-test${VERS}
+docker build --progress plain -t ${TESTTAG} --target testing .
+if [ $? -ne 0 ]; then
+  echo "Docker build of API test image failed"
+  exit 1
+fi
+
+echo "Running API test"
+docker run ${TESTTAG}
+if [ $? -ne 0 ]; then
+    echo "Docker API test check ${TESTTAG} failed"
+    exit 1
+fi
+
+echo "Building final image..."
+# Build the final product image
+docker build --progress plain -t ${TAG} .
+if [ $? -ne 0 ]; then
+  echo "Docker build of final image failed"
+  exit 1
 fi
 
 echo "'$TAG' is created successfully"
