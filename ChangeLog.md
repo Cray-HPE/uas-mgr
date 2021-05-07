@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.0] - 2021-05-07
+- Remove factory settings for UAI images in favor of dynamic update
+
 ## [1.11.8] - 2021-02-17
 - Switch to MIT License in preparation for releasing to GitHub
 
