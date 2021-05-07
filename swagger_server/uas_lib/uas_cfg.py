@@ -74,19 +74,10 @@ class UasCfg:
         # We have the configmap contents, now, populate any ETCD
         # tables that need populating...
         if UAIImage.get_all() is None:
-            # There are no UAI Image objects in ETCD, populate that
-            # table now.
+            # There are no UAI Image objects in ETCD.  Just register
+            # the empty table.  We no longer populate UAI images from
+            # a chart supplied configuration.
             UAIImage.register()
-            uas_imgs = cfg.get('uas_images', {})
-            default_name = uas_imgs.get('default_image', None)
-            if default_name is not None:
-                UAIImage(imagename=default_name, default=True).put()
-            imgs = uas_imgs.get('images', [])
-            for name in imgs:
-                # The default (if any) has already been added, don't
-                # duplicate it here.
-                if name != default_name:
-                    UAIImage(imagename=name, default=False).put()
         if UAIVolume.get_all() is None:
             # There are no UAI Volume objects in ETCD, populate that
             # table now.

@@ -85,10 +85,7 @@ class TestUasCfg(unittest.TestCase):
     def test_get_images(self):
         self.__reset_runtime_config(self.uas_cfg)
         images = self.uas_cfg.get_images()
-        self.assertEqual(
-            images,
-            ['dtr.dev.cray.com:443/cray/cray-uas-sles15:latest']
-        )
+        self.assertIsNone(images)
         self.__reset_runtime_config(self.uas_cfg_empty)
         images = self.uas_cfg_empty.get_images()
         self.__reset_runtime_config()
@@ -99,19 +96,16 @@ class TestUasCfg(unittest.TestCase):
     def test_get_default_image(self):
         self.__reset_runtime_config(self.uas_cfg)
         image = self.uas_cfg.get_default_image()
-        self.assertEqual(
-            image,
-            'dtr.dev.cray.com:443/cray/cray-uas-sles15:latest'
-        )
+        self.assertIsNone(image)
         self.__reset_runtime_config(self.uas_cfg_empty)
         image = self.uas_cfg_empty.get_default_image()
-        self.assertEqual(image, None)
+        self.assertIsNone(image)
         self.__reset_runtime_config()
 
     # pylint: disable=missing-docstring
-    def test_validate_image_true(self):
+    def test_validate_image_no_defaults(self):
         self.__reset_runtime_config(self.uas_cfg)
-        self.assertTrue(
+        self.assertFalse(
             self.uas_cfg.validate_image(
                 'dtr.dev.cray.com:443/cray/cray-uas-sles15:latest'
             )

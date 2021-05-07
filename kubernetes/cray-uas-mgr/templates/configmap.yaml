@@ -49,20 +49,6 @@ data:
     volume_mounts:
       {{- toYaml .Values.uasConfig.volumeMounts | trimSuffix "\n" | nindent 6 }}
 
-    # UAS Images
-    # The following list contains the supported images a user may choose for
-    # their UAS instance.  Image names must be quoted if they contain special
-    # characters such as ':'.
-    #
-    #   default_image: default image name to use if none are selected.
-    #   images:
-    #     - 'repo:port/cray-uas-img:latest'
-    #
-    uas_images:
-      default_image: "{{ include "cray-service.image-prefix" $baseChartValues }}{{ .Values.uasConfig.images.defaultImage }}"
-      images:
-      {{- range .Values.uasConfig.images.images }}
-        - "{{ include "cray-service.image-prefix" $baseChartValues }}{{ . }}"
-      {{- end }}
-
+    # UAI Namespace is the name of the kubernetes namespace (usually 'user')
+    # where end-user UAIs will be created.
     uai_namespace: "{{ .Values.uasConfig.uai_namespace }}"
