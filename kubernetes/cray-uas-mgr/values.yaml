@@ -21,13 +21,6 @@ uasConfig:
   - subnet: 10.100.104.0/23
     gw: 10.252.0.1
 
-# UAI images
-  images:
-  # Default image must also be in 'images'
-    defaultImage: "registry.local/cray/cray-uai-sles15sp1:latest"
-    images:
-      - "registry.local/cray/cray-uai-sles15sp1:latest"
-
 # UAI volume mounts
   volumeMounts:
     - name: lustre

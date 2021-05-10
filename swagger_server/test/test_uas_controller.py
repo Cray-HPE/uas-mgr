@@ -58,11 +58,13 @@ class TestUasController(unittest.TestCase):
     def test_get_uas_images(self):
         with app.test_request_context('/'):
             images = uas_ctl.get_uas_images()
-        self.assertEqual(images,
-                         {'default_image':
-                          'dtr.dev.cray.com:443/cray/cray-uas-sles15:latest',
-                          'image_list':
-                          ['dtr.dev.cray.com:443/cray/cray-uas-sles15:latest']})
+        self.assertEqual(
+            images,
+            {
+                'default_image': None,
+                'image_list': None
+            }
+        )
 
     # pylint: disable=missing-docstring
     def test_get_uas_mgr_info(self):
