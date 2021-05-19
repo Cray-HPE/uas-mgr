@@ -57,8 +57,11 @@ class UasBase:
     def __init__(self):
         """ Constructor """
         config.load_incluster_config()
-        k8s_config = Configuration()
-        k8s_config.assert_hostname = False
+        try:
+            k8s_config = Configuration().get_default_copy()
+        except AttributeError:
+            k8s_config = Configuration()
+            k8s_config.assert_hostname = False
         Configuration.set_default(k8s_config)
         self.api = core_v1_api.CoreV1Api()
         self.apps_v1 = client.AppsV1Api()
