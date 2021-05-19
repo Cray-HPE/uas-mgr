@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.1] - 2021-05-19
+- Update kubernetes client library initialization to 12.0.1 sequence
+
 ## [1.12.0] - 2021-05-07
 - Remove factory settings for UAI images in favor of dynamic update
 
