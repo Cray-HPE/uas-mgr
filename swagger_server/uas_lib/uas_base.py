@@ -48,6 +48,12 @@ from swagger_server.uas_lib.uas_auth import UAS_AUTH_LOGGER
 # picking 40 seconds so that it's under the gateway timeout
 UAI_IP_TIMEOUT = 40
 
+# All UAIs have the following toleration to allow them to run
+# on nodes that are tainted against non-UAI activity.  The list
+# can be extended using UAI Class toleration lists.
+BASE_UAI_TOLERATIONS = [client.V1Toleration(key="uai_only", operator="Exists")]
+
+
 class UasBase:
     """Base class used for any class implementing UAS API functionality.
     Takes care of common activities like K8s client setup, loading UAS
@@ -839,16 +845,25 @@ class UAIInstance:
             required_during_scheduling_ignored_during_execution=node_selector
         )
         affinity = client.V1Affinity(node_affinity=node_affinity)
+        # pylint: disable=unnecessary-comprehension
+        tolerations = [toleration for toleration in BASE_UAI_TOLERATIONS]
+        if uai_class.tolerations is not None:
+            toleration_list = json.loads(uai_class.tolerations)
+            for toleration in toleration_list:
+                tolerations.append(client.V1Toleration(**toleration))
+
         priority_class_name = 'uai-priority'
         if uai_class.priority_class_name is not None:
             priority_class_name = uai_class.priority_class_name
+
         template = client.V1PodTemplateSpec(
             metadata=pod_metadata,
             spec=client.V1PodSpec(
                 priority_class_name=priority_class_name,
                 containers=[container],
                 affinity=affinity,
-                volumes=uas_cfg.gen_volumes(volume_list)
+                volumes=uas_cfg.gen_volumes(volume_list),
+                tolerations=tolerations
             )
         )
 

@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.13.0] - 2021-07-27
+- Add tolerations to UAIs and UAI Classes
+
 ## [1.12.1] - 2021-05-19
 - Update kubernetes client library initialization to 12.0.1 sequence
 

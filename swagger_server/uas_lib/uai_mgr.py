@@ -114,7 +114,8 @@ class UaiManager(UasBase):
                 resource_id=None,
                 volume_list=volume_list,
                 namespace=namespace,
-                opt_ports=opt_ports
+                opt_ports=opt_ports,
+                tolerations=None
             )
         elif imagename is not None:
             abort(

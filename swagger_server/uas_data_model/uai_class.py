@@ -101,6 +101,10 @@ class UAIClass(UASDataModel):
     # in UAIs created using the UAI Class.
     volume_list = Etcd3Attr(default=None)
 
+    # The list of tolerations beyond the default UAI toleration to
+    # be applied to UAI pods of this class
+    tolerations = Etcd3Attr(default=None)
+
     @staticmethod
     def get_default():
         """ Retrieve the current default UAI / Broker Class, if any.
