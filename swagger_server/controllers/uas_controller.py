@@ -578,7 +578,8 @@ def create_uas_class_admin(comment=None,
                            uai_creation_class=None,
                            uai_compute_network=None,
                            resource_id=None,
-                           volume_list=None):
+                           volume_list=None,
+                           tolerations=None):
     """Add a UAI Class
 
     Add a UAI Class to the UAS configuration
@@ -605,6 +606,8 @@ def create_uas_class_admin(comment=None,
     :type resource_id: str
     :param volume_list: List of Volume IDs (UUIDs) mounted in UAIs  of this class
     :type volume_list: list
+    :param tolerations: JSON list of tolerations for UAIs of this class
+    :type volume_list: str
     :rtype: UAIClass
 
     """
@@ -618,7 +621,8 @@ def create_uas_class_admin(comment=None,
                                      uai_creation_class=uai_creation_class,
                                      uai_compute_network=uai_compute_network,
                                      priority_class_name=priority_class_name,
-                                     volume_list=volume_list)
+                                     volume_list=volume_list,
+                                     tolerations=tolerations)
 
 
 def get_uas_classes_admin():
@@ -658,7 +662,8 @@ def update_uas_class_admin(class_id=None,
                            uai_creation_class=None,
                            uai_compute_network=None,
                            resource_id=None,
-                           volume_list=None):
+                           volume_list=None,
+                           tolerations=None):
     """Update the specified UAI Class
 
     Update the specified UAI Class with new values.  This can set the
@@ -687,6 +692,8 @@ def update_uas_class_admin(class_id=None,
     :type resource_id: str
     :param volume_list: List of Volume IDs (UUIDs) useed in UAIs of this class
     :type volume_list: list
+    :param tolerations: JSON list of tolerations for UAIs of this class
+    :type volume_list: str
     :rtype: UAIClass
     """
     if not class_id:
@@ -702,7 +709,8 @@ def update_uas_class_admin(class_id=None,
                                      uai_creation_class=uai_creation_class,
                                      uai_compute_network=uai_compute_network,
                                      resource_id=resource_id,
-                                     volume_list=volume_list)
+                                     volume_list=volume_list,
+                                     tolerations=tolerations)
 
 def delete_uas_class_admin(class_id):
     """Remove the specified UAI Class

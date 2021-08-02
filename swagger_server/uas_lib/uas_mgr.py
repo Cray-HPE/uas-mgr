@@ -26,6 +26,7 @@ Class that implements UAS functions not requiring user attributes
 
 import json
 from flask import abort
+from kubernetes import client
 from swagger_server.uas_lib.uas_base import UasBase
 from swagger_server.uas_lib.uas_base import UAIInstance
 from swagger_server.uas_data_model.uai_image import UAIImage
@@ -611,6 +612,45 @@ class UasManager(UasBase):
             abort(400, "Validation of volume list failed - %s" % str(err))
 
     @staticmethod
+    def _validate_tolerations(tolerations):
+        """Verify that a given toleration list is a validly formed list of
+        tolerations.
+
+        """
+        if tolerations is not None:
+            try:
+                tolerations_list = json.loads(tolerations)
+            except json.decoder.JSONDecodeError as err:
+                abort(
+                    400,
+                    "Tolerations '%s' failed JSON decoding "
+                    "- %s" % (tolerations, str(err))
+                )
+            if not isinstance(tolerations_list, list):
+                abort(
+                    400,
+                    "Tolerations '%s' must be a JSON list of JSON Objects "
+                    "but is not a list" %
+                    (tolerations)
+                )
+            for toleration in tolerations_list:
+                if not isinstance(toleration, dict):
+                    abort(
+                        400,
+                        "Tolerations '%s' must be a JSON list of "
+                        "JSON Objects but contains a non-object value" %
+                        (tolerations)
+                    )
+                try:
+                    _ = client.V1Toleration(**toleration)
+                except TypeError as err:
+                    abort(
+                        400,
+                        "Error using '%s' to compose a toleration - %s" %
+                        (str(toleration), str(err))
+                    )
+
+    @staticmethod
     def _expanded_uai_class(uai_class):
         """Fully expand a UAI Class object and all of its sub-objects.  This
         differs from the object based `expand` method used elsewhere
@@ -650,7 +690,8 @@ class UasManager(UasBase):
             'uai_compute_network': uai_compute_network,
             'uai_image': UAIImage.get(uai_class.image_id).expand(),
             'resource_config': resource_config,
-            'volume_mounts': volume_mounts
+            'volume_mounts': volume_mounts,
+            'tolerations': uai_class.tolerations
         }
 
     def delete_class(self, class_id):
@@ -676,7 +717,8 @@ class UasManager(UasBase):
                      uai_creation_class=None,
                      uai_compute_network=None,
                      resource_id=None,
-                     volume_list=None):
+                     volume_list=None,
+                     tolerations=None):
         """Create a UAI Class
 
         """
@@ -715,6 +757,8 @@ class UasManager(UasBase):
                 "all optional port values must be integers"
                 % (opt_ports)
             )
+        self._validate_tolerations(tolerations)
+
         volume_list = [] if volume_list is None else volume_list
         comment = "" if comment is None else comment
         default = False if default is None else default
@@ -740,7 +784,8 @@ class UasManager(UasBase):
             uai_creation_class=uai_creation_class,
             uai_compute_network=uai_compute_network,
             resource_id=resource_id,
-            volume_list=volume_list
+            volume_list=volume_list,
+            tolerations=tolerations,
         )
         if default:
             default_class = UAIClass.get_default()
@@ -766,7 +811,8 @@ class UasManager(UasBase):
                      uai_creation_class=None,
                      uai_compute_network=None,
                      resource_id=None,
-                     volume_list=None):
+                     volume_list=None,
+                     tolerations=None):
         """Update a UAI Class
 
         """
@@ -842,6 +888,10 @@ class UasManager(UasBase):
         if volume_list is not None:
             self._validate_volume_list(volume_list)
             uai_class.volume_list = volume_list
+            changed = True
+        if tolerations is not None:
+            self._validate_tolerations(tolerations)
+            uai_class.tolerations = tolerations
             changed = True
         if changed:
             if default:  # this implies that default is not None
