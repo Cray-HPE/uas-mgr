@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.13.1] - 2021-08-03
+- Update docker base image to alpine:3.14.0 to fix CVEs
+
 ## [1.13.0] - 2021-07-27
 - Add tolerations to UAIs and UAI Classes
 
