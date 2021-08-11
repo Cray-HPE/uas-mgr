@@ -20,18 +20,12 @@
 #
 # (MIT License)
 
+# UNIT TESTS
+UNIT_TEST_NAME ?= cray-uas-mgr-unit-test
+
 # DOCKER
 NAME ?= cray-uas-mgr
 VERSION ?= $(shell cat .version)
-
-# RPM
-RPM_NAME ?= cray-uas-mgr-crayctldeploy
-SPEC_FILE ?= ${RPM_NAME}.spec
-SPEC_VERSION ?= $(shell cat .version)
-BUILD_METADATA ?= 1~development~$(shell git rev-parse --short HEAD)
-SOURCE_NAME ?= ${RPM_NAME}-${SPEC_VERSION}
-BUILD_DIR ?= $(PWD)/dist/rpmbuild
-SOURCE_PATH := ${BUILD_DIR}/SOURCES/${SOURCE_NAME}.tar.bz2
 
 # Chart
 CHART_NAME ?= cray-uas-mgr
@@ -39,36 +33,30 @@ CHART_VERSION ?= $(shell cat .version)
 CHART_PATH ?= kubernetes
 HELM_UNITTEST_IMAGE ?= quintush/helm-unittest:3.3.0-0.2.5
 
+unit_test: unit_test_image unit_test_run
 
-rpm: rpm_prepare rpm_package_source rpm_build_source rpm_build
 chart: chart_setup chart_package chart_test
 
 image:
 	docker build --pull ${DOCKER_ARGS} --tag '${NAME}:${VERSION}' .
 
-rpm_prepare:
-	rm -rf $(BUILD_DIR)
-	mkdir -p $(BUILD_DIR)/SPECS $(BUILD_DIR)/SOURCES
-	cp $(SPEC_FILE) $(BUILD_DIR)/SPECS/
-	./uasBuildPrep.sh
+unit_test_image:
+	docker build --pull ${DOCKER_ARGS} --tag '${UNIT_TEST_NAME}:${VERSION}'  --target coverage .
 
-rpm_package_source:
-	tar --transform 'flags=r;s,^,/$(SOURCE_NAME)/,' --exclude .git --exclude dist -cvjf $(SOURCE_PATH) .
+unit_test_run:
+	docker run --rm '${UNIT_TEST_NAME}:${VERSION}'
 
-rpm_build_source:
-		BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ts $(SOURCE_PATH) --define "_topdir $(BUILD_DIR)"
-
-rpm_build:
-		BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ba $(SPEC_FILE) --define "_topdir $(BUILD_DIR)"
+unit_test_clean:
+	docker rmi --force '${UNIT_TEST_NAME}:${VERSION}'
 
 chart_setup:
-		mkdir -p ${CHART_PATH}/.packaged
-		printf "\nglobal:\n  appVersion: ${VERSION}" >> ${CHART_PATH}/${CHART_NAME}/values.yaml
+	mkdir -p ${CHART_PATH}/.packaged
+	printf "\nglobal:\n  appVersion: ${VERSION}" >> ${CHART_PATH}/${CHART_NAME}/values.yaml
 
 chart_package:
-		helm dep up ${CHART_PATH}/${CHART_NAME}
-		helm package ${CHART_PATH}/${CHART_NAME} -d ${CHART_PATH}/.packaged --app-version ${VERSION} --version ${CHART_VERSION}
+	helm dep up ${CHART_PATH}/${CHART_NAME}
+	helm package ${CHART_PATH}/${CHART_NAME} -d ${CHART_PATH}/.packaged --app-version ${VERSION} --version ${CHART_VERSION}
 
 chart_test:
-		helm lint "${CHART_PATH}/${CHART_NAME}"
-		docker run --rm -v ${PWD}/${CHART_PATH}:/apps ${HELM_UNITTEST_IMAGE} -3 ${CHART_NAME}
+	helm lint "${CHART_PATH}/${CHART_NAME}"
+	docker run --rm -v ${PWD}/${CHART_PATH}:/apps ${HELM_UNITTEST_IMAGE} -3 ${CHART_NAME}

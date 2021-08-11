@@ -12,7 +12,6 @@ pipeline {
 
     environment {
         NAME = "cray-uas-mgr"
-        RPM_NAME = "cray-uas-mgr-crayctldeploy"
         DESCRIPTION = "Cray User Access Service Manager"
         IS_STABLE = getBuildIsStable()
         VERSION = getDockerBuildVersion(isStable: env.IS_STABLE)
@@ -23,6 +22,11 @@ pipeline {
     }
 
     stages {
+        stage("Test") {
+            steps {
+                sh "make unit_test"
+            }
+        }
         stage("Build") {
             parallel {
                 stage('Image') {
@@ -37,19 +41,6 @@ pipeline {
                     }
                 }
 
-                stage('RPM') {
-                    agent {
-                        docker {
-                            image "arti.dev.cray.com/dstbuildenv-docker-master-local/cray-sle15sp2_build_environment:latest"
-                            reuseNode true
-                             // Run as root
-                            args "-u root"
-                        }
-                    }
-                    steps {
-                        sh "make rpm"
-                    }
-                }
             }
         }
 
@@ -59,8 +50,6 @@ pipeline {
                 script {
                     publishCsmDockerImage(image: env.NAME, tag: env.VERSION, isStable: env.IS_STABLE)
                     publishCsmHelmCharts(component: env.NAME, chartsPath: "${WORKSPACE}/kubernetes/.packaged", isStable: env.IS_STABLE)
-                    publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/RPMS/x86_64/*.rpm", arch: "x86_64", isStable: env.IS_STABLE)
-                    publishCsmRpms(component: env.NAME, pattern: "dist/rpmbuild/SRPMS/*.rpm", arch: "src", isStable: env.IS_STABLE)
                 }
             }
         }
@@ -68,8 +57,13 @@ pipeline {
 
     post {
         always {
-            // Own files so jenkins can clean them up later
-            postChownFiles()
+            script {
+                // Clean up after testing...
+                sh "make unit_test_clean"
+
+                // Own files so jenkins can clean them up later
+                postChownFiles()
+            }
         }
     }
 }
