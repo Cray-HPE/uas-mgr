@@ -26,3 +26,4 @@
 zypper --non-interactive addrepo --no-gpgcheck \
     http://car.dev.cray.com/artifactory/shasta-premium/SHASTA-OS/sle15_sp1_ncn/x86_64/dev/master/ \
     shasta-os-build-resource
+zypper --no-gpg-checks install -y cme-premium-cf-crayctldeploy-buildmacro
