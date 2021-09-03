@@ -24,7 +24,7 @@
 #########################
 ### Base
 #########################
-FROM alpine:3.12.4 as base
+FROM alpine:3.14.2 as base
 
 # packages needed to run the app & install deps
 ENV BASE_PACKAGES g++ gcc libffi-dev linux-headers musl-dev openssl-dev python3 python3-dev py3-pip
@@ -34,6 +34,7 @@ ENV DEBUG_PACKAGES procps iputils curl wget vim less
 
 # Install application dependencies
 RUN apk update && apk add $BASE_PACKAGES && apk add $DEBUG_PACKAGES
+RUN apk upgrade
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
