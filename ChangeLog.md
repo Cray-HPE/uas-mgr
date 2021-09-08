@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.13.3] - 2021-09-08
+- update alpine version to address CVE-2021-3711
+- fix new lint errors
+
 ## [1.13.2] - 2021-08-11
 - Get github builds and publish to Algo60 artifactory working
 
