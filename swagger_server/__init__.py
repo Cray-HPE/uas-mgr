@@ -26,6 +26,6 @@ The top level Swagger Server Application for UAS Manager
 from etcd3_model import create_instance
 
 # pylint: disable=consider-using-with
-version = open('.version', 'r').read().rstrip() # pylint: disable=invalid-name
+version = open('.version', 'r', encoding='utf-8').read().rstrip() # pylint: disable=invalid-name
 ETCD_PREFIX = "/cray/uas_mgr/config"
 ETCD_INSTANCE = create_instance()
