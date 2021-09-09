@@ -308,7 +308,7 @@ info:
     Delete the specified resource limit / request configuration from the
     list of available choices.
 
-  version: "1.13.2"
+  version: "1.13.3"
 
 servers:
   - url: "/apis/uas-mgr/v1"
