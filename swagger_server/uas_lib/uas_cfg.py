@@ -62,7 +62,7 @@ class UasCfg:
         """
         cfg = {}
         try:
-            with open(self.uas_cfg) as uascfg:
+            with open(self.uas_cfg, encoding='utf-8') as uascfg:
                 # pylint: disable=no-member
                 cfg = yaml.load(uascfg, Loader=yaml.FullLoader)
         except (TypeError, IOError):
@@ -93,7 +93,7 @@ class UasCfg:
         imgs = UAIImage.get_all()
         if not imgs:
             return None
-        return [img.imagename for img in imgs]
+        return [img.imagename for img in imgs]   # pylint: disable=no-member
 
     def get_default_image(self):
         """Retrieve the name of the default image.
@@ -114,6 +114,7 @@ class UasCfg:
         _ = self.get_config()
         imgs = UAIImage.get_all()
         imgs = [] if imgs is None else imgs
+        # pylint: disable=no-member
         for img in imgs:
             if imagename == img.imagename:
                 return True

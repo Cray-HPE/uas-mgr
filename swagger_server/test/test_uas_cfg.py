@@ -133,6 +133,7 @@ class TestUasCfg(unittest.TestCase):
         self.__reset_runtime_config(self.uas_cfg_svc)
         volumes = UAIVolume.get_all()
         volumes = [] if volumes is None else volumes
+        # pylint: disable=no-member
         volume_list = [volume.volume_id for volume in volumes]
         self.assertEqual(
             5,
@@ -141,6 +142,7 @@ class TestUasCfg(unittest.TestCase):
         self.__reset_runtime_config(self.uas_cfg_empty)
         volumes = UAIVolume.get_all()
         volumes = [] if volumes is None else volumes
+        # pylint: disable=no-member
         volume_list = [volume.volume_id for volume in volumes]
         self.assertEqual(
             [],
@@ -153,6 +155,7 @@ class TestUasCfg(unittest.TestCase):
         self.__reset_runtime_config(self.uas_cfg_svc)
         volumes = UAIVolume.get_all()
         volumes = [] if volumes is None else volumes
+        # pylint: disable=no-member
         volume_list = [volume.volume_id for volume in volumes]
         vols = self.uas_cfg_svc.gen_volumes(volume_list)
         for vol in vols:  # pylint: disable=invalid-name
@@ -167,6 +170,7 @@ class TestUasCfg(unittest.TestCase):
         self.__reset_runtime_config(self.uas_cfg_empty)
         volumes = UAIVolume.get_all()
         volumes = [] if volumes is None else volumes
+        # pylint: disable=no-member
         volume_list = [volume.volume_id for volume in volumes]
         self.assertEqual([], self.uas_cfg_empty.gen_volumes(volume_list))
         self.__reset_runtime_config()
@@ -313,13 +317,19 @@ class TestUasCfg(unittest.TestCase):
         # try a random non-key file
         # pylint: disable=invalid-name
         with open(
-                "/usr/src/app/swagger_server/test/version-check.sh", "r"
+                "/usr/src/app/swagger_server/test/version-check.sh",
+                "r",
+                encoding='utf-8'
         ) as f:
             nonKey = f.read()
             self.assertFalse(UAIInstance.validate_ssh_key(nonKey))
 
         # pylint: disable=invalid-name
-        with open("/usr/src/app/swagger_server/test/test_rsa.pub", "r") as f:
+        with open(
+                "/usr/src/app/swagger_server/test/test_rsa.pub",
+                "r",
+                encoding='utf-8'
+        ) as f:
             publicKey = f.read()
             self.assertTrue(UAIInstance.validate_ssh_key(publicKey))
             # pick some random substrings from the key - it should only
@@ -328,7 +338,11 @@ class TestUasCfg(unittest.TestCase):
             self.assertFalse(UAIInstance.validate_ssh_key(publicKey[0:58]))
 
         # pylint: disable=invalid-name
-        with open("/usr/src/app/swagger_server/test/test_rsa", "r") as f:
+        with open(
+                "/usr/src/app/swagger_server/test/test_rsa",
+                "r",
+                encoding='utf-8'
+        ) as f:
             privateKey = f.read()
             self.assertFalse(UAIInstance.validate_ssh_key(privateKey))
         self.__reset_runtime_config()

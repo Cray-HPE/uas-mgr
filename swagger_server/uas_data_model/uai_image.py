@@ -70,6 +70,7 @@ class UAIImage(UASDataModel):
         """
         imgs = cls.get_all()
         imgs = [] if imgs is None else imgs
+        #pylint: disable=no-member
         img_dict = {img.imagename: img for img in imgs}
         return img_dict.get(imagename, None)
 

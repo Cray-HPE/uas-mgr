@@ -105,6 +105,7 @@ class UaiManager(UasBase):
             image_id = UAIImage.get_by_name(imagename).image_id
             volumes = UAIVolume.get_all()
             volumes = [] if volumes is None else volumes
+            # pylint: disable=no-member
             volume_list = [ vol.volume_id for vol in volumes]
             uai_class = UAIClass(
                 comment=None,

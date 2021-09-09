@@ -133,6 +133,7 @@ class UasManager(UasBase):
         # it is, get a list of them to complain about.
         uai_classes = UAIClass.get_all()
         uai_classes = [] if uai_classes is None else uai_classes
+        # pylint: disable=no-member
         in_use = [
             uai_class.class_id
             for uai_class in uai_classes if uai_class.image_id == image_id
@@ -250,6 +251,7 @@ class UasManager(UasBase):
         self.uas_cfg.get_config()
         imgs = UAIImage.get_all()
         imgs = [] if imgs is None else imgs
+        # pylint: disable=no-member
         return [
             {
                 'image_id': img.image_id,
@@ -268,6 +270,7 @@ class UasManager(UasBase):
         # it is, get a list of them to complain about.
         uai_classes = UAIClass.get_all()
         uai_classes = [] if uai_classes is None else uai_classes
+        # pylint: disable=no-member
         in_use = [
             uai_class.class_id
             for uai_class in uai_classes if volume_id in uai_class.volume_list
@@ -421,6 +424,7 @@ class UasManager(UasBase):
         self.uas_cfg.get_config()
         vols = UAIVolume.get_all()
         vols = [] if vols is None else vols
+        # pylint: disable=no-member
         return [
             {
                 'volume_id': vol.volume_id,
@@ -441,6 +445,7 @@ class UasManager(UasBase):
         # it is, get a list of them to complain about.
         uai_classes = UAIClass.get_all()
         uai_classes = [] if uai_classes is None else uai_classes
+        # pylint: disable=no-member
         in_use = [
             uai_class.class_id
             for uai_class in uai_classes
@@ -580,9 +585,9 @@ class UasManager(UasBase):
         self.uas_cfg.get_config()
         resources = UAIResource.get_all()
         resources = [] if resources is None else resources
+        # pylint: disable=no-member
         return [
             {
-                'resource_id': resource.resource_id,
                 'comment': resource.comment,
                 'limit': resource.limit,
                 'request': resource.request
@@ -794,7 +799,7 @@ class UasManager(UasBase):
                 # usurping that, so set the previously default class
                 # no longer default.
                 default_class.default = False
-                default_class.put()
+                default_class.put()  # pylint: disable=no-member
         uai_class.put()
         return self._expanded_uai_class(uai_class)
 
