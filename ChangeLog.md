@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.11.8-release-1] - 2021-09-21
+- Enable build from github source
+- Remove dependency on dstpiprepo
+
 ## [1.11.8] - 2021-02-17
 - Switch to MIT License in preparation for releasing to GitHub
 
