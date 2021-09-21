@@ -54,9 +54,8 @@ COPY pylintrc test-requirements.txt .coveragerc /usr/src/app/
 # production delivered code, so it is less critical that everything be
 # strictly Cray provided.
 RUN pip3 install --no-cache-dir \
-                 --extra-index https://pypi.org/simple \
-                 --index-url http://dst.us.cray.com/dstpiprepo/simple \
-                 --trusted-host dst.us.cray.com -r test-requirements.txt
+                 --extra-index-url https://artifactory.algol60.net/artifactory/csm-python-modules/simple \
+                 --trusted-host artifactory.algol60.net -r test-requirements.txt
 
 # Copy the code into the container
 COPY setup.py .version /usr/src/app/
