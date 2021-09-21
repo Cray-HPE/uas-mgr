@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.1-release-2] - 2021-09-21
+- Remove dependency on dstpiprepo for CSM 1.0.0
+
 ## [1.12.1-release-1] - 2021-09-03
 - Pin cray-service chart version to 2.4.x for CSM 1.0.0
 

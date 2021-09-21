@@ -43,9 +43,8 @@ COPY requirements.txt /usr/src/app/
 # don't build cryptography Rust library
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST 1
 RUN pip3 install --no-cache-dir \
-                 --extra-index https://pypi.org/simple \
-                 --index-url http://dst.us.cray.com/dstpiprepo/simple \
-                 --trusted-host dst.us.cray.com -r requirements.txt
+                 --extra-index-url https://artifactory.algol60.net/artifactory/csm-python-modules/simple \
+                 --trusted-host artifactory.algol60.net -r requirements.txt
 #########################
 ### Coverage/Unit Tests
 #########################
