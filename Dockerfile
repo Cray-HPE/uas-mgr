@@ -91,6 +91,7 @@ ENTRYPOINT ["./api_test.sh"]
 ### Application
 #########################
 FROM base as application
+USER 65534:65534
 
 # Copy the code into the container
 COPY setup.py .version /usr/src/app/
