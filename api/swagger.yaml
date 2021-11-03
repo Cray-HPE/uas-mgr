@@ -1584,6 +1584,74 @@ paths:
         schema:
           type: "string"
         example: "[{\"key\": \"gpu_uais_only\", \"operator\": \"Exists\"}]"
+      - name: "one_shot"
+        description: |
+            Optional boolean argument indicating whether UAIs created using
+            this class will be one-shot UAIs.  A one-shot UAI runs to
+            successful completion and then terminates. This is similar to
+            the behavior when a UAI times out, see the 'timeout'
+            configuration parameter.  By default one-shot is false, meaning
+            that the UAI will be rescheduled if it terminates even if it
+            terminates successfully.
+        in: "query"
+        required: false
+        style: form
+        explode: false
+        schema:
+          type: boolean
+        example: true
+      - name: "timeout"
+        description: |
+            Optional JSON string containing a timeout specification
+            for UAIs created using this class.  The value contains a
+            JSON string specifying a map with three optional key /
+            value pairs, 'soft', 'hard' and 'warning'.  The 'soft'
+            value specifies the number of seconds a UAI will run
+            before it is eligible for termination due to being idle
+            (i.e. no user is logged into it).  The 'hard' value
+            specifies the number of seconds the UAI will run before
+            being unconditionally terminated, even if a user is logged
+            into it.  The 'warning' value specifies the number of
+            seconds before the 'hard' timeout at which a warning
+            message will be sent to all logged in sessions.  If a
+            'soft' value is provided with no 'hard' value, the UAI
+            will remain in place (subject to failure or scheduling
+            issues) indefinitely as long as there is at least one
+            active login session running. The UAI will terminate once
+            the 'soft' value is exceeded and there are no longer any
+            active login sessions. If a 'hard' value is specified
+            without a 'soft' value, the UAI will remain in place until
+            the 'hard' value is reached at which point it will
+            terminate regardless of logged in sessions.  If both
+            'soft' and 'hard' values are specified, the UAI will
+            terminate at the 'soft' value if no active login session
+            exists and will terminate unconditionally once the 'hard'
+            value is reached.  If neither 'soft' nor 'hard' is
+            specified, or no timeout parameter is provided at all, the
+            UAI will run indefinitely.
+        in: "query"
+        required: false
+        style: form
+        explode: false
+        schema:
+          type: "string"
+        example: "{\"soft\": \"600\", \"hard\": \"1800\", \"warning\": \"30\"}"
+      - name: "service_account"
+        description: |
+            Optional name of a Kubernetes service account to be assigned to
+            UAIs created with this class.  Kubernetes service accounts grant
+            access to Kubernetes Role Based Access Control (RBAC).  If not
+            specified, the default service account for the namespace in which
+            the UAI is created will be used.  Apply service accounts to UAI
+            classes with care, since they potentially give UAIs access to
+            Kubernetes functions that could be harmful.
+        in: "query"
+        required: false
+        style: form
+        explode: false
+        schema:
+          type: "string"
+        example: "default"
       responses:
         201:
           description: "UAI / Broker Class added"
@@ -1816,6 +1884,74 @@ paths:
         schema:
           type: "string"
         example: "[{\"key\": \"gpu_uais_only\", \"operator\": \"Exists\"}]"
+      - name: "one_shot"
+        description: |
+            Optional boolean argument indicating whether UAIs created using
+            this class will be one-shot UAIs.  A one-shot UAI runs to
+            successful completion and then terminates. This is similar to
+            the behavior when a UAI times out, see the 'timeout'
+            configuration parameter.  By default one-shot is false, meaning
+            that the UAI will be rescheduled if it terminates even if it
+            terminates successfully.
+        in: "query"
+        required: false
+        style: form
+        explode: false
+        schema:
+          type: boolean
+        example: true
+      - name: "timeout"
+        description: |
+            Optional JSON string containing a timeout specification
+            for UAIs created using this class.  The value contains a
+            JSON string specifying a map with three optional key /
+            value pairs, 'soft', 'hard' and 'warning'.  The 'soft'
+            value specifies the number of seconds a UAI will run
+            before it is eligible for termination due to being idle
+            (i.e. no user is logged into it).  The 'hard' value
+            specifies the number of seconds the UAI will run before
+            being unconditionally terminated, even if a user is logged
+            into it.  The 'warning' value specifies the number of
+            seconds before the 'hard' timeout at which a warning
+            message will be sent to all logged in sessions.  If a
+            'soft' value is provided with no 'hard' value, the UAI
+            will remain in place (subject to failure or scheduling
+            issues) indefinitely as long as there is at least one
+            active login session running. The UAI will terminate once
+            the 'soft' value is exceeded and there are no longer any
+            active login sessions. If a 'hard' value is specified
+            without a 'soft' value, the UAI will remain in place until
+            the 'hard' value is reached at which point it will
+            terminate regardless of logged in sessions.  If both
+            'soft' and 'hard' values are specified, the UAI will
+            terminate at the 'soft' value if no active login session
+            exists and will terminate unconditionally once the 'hard'
+            value is reached.  If neither 'soft' nor 'hard' is
+            specified, or no timeout parameter is provided at all, the
+            UAI will run indefinitely.
+        in: "query"
+        required: false
+        style: form
+        explode: false
+        schema:
+          type: "string"
+        example: "{\"soft\": \"600\", \"hard\": \"1800\", \"warning\": \"30\"}"
+      - name: "service_account"
+        description: |
+            Optional name of a Kubernetes service account to be assigned to
+            UAIs created with this class.  Kubernetes service accounts grant
+            access to Kubernetes Role Based Access Control (RBAC).  If not
+            specified, the default service account for the namespace in which
+            the UAI is created will be used.  Apply service accounts to UAI
+            classes with care, since they potentially give UAIs access to
+            Kubernetes functions that could be harmful.
+        in: "query"
+        required: false
+        style: form
+        explode: false
+        schema:
+          type: "string"
+        example: "default"
       responses:
         201:
           description: "UAI / Broker Class updated"
