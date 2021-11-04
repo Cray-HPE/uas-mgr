@@ -23,8 +23,8 @@
 """
 from __future__ import absolute_import
 import re
-from kubernetes import client
 from etcd3_model import Etcd3Attr
+from kubernetes import client
 from swagger_server.uas_lib.uas_logging import logger
 from swagger_server import ETCD_INSTANCE, ETCD_PREFIX, version
 from swagger_server.uas_data_model.uas_data_model import UASDataModel

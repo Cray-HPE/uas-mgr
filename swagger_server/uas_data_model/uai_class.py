@@ -105,6 +105,23 @@ class UAIClass(UASDataModel):
     # be applied to UAI pods of this class
     tolerations = Etcd3Attr(default=None)
 
+    # A timeout description in the form of a dictionary consisting of,
+    # potentially, a 'soft' valued and a 'hard' value, both in
+    # seconds.  Both settings are optional.  If the timeout is present
+    # and one or the other timeouts is not in it, that timeout is
+    # indefinite.
+    timeout = Etcd3Attr(default=None)
+
+    # A boolean indicating whether a UAI created from this class is to
+    # be a one-shot (i.e. run to successful completion and terminate)
+    # or persistent UAI.
+    one_shot = Etcd3Attr(default=None)
+
+    # A Kubernetes service account to be applied to UAIs created from
+    # this class to confer specific Kubernetes RBAC to the UAI
+    # pod.
+    service_account = Etcd3Attr(default=None)
+
     @staticmethod
     def get_default():
         """ Retrieve the current default UAI / Broker Class, if any.
@@ -133,5 +150,9 @@ class UAIClass(UASDataModel):
             'uai_compute_network': self.uai_compute_network,
             'image_id': self.image_id,
             'resource_id': self.resource_id,
-            'volume_list': self.volume_list
+            'volume_list': self.volume_list,
+            'tolerations': self.tolerations,
+            'timeout': self.timeout,
+            'one_shot': self.one_shot,
+            'service_account': self.service_account
         }

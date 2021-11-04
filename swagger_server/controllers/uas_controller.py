@@ -579,7 +579,10 @@ def create_uas_class_admin(comment=None,
                            uai_compute_network=None,
                            resource_id=None,
                            volume_list=None,
-                           tolerations=None):
+                           tolerations=None,
+                           timeout=None,
+                           one_shot=None,
+                           service_account=None):
     """Add a UAI Class
 
     Add a UAI Class to the UAS configuration
@@ -607,7 +610,13 @@ def create_uas_class_admin(comment=None,
     :param volume_list: List of Volume IDs (UUIDs) mounted in UAIs  of this class
     :type volume_list: list
     :param tolerations: JSON list of tolerations for UAIs of this class
-    :type volume_list: str
+    :type tolerations: str
+    :param timeout: JSON map of timeout settings for UAIs of this class
+    :type timeout: str
+    :param one_shot: Boolean value: UAIs of this class are one-shot or persistant
+    :type one_shot: str
+    :param service_account: name of a K8s service account for UAIs of this class
+    :type service_account: str
     :rtype: UAIClass
 
     """
@@ -622,7 +631,10 @@ def create_uas_class_admin(comment=None,
                                      uai_compute_network=uai_compute_network,
                                      priority_class_name=priority_class_name,
                                      volume_list=volume_list,
-                                     tolerations=tolerations)
+                                     tolerations=tolerations,
+                                     timeout=timeout,
+                                     one_shot=one_shot,
+                                     service_account=service_account)
 
 
 def get_uas_classes_admin():
@@ -650,7 +662,7 @@ def get_uas_class_admin(class_id=None):
     return UasManager().get_class(class_id=class_id)
 
 
-#pylint: disable=too-many-arguments
+#pylint: disable=too-many-arguments,too-many-locals
 def update_uas_class_admin(class_id=None,
                            comment=None,
                            default=None,
@@ -663,7 +675,10 @@ def update_uas_class_admin(class_id=None,
                            uai_compute_network=None,
                            resource_id=None,
                            volume_list=None,
-                           tolerations=None):
+                           tolerations=None,
+                           timeout=None,
+                           one_shot=None,
+                           service_account=None):
     """Update the specified UAI Class
 
     Update the specified UAI Class with new values.  This can set the
@@ -693,7 +708,13 @@ def update_uas_class_admin(class_id=None,
     :param volume_list: List of Volume IDs (UUIDs) useed in UAIs of this class
     :type volume_list: list
     :param tolerations: JSON list of tolerations for UAIs of this class
-    :type volume_list: str
+    :type tolerations: str
+    :param timeout: JSON map of timeout settings for UAIs of this class
+    :type timeout: str
+    :param one_shot: Boolean value: UAIs of this class are one-shot or persistant
+    :type one_shot: str
+    :param service_account: name of a K8s service account for UAIs of this class
+    :type service_account: str
     :rtype: UAIClass
     """
     if not class_id:
@@ -710,7 +731,10 @@ def update_uas_class_admin(class_id=None,
                                      uai_compute_network=uai_compute_network,
                                      resource_id=resource_id,
                                      volume_list=volume_list,
-                                     tolerations=tolerations)
+                                     tolerations=tolerations,
+                                     timeout=timeout,
+                                     one_shot=one_shot,
+                                     service_account=service_account)
 
 def delete_uas_class_admin(class_id):
     """Remove the specified UAI Class

@@ -25,6 +25,7 @@ Class that implements UAS functions not requiring user attributes
 #pylint: disable=too-many-lines
 
 import json
+import re
 from flask import abort
 from kubernetes import client
 from swagger_server.uas_lib.uas_base import UasBase
@@ -656,6 +657,74 @@ class UasManager(UasBase):
                     )
 
     @staticmethod
+    def _validate_timeout(timeout):
+        """Verify that a given timeout description is a validly
+        formed dictionary of timeout settings.
+
+        """
+        if timeout is not None:
+            try:
+                timeout_dict = json.loads(timeout)
+            except json.decoder.JSONDecodeError as err:
+                abort(
+                    400,
+                    "Timeout '%s' failed JSON decoding "
+                    "- %s" % (timeout, str(err))
+                )
+            if not isinstance(timeout_dict, dict):
+                abort(
+                    400,
+                    "Timeout '%s' must be a JSON map object "
+                    "but is not a map" %
+                    (timeout)
+                )
+            for key, value in timeout_dict.items():
+                if key not in ['soft', 'hard', 'warning']:
+                    abort(
+                        400,
+                        "Timeout '%s' contains an unrecognized timeout "
+                        "setting '%s' acceptable settings are "
+                        "'soft', 'hard' or 'warning'" % (timeout, key)
+                    )
+                if not isinstance(value, str):
+                    abort(
+                        400,
+                        "Timeout '%s' setting '%s: %s' has a non-string "
+                        "value" % (timeout, key, value)
+                    )
+                try:
+                    intval = int(value)
+                except ValueError as err:
+                    abort(
+                        400,
+                        "Timeout '%s' setting '%s: %s' cannot be "
+                        "converted to an integer - %s" %
+                        (timeout, key, value, err)
+                    )
+                if intval < 0:
+                    abort(
+                        400,
+                        "Timeout '%s' setting '%s: %s' must not be "
+                        "a negative value" %
+                        (timeout, key, value)
+                    )
+
+
+    @staticmethod
+    def _validate_service_account(service_account):
+        """Verify that a given service account name is a valid Kubernetes
+        name.
+
+        """
+        valid_re = re.compile(r"^[a-zA-Z0-9-]+$")
+        if valid_re.match(service_account) is not None:
+            abort(
+                400,
+                "Invalid service account name '%s'" %
+                service_account
+            )
+
+    @staticmethod
     def _expanded_uai_class(uai_class):
         """Fully expand a UAI Class object and all of its sub-objects.  This
         differs from the object based `expand` method used elsewhere
@@ -683,6 +752,10 @@ class UasManager(UasBase):
             False if uai_class.uai_compute_network is None
             else uai_class.uai_compute_network
         )
+        one_shot = (
+            False if uai_class.one_shot is None
+            else uai_class.one_shot
+        )
         return {
             'class_id': uai_class.class_id,
             'comment': comment,
@@ -696,7 +769,10 @@ class UasManager(UasBase):
             'uai_image': UAIImage.get(uai_class.image_id).expand(),
             'resource_config': resource_config,
             'volume_mounts': volume_mounts,
-            'tolerations': uai_class.tolerations
+            'tolerations': uai_class.tolerations,
+            'timeout': uai_class.timeout,
+            'one_shot': one_shot,
+            'service_account': uai_class.service_account,
         }
 
     def delete_class(self, class_id):
@@ -723,7 +799,10 @@ class UasManager(UasBase):
                      uai_compute_network=None,
                      resource_id=None,
                      volume_list=None,
-                     tolerations=None):
+                     tolerations=None,
+                     timeout=None,
+                     one_shot=None,
+                     service_account=None):
         """Create a UAI Class
 
         """
@@ -749,6 +828,9 @@ class UasManager(UasBase):
             )
         if volume_list:
             self._validate_volume_list(volume_list)
+        if timeout:
+            self._validate_timeout(timeout)
+        timeout = json.loads(timeout) if timeout is not None else None
         opt_ports_list = [
             port.strip()
             for port in opt_ports.split(',')
@@ -791,6 +873,9 @@ class UasManager(UasBase):
             resource_id=resource_id,
             volume_list=volume_list,
             tolerations=tolerations,
+            timeout=timeout,
+            one_shot=one_shot,
+            service_account=service_account
         )
         if default:
             default_class = UAIClass.get_default()
@@ -817,7 +902,10 @@ class UasManager(UasBase):
                      uai_compute_network=None,
                      resource_id=None,
                      volume_list=None,
-                     tolerations=None):
+                     tolerations=None,
+                     timeout=None,
+                     one_shot=None,
+                     service_account=None):
         """Update a UAI Class
 
         """
@@ -897,6 +985,17 @@ class UasManager(UasBase):
         if tolerations is not None:
             self._validate_tolerations(tolerations)
             uai_class.tolerations = tolerations
+            changed = True
+        if timeout is not None:
+            self._validate_timeout(timeout)
+            uai_class.timeout = json.loads(timeout)
+            changed = True
+        if one_shot is not None:
+            uai_class.one_shot = one_shot
+            changed = True
+        if service_account is not None:
+            self._validate_service_account(service_account)
+            uai_class.service_account = service_account
             changed = True
         if changed:
             if default:  # this implies that default is not None
