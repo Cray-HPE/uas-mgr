@@ -26,8 +26,8 @@ metadata:
   name: cray-uas-mgr
   namespace: {{ .Values.uasConfig.uai_namespace }}
 rules:
-  - apiGroups: ["apps"]
-    resources: ["deployments"]
+  - apiGroups: ["batch", "extensions"]
+    resources: ["jobs", "jobs/status"]
     verbs: ["get", "list", "create", "delete", "patch"]
   - apiGroups: [""]
     resources: ["services"]
@@ -56,8 +56,8 @@ metadata:
   name: cray-uas-mgr
   namespace: {{ .Values.uasConfig.broker_namespace }}
 rules:
-  - apiGroups: ["apps"]
-    resources: ["deployments"]
+  - apiGroups: ["batch", "extensions"]
+    resources: ["jobs", "jobs/status"]
     verbs: ["get", "list", "create", "delete", "patch"]
   - apiGroups: [""]
     resources: ["services"]
@@ -109,8 +109,8 @@ kind: ClusterRole
 metadata:
   name: "cray-uas-mgr"
 rules:
-- apiGroups: ["apps"]
-  resources: ["deployments"]
+- apiGroups: ["batch", "extensions"]
+  resources: ["jobs", "jobs/status"]
   verbs: ["get", "list", "delete"]
 - apiGroups: [""]
   resources: ["services"]
