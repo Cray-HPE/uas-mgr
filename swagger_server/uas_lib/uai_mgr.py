@@ -26,7 +26,7 @@ Class that implements UAS operations that require user attributes
 from flask import abort, request
 from swagger_server.uas_lib.uas_logging import logger
 from swagger_server.uas_lib.uas_base import UasBase
-from swagger_server.uas_lib.uas_base import UAIInstance
+from swagger_server.uas_lib.uai_instance import UAIInstance
 from swagger_server.uas_lib.uas_auth import UasAuth
 from swagger_server.uas_data_model.uai_image import UAIImage
 from swagger_server.uas_data_model.uai_volume import UAIVolume
@@ -191,32 +191,32 @@ class UaiManager(UasBase):
             labels = ['user=%s' % self.username]
         else:
             labels = label.split(',')
-        deploy_names = self.select_deployments(
+        job_names = self.select_jobs(
             labels=labels,
             host=host
         )
-        return self.get_uai_list(deploy_names=deploy_names)
+        return self.get_uai_list(job_names=job_names)
 
-    def delete_uais(self, deployment_list):
+    def delete_uais(self, job_list):
         """
-        Deletes the UAIs named in deployment_list.
-        If deployment_list is empty, it will delete all UAIs.
+        Deletes the UAIs named in job_list.
+        If job_list is empty, it will delete all UAIs.
 
-        :param deployment_list: List of UAI names to delete.
+        :param job_list: List of UAI names to delete.
                                 If empty, delete all UAIs.
-        :type deployment_list: list
+        :type job_list: list
         :return: List of UAIs deleted.
         :rtype: list
         """
         uai_list = []
-        if not deployment_list:
-            uai_list = self.select_deployments()
+        if not job_list:
+            uai_list = self.select_jobs()
         else:
-            user_uais = self.select_deployments(
+            user_uais = self.select_jobs(
                 labels=["user=%s" % self.username]
             )
             uai_list = [
-                uai.strip() for uai in deployment_list
+                uai.strip() for uai in job_list
                 if uai.strip() in user_uais
             ]
         resp_list = self.remove_uais(uai_list)

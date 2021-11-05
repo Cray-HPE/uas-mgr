@@ -66,7 +66,7 @@ def delete_uai_by_name(uai_list):
     """
     if not uai_list:
         return "Must provide a list of UAI names to delete."
-    uai_resp = UaiManager().delete_uais(deployment_list=uai_list)
+    uai_resp = UaiManager().delete_uais(job_list=uai_list)
     return uai_resp
 
 
@@ -139,12 +139,12 @@ def delete_all_uais(username=None):
     uai_list = []
 
     if username:
-        uai_list = uai_mgr.select_deployments(
+        uai_list = uai_mgr.select_jobs(
             labels='uas=managed,user=%s' % username
         )
         if not uai_list:
             return "User %s has no UAIs, none deleted"
-    uai_resp = uai_mgr.delete_uais(deployment_list=uai_list)
+    uai_resp = uai_mgr.delete_uais(job_list=uai_list)
     return uai_resp
 
 

@@ -34,7 +34,7 @@ import werkzeug
 import flask
 from swagger_server.uas_lib.uai_mgr import UaiManager
 from swagger_server.uas_lib.uas_mgr import UasManager
-from swagger_server.uas_lib.uas_base import UAIInstance
+from swagger_server.uas_lib.uai_instance import UAIInstance
 from swagger_server.uas_data_model.uai_class import UAIClass
 from swagger_server.uas_data_model.uai_image import UAIImage
 
@@ -109,7 +109,7 @@ class TestUasMgr(unittest.TestCase):
         labels = uai_instance.gen_labels()
         self.__compare_dicts(
             {
-                "app": uai_instance.deployment_name,
+                "app": uai_instance.job_name,
                 "uas": "managed"
             },
             labels
@@ -117,7 +117,7 @@ class TestUasMgr(unittest.TestCase):
         labels = uai_instance.gen_labels()
         self.__compare_dicts(
             {
-                "app": uai_instance.deployment_name,
+                "app": uai_instance.job_name,
                 "uas": "managed"
             },
             labels
@@ -126,7 +126,7 @@ class TestUasMgr(unittest.TestCase):
         labels = uai_instance.gen_labels()
         self.__compare_dicts(
             {
-                "app": uai_instance.deployment_name,
+                "app": uai_instance.job_name,
                 "uas": "managed",
                 "user": uai_instance.owner
             },
@@ -139,12 +139,15 @@ class TestUasMgr(unittest.TestCase):
         labels = uai_instance.gen_labels(uai_class)
         self.__compare_dicts(
             {
-                "app": uai_instance.deployment_name,
+                "app": uai_instance.job_name,
                 "uas": "managed",
                 "user": uai_instance.owner,
                 "uas-uai-creation-class": uai_class.uai_creation_class,
                 "uas-public-ip": str(uai_class.public_ip),
-                "uas-class-id": uai_class.class_id
+                "uas-class-id": uai_class.class_id,
+                "uas-uai-is-one-shot": str(
+                    bool(uai_class.timeout or uai_class.one_shot)
+                )
             },
             labels
         )
@@ -211,7 +214,7 @@ class TestUasMgr(unittest.TestCase):
         )
 
     #pylint: disable=missing-docstring
-    def test_create_deployment_object(self):
+    def test_create_job_object(self):
         self.uai_mgr.uas_cfg.get_config()
         image = UAIImage(imagename="my-image-name", default=False)
         image_id = image.image_id
@@ -233,26 +236,18 @@ class TestUasMgr(unittest.TestCase):
             resource_id=None,
             volume_list=[]
         )
-        obj = uai_instance.create_deployment_object(
+        obj = uai_instance.create_job_object(
             uai_class,
             self.uai_mgr.uas_cfg
         )
         image.remove()
         # Spot check the deployment, since exhaustive checking is
         # probably impractical
-        self.assertEqual(obj.api_version, "apps/v1")
-        self.assertEqual(obj.kind, "Deployment")
+        self.assertEqual(obj.api_version, "batch/v1")
+        self.assertEqual(obj.kind, "Job")
         metadata = obj.metadata
         spec = obj.spec
         template=spec.template
-        self.__compare_dicts(
-            {
-                'matchLabels': {
-                    'app': uai_instance.deployment_name
-                }
-            },
-            spec.selector
-        )
         self.assertEqual(
             uai_class.priority_class_name,
             template.spec.priority_class_name
@@ -262,7 +257,7 @@ class TestUasMgr(unittest.TestCase):
             template.spec.volumes
         )
         self.assertEqual(
-            uai_instance.deployment_name,
+            uai_instance.job_name,
             template.spec.containers[0].name
         )
         self.__check_env(
@@ -282,7 +277,7 @@ class TestUasMgr(unittest.TestCase):
             metadata.labels
         )
         self.assertEqual(
-            uai_instance.deployment_name,
+            uai_instance.job_name,
             metadata.name
         )
         self.__compare_dicts(
@@ -321,7 +316,7 @@ class TestUasMgr(unittest.TestCase):
         spec = obj.spec
         self.__compare_dicts(
             {
-                'app': uai_instance.deployment_name
+                'app': uai_instance.job_name
             },
             spec.selector
         )

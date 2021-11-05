@@ -122,6 +122,11 @@ class UAIClass(UASDataModel):
     # pod.
     service_account = Etcd3Attr(default=None)
 
+    # The number of instances of this UAI to run when it is launched.
+    # This allows the UAI to run as a load-balanced set of pods under
+    # a single service instead of just one pod.  Default value is 1.
+    instances = Etcd3Attr(default=1)
+
     @staticmethod
     def get_default():
         """ Retrieve the current default UAI / Broker Class, if any.

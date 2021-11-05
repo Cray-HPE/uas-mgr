@@ -29,7 +29,7 @@ import re
 from flask import abort
 from kubernetes import client
 from swagger_server.uas_lib.uas_base import UasBase
-from swagger_server.uas_lib.uas_base import UAIInstance
+from swagger_server.uas_lib.uai_instance import UAIInstance
 from swagger_server.uas_data_model.uai_image import UAIImage
 from swagger_server.uas_data_model.uai_volume import UAIVolume
 from swagger_server.uas_data_model.uai_resource import UAIResource
@@ -56,7 +56,7 @@ class UasManager(UasBase):
                 labels.append("user=%s" % owner)
             if class_id is not None:
                 labels.append("uas-class-id=%s" % class_id)
-            uai_list = self.select_deployments(labels=labels)
+            uai_list = self.select_jobs(labels=labels)
         else:
             uai_list = [
                 uai_name.strip() for uai_name in uai_list
@@ -97,7 +97,7 @@ class UasManager(UasBase):
         self.uas_cfg.get_config()
         if uai_name is None:
             abort(400, "Missing UAI Name argument")
-        candidate_list = self.select_deployments(
+        candidate_list = self.select_jobs(
             labels=["app=%s" % uai_name]
         )
         if not candidate_list:
@@ -120,7 +120,7 @@ class UasManager(UasBase):
             labels.append("user=%s" % owner)
         if class_id is not None:
             labels.append("uas-class-id=%s" % class_id)
-        uai_list = self.select_deployments(labels=labels)
+        uai_list = self.select_jobs(labels=labels)
         resp_list = self.get_uai_list(uai_list)
         return resp_list
 
