@@ -102,6 +102,13 @@ def get_uas_mgr_info():
 
     :rtype: object
     """
+    # This API call is used as a readiness check which provides a sort
+    # of heartbeat for UAS, and we need a background activity to check
+    # for stale UAIs and reap them.  The following provides the hook
+    # for that and avoids the need for threading.  For now we will
+    # reap the default number of UAIs at a go.  In the future this may
+    # want to be configurable.
+    UaiManager().reap_uais()
     uas_mgr_info = {
         'service_name': 'cray-uas-mgr',
         'version': version

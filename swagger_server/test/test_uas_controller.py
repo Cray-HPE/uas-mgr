@@ -33,7 +33,6 @@ import flask
 import werkzeug
 
 import swagger_server.controllers.uas_controller as uas_ctl
-from swagger_server import version
 from swagger_server.uas_lib.uas_cfg import UasCfg
 
 app = flask.Flask(__name__)  # pylint: disable=invalid-name
@@ -65,14 +64,6 @@ class TestUasController(unittest.TestCase):
                 'image_list': None
             }
         )
-
-    # pylint: disable=missing-docstring
-    def test_get_uas_mgr_info(self):
-        with app.test_request_context('/'):
-            info = uas_ctl.get_uas_mgr_info()
-        self.assertEqual(info,
-                         {'service_name': 'cray-uas-mgr',
-                          'version': version})
 
     # pylint: disable=missing-docstring
     def test_get_uas_images_admin(self):

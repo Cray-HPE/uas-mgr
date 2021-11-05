@@ -536,11 +536,19 @@ class UasBase:
             )
         return uai_info
 
-    def select_jobs(self, labels=None, host=None):
+    def select_jobs(self,
+                    labels=None,
+                    host=None,
+                    fields=None):
         """Get a list of UAI names from the specified host (if any) that meet
-        the criteria in the specified labels (if any).
+        the criteria in the specified labels (if any) and fields (if
+        any).  The values of 'labels' and 'fields' are lists of
+        'label' and 'field' selectors. If 'fields' is None then only
+        terminated UAIs will selected.
 
         """
+        fields = ["status.successful=0"] if fields is None else fields
+        field_selector = ','.join(fields) or None
         labels = [] if labels is None else labels
         # Has to be a UAI (uas=managed) at least, along with any other
         # labels specified.
@@ -550,12 +558,14 @@ class UasBase:
         try:
             logger.info(
                 "listing jobs matching: host %s,"
-                " labels %s",
+                " labels %s, fields %s",
                 host,
-                label_selector
+                label_selector,
+                field_selector
             )
             resp = self.batch_v1.list_job_for_all_namespaces(
-                label_selector=label_selector
+                label_selector=label_selector,
+                field_selector=field_selector
             )
         except ApiException as err:
             if err.status != 404:

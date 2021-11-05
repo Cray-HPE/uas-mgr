@@ -23,6 +23,7 @@
 Class that implements UAS operations that require user attributes
 """
 
+import random
 from flask import abort, request
 from swagger_server.uas_lib.uas_logging import logger
 from swagger_server.uas_lib.uas_base import UasBase
@@ -193,7 +194,7 @@ class UaiManager(UasBase):
             labels = label.split(',')
         job_names = self.select_jobs(
             labels=labels,
-            host=host
+            host=host,
         )
         return self.get_uai_list(job_names=job_names)
 
@@ -219,5 +220,20 @@ class UaiManager(UasBase):
                 uai.strip() for uai in job_list
                 if uai.strip() in user_uais
             ]
+        resp_list = self.remove_uais(uai_list)
+        return resp_list
+
+    def reap_uais(self, count=5):
+        """Find up to 'count' uais that have completed and clean up their
+        resources.  If there are more than 'count' UAIs to choose
+        from, select them randomly from the overall list to make it
+        less likely that other UAS instances are reaping the same
+        UAIs.  There are no serious negative effects of collisions
+        here, just inefficiency.
+
+        """
+        uai_list = self.select_jobs(fields=["status.successful!=0"])
+        count = len(uai_list) if len(uai_list) < count else count
+        random.sample(uai_list, count)
         resp_list = self.remove_uais(uai_list)
         return resp_list
