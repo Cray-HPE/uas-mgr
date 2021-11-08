@@ -42,9 +42,11 @@ WORKDIR /usr/src/app
 COPY requirements.txt /usr/src/app/
 # don't build cryptography Rust library
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST 1
+RUN pip install --upgrade pip
 RUN pip3 install --no-cache-dir \
                  --extra-index-url https://artifactory.algol60.net/artifactory/csm-python-modules/simple \
                  --trusted-host artifactory.algol60.net -r requirements.txt
+
 #########################
 ### Coverage/Unit Tests
 #########################
@@ -97,5 +99,9 @@ COPY setup.py .version /usr/src/app/
 COPY api/ swagger_server/ /usr/src/app/swagger_server/
 
 EXPOSE 8088
+
+# noboby 65534:65534
+USER 65534:65534
+
 ENTRYPOINT ["python3"]
 CMD ["-m", "swagger_server"]

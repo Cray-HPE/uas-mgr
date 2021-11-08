@@ -144,3 +144,6 @@ cray-service:
 
   etcdCluster:
     enabled: true
+
+global:
+  appVersion: 1.13.4
