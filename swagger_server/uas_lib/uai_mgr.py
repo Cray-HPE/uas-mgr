@@ -135,6 +135,11 @@ class UaiManager(UasBase):
         """Create a new UAI
 
         """
+        logger.debug(
+            "creating a new UAI, legacy mode, public_key = %s, "
+            "image_name = %s, opt_port = %s",
+            public_key, imagename, opt_ports
+        )
         if not public_key:
             logger.warning("create_uai - missing public key")
             abort(400, "Missing ssh public key.")
@@ -175,7 +180,9 @@ class UaiManager(UasBase):
             public_key=public_key,
             passwd_str=self.passwd
         )
-        return self.deploy_uai(uai_class, uai_instance, self.uas_cfg)
+        ret = self.deploy_uai(uai_class, uai_instance, self.uas_cfg)
+        logger.debug("created UAI (legacy mode): %s", ret)
+        return ret
 
 
     def list_uais(self, label=None, host=None):
@@ -188,6 +195,7 @@ class UaiManager(UasBase):
         :return: List of UAI information.
         :rtype: list
         """
+        logger.debug("listing UAIs legacy mode")
         if not label:
             labels = ['user=%s' % self.username]
         else:
@@ -196,7 +204,9 @@ class UaiManager(UasBase):
             labels=labels,
             host=host,
         )
-        return self.get_uai_list(job_names=job_names)
+        ret = self.get_uai_list(job_names=job_names)
+        logger.debug("Got UAI list (legacy mode): %s", ret)
+        return ret
 
     def delete_uais(self, job_list):
         """
@@ -209,6 +219,10 @@ class UaiManager(UasBase):
         :return: List of UAIs deleted.
         :rtype: list
         """
+        logger.debug(
+            "deleting UAIs legacy mode job_list = %s",
+            job_list
+        )
         uai_list = []
         if not job_list:
             uai_list = self.select_jobs()
@@ -221,6 +235,7 @@ class UaiManager(UasBase):
                 if uai.strip() in user_uais
             ]
         resp_list = self.remove_uais(uai_list)
+        logger.debug("deleted UAIs legacy mode: %s", resp_list)
         return resp_list
 
     def reap_uais(self, count=5):
