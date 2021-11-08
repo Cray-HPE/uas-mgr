@@ -11,6 +11,10 @@ uasConfig:
   uai_namespace: "user"
   broker_namespace: "uas"
 
+# Configure the logging level to use in UAS manager.  Levels are
+# debug, info, warning, error.
+  logging_level: "info"
+
 # macvlan setttings
   use_macvlan: true
   uai_macvlan_interface: "vlan002"
@@ -109,6 +113,13 @@ cray-service:
             configMapKeyRef:
               name: cray-uas-mgr-config
               key: cray-uas-mgr.use_macvlan
+        # Configure the logging level to use in UAS manager.  Levels are
+        # debug, info, warning, error.
+        - name: UAS_LOGGING_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: cray-uas-mgr-config
+              key: cray-uas-mgr.logging_level
       ports:
         - name: http
           containerPort: 8088

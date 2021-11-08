@@ -5,3 +5,4 @@ metadata:
 data:
   # Settings injected into the 'cray-uas-mgr' container environment
   cray-uas-mgr.use_macvlan: "{{ .Values.uasConfig.use_macvlan }}"
+  cray-uas-mgr.logging_level: "{{ .Values.uasConfig.logging_level }}"
