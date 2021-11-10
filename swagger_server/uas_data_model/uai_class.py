@@ -117,10 +117,10 @@ class UAIClass(UASDataModel):
     # pod.
     service_account = Etcd3Attr(default=None)
 
-    # The number of instances of this UAI to run when it is launched.
+    # The number of replicas of this UAI to run when it is launched.
     # This allows the UAI to run as a load-balanced set of pods under
     # a single service instead of just one pod.  Default value is 1.
-    instances = Etcd3Attr(default=1)
+    replicas = Etcd3Attr(default=1)
 
     @staticmethod
     def get_default():
@@ -153,5 +153,6 @@ class UAIClass(UASDataModel):
             'volume_list': self.volume_list,
             'tolerations': self.tolerations,
             'timeout': self.timeout,
-            'service_account': self.service_account
+            'service_account': self.service_account,
+            'replicas': self.replicas
         }

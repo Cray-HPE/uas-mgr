@@ -308,7 +308,7 @@ info:
     Delete the specified resource limit / request configuration from the
     list of available choices.
 
-  version: "1.15.0"
+  version: "1.16.0"
 
 servers:
   - url: "/apis/uas-mgr/v1"
@@ -1636,6 +1636,24 @@ paths:
         schema:
           type: "string"
         example: "default"
+      - name: "replicas"
+        description: |
+            The number of UAI replicas created when a UAI of
+            this class starts.  For end-user UAI classes this should
+            be omitted or set to 1 because having multiple replicas of
+            an end-user UAI only consumes resources and introduces
+            potential negative interactions with brokers.  For other
+            UAI classes, especially Broker UAI classes, setting this
+            to a larger value can improve resiliency of the UAI and
+            also provide better load-balanced handling of external
+            connections.
+        in: "query"
+        required: false
+        style: form
+        explode: false
+        schema:
+          type: "string"
+        example: "1"
       responses:
         201:
           description: "UAI / Broker Class added"
@@ -1920,6 +1938,24 @@ paths:
         schema:
           type: "string"
         example: "default"
+      - name: "replicas"
+        description: |
+            The number of UAI replicas created when a UAI of
+            this class starts.  For end-user UAI classes this should
+            be omitted or set to 1 because having multiple replicas of
+            an end-user UAI only consumes resources and introduces
+            potential negative interactions with brokers.  For other
+            UAI classes, especially Broker UAI classes, setting this
+            to a larger value can improve resiliency of the UAI and
+            also provide better load-balanced handling of external
+            connections.
+        in: "query"
+        required: false
+        style: form
+        explode: false
+        schema:
+          type: "string"
+        example: "1"
       responses:
         201:
           description: "UAI / Broker Class updated"

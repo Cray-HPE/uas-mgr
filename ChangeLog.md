@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.16.0] - 2021-11-10
+- Add multi-instance UAI support to UAI Classes
+
 ## [1.15.0] - 2021-11-09
 - Add timeout UAI handling to UAI Classes and UAI management
 - add K8s service accounts to UAI classes

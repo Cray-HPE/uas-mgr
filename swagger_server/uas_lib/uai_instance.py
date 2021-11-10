@@ -300,7 +300,7 @@ class UAIInstance:
         )
         spec = client.V1JobSpec(
             backoff_limit=1000000000,
-            parallelism=uai_class.instances,
+            parallelism=uai_class.replicas,
             template=template
         )
         # Instantiate the job object
