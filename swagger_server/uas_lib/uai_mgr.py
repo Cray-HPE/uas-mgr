@@ -119,7 +119,6 @@ class UaiManager(UasBase):
                 opt_ports=opt_ports,
                 tolerations=None,
                 timeout=None,
-                one_shot=None,
                 service_account=None
             )
         elif imagename is not None:

@@ -836,10 +836,6 @@ class UasManager(UasBase):
             False if uai_class.uai_compute_network is None
             else uai_class.uai_compute_network
         )
-        one_shot = (
-            False if uai_class.one_shot is None
-            else uai_class.one_shot
-        )
         return {
             'class_id': uai_class.class_id,
             'comment': comment,
@@ -855,7 +851,6 @@ class UasManager(UasBase):
             'volume_mounts': volume_mounts,
             'tolerations': uai_class.tolerations,
             'timeout': uai_class.timeout,
-            'one_shot': one_shot,
             'service_account': uai_class.service_account,
         }
 
@@ -888,7 +883,6 @@ class UasManager(UasBase):
                      volume_list=None,
                      tolerations=None,
                      timeout=None,
-                     one_shot=None,
                      service_account=None):
         """Create a UAI Class
 
@@ -898,11 +892,11 @@ class UasManager(UasBase):
             "image_id = %s, priority_class_name = %s, namespace = %s, "
             "opt_ports = %s, uai_creation_class = %s, "
             "uai_compute_network = %s, resource_id = %s, volume_list = %s, "
-            "tolerations = %s, timeout = %s, one_shot = %s, "
+            "tolerations = %s, timeout = %s, "
             "service_account = %s",
             comment, default, public_ip, image_id, priority_class_name,
             namespace, opt_ports, uai_creation_class, uai_compute_network,
-            resource_id, volume_list, tolerations, timeout, one_shot,
+            resource_id, volume_list, tolerations, timeout,
             service_account
         )
         self.uas_cfg.get_config()
@@ -977,7 +971,6 @@ class UasManager(UasBase):
             volume_list=volume_list,
             tolerations=tolerations,
             timeout=timeout,
-            one_shot=one_shot,
             service_account=service_account
         )
         if default:
@@ -1009,7 +1002,6 @@ class UasManager(UasBase):
                      volume_list=None,
                      tolerations=None,
                      timeout=None,
-                     one_shot=None,
                      service_account=None):
         """Update a UAI Class
 
@@ -1019,12 +1011,12 @@ class UasManager(UasBase):
             "public_ip = %s, image_id = %s, priority_class_name = %s, "
             "namespace = %s, opt_ports = %s, uai_creation_class = %s, "
             "uai_compute_network = %s, resource_id = %s, volume_list = %s, "
-            "tolerations = %s, timeout = %s, one_shot = %s, "
+            "tolerations = %s, timeout = %s, "
             "service_account = %s",
             class_id, comment, default, public_ip, image_id,
             priority_class_name, namespace, opt_ports, uai_creation_class,
             uai_compute_network, resource_id, volume_list, tolerations,
-            timeout, one_shot, service_account
+            timeout, service_account
         )
         self.uas_cfg.get_config()
         uai_class = UAIClass.get(class_id)
@@ -1106,9 +1098,6 @@ class UasManager(UasBase):
         if timeout is not None:
             self._validate_timeout(timeout)
             uai_class.timeout = json.loads(timeout)
-            changed = True
-        if one_shot is not None:
-            uai_class.one_shot = one_shot
             changed = True
         if service_account is not None:
             self._validate_service_account(service_account)

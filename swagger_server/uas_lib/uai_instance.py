@@ -185,11 +185,7 @@ class UAIInstance:
                 ret['uas-uai-creation-class'] = uai_class.uai_creation_class
             if uai_class.opt_ports is not None:
                 ret['uas-uai-opt-ports'] = "-".join(uai_class.opt_ports)
-            ret['uas-uai-is-one-shot'] = str(
-                bool(
-                    uai_class.timeout or uai_class.one_shot
-                )
-            )
+            ret['uas-uai-has-timeout'] = str(bool(uai_class.timeout))
             ret['uas-public-ip'] = str(uai_class.public_ip)
             ret['uas-class-id'] = uai_class.class_id
         return ret

@@ -145,9 +145,7 @@ class TestUasMgr(unittest.TestCase):
                 "uas-uai-creation-class": uai_class.uai_creation_class,
                 "uas-public-ip": str(uai_class.public_ip),
                 "uas-class-id": uai_class.class_id,
-                "uas-uai-is-one-shot": str(
-                    bool(uai_class.timeout or uai_class.one_shot)
-                )
+                "uas-uai-has-timeout": str(bool(uai_class.timeout))
             },
             labels
         )

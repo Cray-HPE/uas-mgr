@@ -588,7 +588,6 @@ def create_uas_class_admin(comment=None,
                            volume_list=None,
                            tolerations=None,
                            timeout=None,
-                           one_shot=None,
                            service_account=None):
     """Add a UAI Class
 
@@ -620,8 +619,6 @@ def create_uas_class_admin(comment=None,
     :type tolerations: str
     :param timeout: JSON map of timeout settings for UAIs of this class
     :type timeout: str
-    :param one_shot: Boolean value: UAIs of this class are one-shot or persistant
-    :type one_shot: str
     :param service_account: name of a K8s service account for UAIs of this class
     :type service_account: str
     :rtype: UAIClass
@@ -640,7 +637,6 @@ def create_uas_class_admin(comment=None,
                                      volume_list=volume_list,
                                      tolerations=tolerations,
                                      timeout=timeout,
-                                     one_shot=one_shot,
                                      service_account=service_account)
 
 
@@ -684,7 +680,6 @@ def update_uas_class_admin(class_id=None,
                            volume_list=None,
                            tolerations=None,
                            timeout=None,
-                           one_shot=None,
                            service_account=None):
     """Update the specified UAI Class
 
@@ -718,8 +713,6 @@ def update_uas_class_admin(class_id=None,
     :type tolerations: str
     :param timeout: JSON map of timeout settings for UAIs of this class
     :type timeout: str
-    :param one_shot: Boolean value: UAIs of this class are one-shot or persistant
-    :type one_shot: str
     :param service_account: name of a K8s service account for UAIs of this class
     :type service_account: str
     :rtype: UAIClass
@@ -740,7 +733,6 @@ def update_uas_class_admin(class_id=None,
                                      volume_list=volume_list,
                                      tolerations=tolerations,
                                      timeout=timeout,
-                                     one_shot=one_shot,
                                      service_account=service_account)
 
 def delete_uas_class_admin(class_id):

@@ -1584,22 +1584,6 @@ paths:
         schema:
           type: "string"
         example: "[{\"key\": \"gpu_uais_only\", \"operator\": \"Exists\"}]"
-      - name: "one_shot"
-        description: |
-            Optional boolean argument indicating whether UAIs created using
-            this class will be one-shot UAIs.  A one-shot UAI runs to
-            successful completion and then terminates. This is similar to
-            the behavior when a UAI times out, see the 'timeout'
-            configuration parameter.  By default one-shot is false, meaning
-            that the UAI will be rescheduled if it terminates even if it
-            terminates successfully.
-        in: "query"
-        required: false
-        style: form
-        explode: false
-        schema:
-          type: boolean
-        example: true
       - name: "timeout"
         description: |
             Optional JSON string containing a timeout specification
@@ -1884,22 +1868,6 @@ paths:
         schema:
           type: "string"
         example: "[{\"key\": \"gpu_uais_only\", \"operator\": \"Exists\"}]"
-      - name: "one_shot"
-        description: |
-            Optional boolean argument indicating whether UAIs created using
-            this class will be one-shot UAIs.  A one-shot UAI runs to
-            successful completion and then terminates. This is similar to
-            the behavior when a UAI times out, see the 'timeout'
-            configuration parameter.  By default one-shot is false, meaning
-            that the UAI will be rescheduled if it terminates even if it
-            terminates successfully.
-        in: "query"
-        required: false
-        style: form
-        explode: false
-        schema:
-          type: boolean
-        example: true
       - name: "timeout"
         description: |
             Optional JSON string containing a timeout specification
