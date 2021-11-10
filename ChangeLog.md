@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.15.0] - 2021-11-09
+- Add timeout UAI handling to UAI Classes and UAI management
+- add K8s service accounts to UAI classes
+- Make logging level in UAS configurable in the helm chart
+
 ## [1.13.4] - 2021-09-08
 - Remove dependency on DST pip repository
 

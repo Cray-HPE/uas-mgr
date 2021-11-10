@@ -103,8 +103,8 @@ class UasCfg:
         imgs = UAIImage.get_all()
         imgs = [] if imgs is None else imgs
         for img in imgs:
-            if img.default:
-                return img.imagename
+            if img.default:  # pylint: disable=no-member
+                return img.imagename  # pylint: disable=no-member
         return None
 
     def validate_image(self, imagename):

@@ -66,7 +66,7 @@ def delete_uai_by_name(uai_list):
     """
     if not uai_list:
         return "Must provide a list of UAI names to delete."
-    uai_resp = UaiManager().delete_uais(deployment_list=uai_list)
+    uai_resp = UaiManager().delete_uais(job_list=uai_list)
     return uai_resp
 
 
@@ -102,6 +102,13 @@ def get_uas_mgr_info():
 
     :rtype: object
     """
+    # This API call is used as a readiness check which provides a sort
+    # of heartbeat for UAS, and we need a background activity to check
+    # for stale UAIs and reap them.  The following provides the hook
+    # for that and avoids the need for threading.  For now we will
+    # reap the default number of UAIs at a go.  In the future this may
+    # want to be configurable.
+    UaiManager().reap_uais()
     uas_mgr_info = {
         'service_name': 'cray-uas-mgr',
         'version': version
@@ -139,12 +146,12 @@ def delete_all_uais(username=None):
     uai_list = []
 
     if username:
-        uai_list = uai_mgr.select_deployments(
+        uai_list = uai_mgr.select_jobs(
             labels='uas=managed,user=%s' % username
         )
         if not uai_list:
             return "User %s has no UAIs, none deleted"
-    uai_resp = uai_mgr.delete_uais(deployment_list=uai_list)
+    uai_resp = uai_mgr.delete_uais(job_list=uai_list)
     return uai_resp
 
 
@@ -579,7 +586,9 @@ def create_uas_class_admin(comment=None,
                            uai_compute_network=None,
                            resource_id=None,
                            volume_list=None,
-                           tolerations=None):
+                           tolerations=None,
+                           timeout=None,
+                           service_account=None):
     """Add a UAI Class
 
     Add a UAI Class to the UAS configuration
@@ -607,7 +616,11 @@ def create_uas_class_admin(comment=None,
     :param volume_list: List of Volume IDs (UUIDs) mounted in UAIs  of this class
     :type volume_list: list
     :param tolerations: JSON list of tolerations for UAIs of this class
-    :type volume_list: str
+    :type tolerations: str
+    :param timeout: JSON map of timeout settings for UAIs of this class
+    :type timeout: str
+    :param service_account: name of a K8s service account for UAIs of this class
+    :type service_account: str
     :rtype: UAIClass
 
     """
@@ -622,7 +635,9 @@ def create_uas_class_admin(comment=None,
                                      uai_compute_network=uai_compute_network,
                                      priority_class_name=priority_class_name,
                                      volume_list=volume_list,
-                                     tolerations=tolerations)
+                                     tolerations=tolerations,
+                                     timeout=timeout,
+                                     service_account=service_account)
 
 
 def get_uas_classes_admin():
@@ -650,7 +665,7 @@ def get_uas_class_admin(class_id=None):
     return UasManager().get_class(class_id=class_id)
 
 
-#pylint: disable=too-many-arguments
+#pylint: disable=too-many-arguments,too-many-locals
 def update_uas_class_admin(class_id=None,
                            comment=None,
                            default=None,
@@ -663,7 +678,9 @@ def update_uas_class_admin(class_id=None,
                            uai_compute_network=None,
                            resource_id=None,
                            volume_list=None,
-                           tolerations=None):
+                           tolerations=None,
+                           timeout=None,
+                           service_account=None):
     """Update the specified UAI Class
 
     Update the specified UAI Class with new values.  This can set the
@@ -693,7 +710,11 @@ def update_uas_class_admin(class_id=None,
     :param volume_list: List of Volume IDs (UUIDs) useed in UAIs of this class
     :type volume_list: list
     :param tolerations: JSON list of tolerations for UAIs of this class
-    :type volume_list: str
+    :type tolerations: str
+    :param timeout: JSON map of timeout settings for UAIs of this class
+    :type timeout: str
+    :param service_account: name of a K8s service account for UAIs of this class
+    :type service_account: str
     :rtype: UAIClass
     """
     if not class_id:
@@ -710,7 +731,9 @@ def update_uas_class_admin(class_id=None,
                                      uai_compute_network=uai_compute_network,
                                      resource_id=resource_id,
                                      volume_list=volume_list,
-                                     tolerations=tolerations)
+                                     tolerations=tolerations,
+                                     timeout=timeout,
+                                     service_account=service_account)
 
 def delete_uas_class_admin(class_id):
     """Remove the specified UAI Class

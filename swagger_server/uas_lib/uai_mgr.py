@@ -23,10 +23,11 @@
 Class that implements UAS operations that require user attributes
 """
 
+import random
 from flask import abort, request
 from swagger_server.uas_lib.uas_logging import logger
 from swagger_server.uas_lib.uas_base import UasBase
-from swagger_server.uas_lib.uas_base import UAIInstance
+from swagger_server.uas_lib.uai_instance import UAIInstance
 from swagger_server.uas_lib.uas_auth import UasAuth
 from swagger_server.uas_data_model.uai_image import UAIImage
 from swagger_server.uas_data_model.uai_volume import UAIVolume
@@ -116,7 +117,9 @@ class UaiManager(UasBase):
                 volume_list=volume_list,
                 namespace=namespace,
                 opt_ports=opt_ports,
-                tolerations=None
+                tolerations=None,
+                timeout=None,
+                service_account=None
             )
         elif imagename is not None:
             abort(
@@ -131,6 +134,11 @@ class UaiManager(UasBase):
         """Create a new UAI
 
         """
+        logger.debug(
+            "creating a new UAI, legacy mode, public_key = %s, "
+            "image_name = %s, opt_port = %s",
+            public_key, imagename, opt_ports
+        )
         if not public_key:
             logger.warning("create_uai - missing public key")
             abort(400, "Missing ssh public key.")
@@ -171,7 +179,9 @@ class UaiManager(UasBase):
             public_key=public_key,
             passwd_str=self.passwd
         )
-        return self.deploy_uai(uai_class, uai_instance, self.uas_cfg)
+        ret = self.deploy_uai(uai_class, uai_instance, self.uas_cfg)
+        logger.debug("created UAI (legacy mode): %s", ret)
+        return ret
 
 
     def list_uais(self, label=None, host=None):
@@ -184,37 +194,60 @@ class UaiManager(UasBase):
         :return: List of UAI information.
         :rtype: list
         """
+        logger.debug("listing UAIs legacy mode")
         if not label:
             labels = ['user=%s' % self.username]
         else:
             labels = label.split(',')
-        deploy_names = self.select_deployments(
+        job_names = self.select_jobs(
             labels=labels,
-            host=host
+            host=host,
         )
-        return self.get_uai_list(deploy_names=deploy_names)
+        ret = self.get_uai_list(job_names=job_names)
+        logger.debug("Got UAI list (legacy mode): %s", ret)
+        return ret
 
-    def delete_uais(self, deployment_list):
+    def delete_uais(self, job_list):
         """
-        Deletes the UAIs named in deployment_list.
-        If deployment_list is empty, it will delete all UAIs.
+        Deletes the UAIs named in job_list.
+        If job_list is empty, it will delete all UAIs.
 
-        :param deployment_list: List of UAI names to delete.
+        :param job_list: List of UAI names to delete.
                                 If empty, delete all UAIs.
-        :type deployment_list: list
+        :type job_list: list
         :return: List of UAIs deleted.
         :rtype: list
         """
+        logger.debug(
+            "deleting UAIs legacy mode job_list = %s",
+            job_list
+        )
         uai_list = []
-        if not deployment_list:
-            uai_list = self.select_deployments()
+        if not job_list:
+            uai_list = self.select_jobs()
         else:
-            user_uais = self.select_deployments(
+            user_uais = self.select_jobs(
                 labels=["user=%s" % self.username]
             )
             uai_list = [
-                uai.strip() for uai in deployment_list
+                uai.strip() for uai in job_list
                 if uai.strip() in user_uais
             ]
+        resp_list = self.remove_uais(uai_list)
+        logger.debug("deleted UAIs legacy mode: %s", resp_list)
+        return resp_list
+
+    def reap_uais(self, count=5):
+        """Find up to 'count' uais that have completed and clean up their
+        resources.  If there are more than 'count' UAIs to choose
+        from, select them randomly from the overall list to make it
+        less likely that other UAS instances are reaping the same
+        UAIs.  There are no serious negative effects of collisions
+        here, just inefficiency.
+
+        """
+        uai_list = self.select_jobs(fields=["status.successful!=0"])
+        count = len(uai_list) if len(uai_list) < count else count
+        random.sample(uai_list, count)
         resp_list = self.remove_uais(uai_list)
         return resp_list

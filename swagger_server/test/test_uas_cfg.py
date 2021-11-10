@@ -27,7 +27,7 @@ import unittest
 
 from kubernetes import client
 from swagger_server.uas_lib.uas_cfg import UasCfg
-from swagger_server.uas_lib.uas_base import UAIInstance
+from swagger_server.uas_lib.uai_instance import UAIInstance
 from swagger_server.uas_data_model.uai_volume import UAIVolume
 from swagger_server.uas_data_model.uai_image import UAIImage
 from swagger_server.uas_data_model.populated_config import PopulatedConfig
