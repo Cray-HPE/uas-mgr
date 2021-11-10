@@ -376,6 +376,7 @@ class TestUasController(unittest.TestCase):
             with self.assertRaises(werkzeug.exceptions.NotFound):
                 _ = uas_ctl.delete_uas_resource_admin(resource_id=str(uuid4()))
 
+    # pylint: disable=too-many-locals
     def __create_test_uai_class(self):
         """Create a test class through the API that is set up for
         creating UAIs and make sure that works, return the class ID
@@ -392,6 +393,10 @@ class TestUasController(unittest.TestCase):
         uai_compute_network = True
         resource_id = self.__create_test_resource()
         volume_list = [self.__create_test_volume("my-uai-volume")]
+        tolerations = '[{"key": "gpu_uais_only", "operator": "Exists"}]'
+        timeout = '{"soft": "600", "hard": "3600", "warning": "60"}'
+        service_account = "my-service-account"
+        replicas = "1"
         with app.test_request_context('/'):
             resp = uas_ctl.create_uas_class_admin(
                 comment=comment,
@@ -403,12 +408,17 @@ class TestUasController(unittest.TestCase):
                 uai_creation_class=uai_creation_class,
                 uai_compute_network=uai_compute_network,
                 resource_id=resource_id,
-                volume_list=volume_list
+                volume_list=volume_list,
+                tolerations=tolerations,
+                timeout=timeout,
+                service_account=service_account,
+                replicas=replicas
             )
         self.assertIsInstance(resp, dict)
         self.assertIn('class_id', resp)
         return resp['class_id']
 
+    # pylint: disable=too-many-locals
     def __create_test_broker_class(self):
         """Create a test class through the API that is set up for
         creating Brokers and make sure that works, return the class ID
@@ -425,6 +435,10 @@ class TestUasController(unittest.TestCase):
         uai_compute_network = False
         resource_id = self.__create_test_resource()
         volume_list = [self.__create_test_volume("my-broker-volume")]
+        tolerations = '[{"key": "gpu_uais_only", "operator": "Exists"}]'
+        timeout = None
+        service_account = None
+        replicas = "3"
         with app.test_request_context('/'):
             resp = uas_ctl.create_uas_class_admin(
                 comment=comment,
@@ -436,7 +450,11 @@ class TestUasController(unittest.TestCase):
                 uai_creation_class=uai_creation_class,
                 uai_compute_network=uai_compute_network,
                 resource_id=resource_id,
-                volume_list=volume_list
+                volume_list=volume_list,
+                tolerations=tolerations,
+                timeout=timeout,
+                service_account=service_account,
+                replicas=replicas
             )
         self.assertIsInstance(resp, dict)
         self.assertIn('class_id', resp)

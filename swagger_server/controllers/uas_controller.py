@@ -574,7 +574,7 @@ def delete_uas_resource_admin(resource_id):
     return UasManager().delete_resource(resource_id=resource_id)
 
 # UAI Classes
-#pylint: disable=too-many-arguments
+#pylint: disable=too-many-arguments,too-many-locals
 def create_uas_class_admin(comment=None,
                            default=None,
                            public_ip=None,
@@ -588,7 +588,8 @@ def create_uas_class_admin(comment=None,
                            volume_list=None,
                            tolerations=None,
                            timeout=None,
-                           service_account=None):
+                           service_account=None,
+                           replicas="1"):
     """Add a UAI Class
 
     Add a UAI Class to the UAS configuration
@@ -621,6 +622,8 @@ def create_uas_class_admin(comment=None,
     :type timeout: str
     :param service_account: name of a K8s service account for UAIs of this class
     :type service_account: str
+    :param replicas: the number of UAI replicas created for a UAI of this class
+    :type replicas: str
     :rtype: UAIClass
 
     """
@@ -637,7 +640,8 @@ def create_uas_class_admin(comment=None,
                                      volume_list=volume_list,
                                      tolerations=tolerations,
                                      timeout=timeout,
-                                     service_account=service_account)
+                                     service_account=service_account,
+                                     replicas=replicas)
 
 
 def get_uas_classes_admin():
@@ -680,7 +684,8 @@ def update_uas_class_admin(class_id=None,
                            volume_list=None,
                            tolerations=None,
                            timeout=None,
-                           service_account=None):
+                           service_account=None,
+                           replicas=None):
     """Update the specified UAI Class
 
     Update the specified UAI Class with new values.  This can set the
@@ -715,6 +720,8 @@ def update_uas_class_admin(class_id=None,
     :type timeout: str
     :param service_account: name of a K8s service account for UAIs of this class
     :type service_account: str
+    :param replicas: the number of UAI replicas created for a UAI of this class
+    :type replicas: str
     :rtype: UAIClass
     """
     if not class_id:
@@ -733,7 +740,8 @@ def update_uas_class_admin(class_id=None,
                                      volume_list=volume_list,
                                      tolerations=tolerations,
                                      timeout=timeout,
-                                     service_account=service_account)
+                                     service_account=service_account,
+                                     replicas=replicas)
 
 def delete_uas_class_admin(class_id):
     """Remove the specified UAI Class

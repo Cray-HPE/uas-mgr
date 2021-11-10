@@ -119,7 +119,8 @@ class UaiManager(UasBase):
                 opt_ports=opt_ports,
                 tolerations=None,
                 timeout=None,
-                service_account=None
+                service_account=None,
+                replicas=1
             )
         elif imagename is not None:
             abort(

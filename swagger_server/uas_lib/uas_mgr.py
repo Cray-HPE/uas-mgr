@@ -778,6 +778,13 @@ class UasManager(UasBase):
                     )
                 try:
                     intval = int(value)
+                    if intval < 0:
+                        abort(
+                            400,
+                            "Timeout '%s' setting '%s: %s' must not be "
+                            "a negative value" %
+                            (timeout, key, value)
+                        )
                 except ValueError as err:
                     abort(
                         400,
@@ -785,14 +792,34 @@ class UasManager(UasBase):
                         "converted to an integer - %s" %
                         (timeout, key, value, err)
                     )
-                if intval < 0:
-                    abort(
-                        400,
-                        "Timeout '%s' setting '%s: %s' must not be "
-                        "a negative value" %
-                        (timeout, key, value)
-                    )
 
+    @staticmethod
+    def _validate_replicas(replicas):
+        """Verify that a given 'replicas' value is a string representing a
+        non-negative integer.
+
+        """
+        if not isinstance(replicas, str):
+            abort(
+                400,
+                "Replicas parameter '%s' is not a string" % (replicas)
+            )
+        try:
+            intval = int(replicas)
+            if intval < 1:
+                abort(
+                    400,
+                    "Replicas parameter '%s' must be greater than "
+                    "zero" %
+                    (replicas)
+                )
+        except ValueError as err:
+            abort(
+                400,
+                "Replicas parameter '%s' cannot be "
+                "converted to an integer - %s" %
+                (replicas, err)
+            )
 
     @staticmethod
     def _validate_service_account(service_account):
@@ -852,6 +879,7 @@ class UasManager(UasBase):
             'tolerations': uai_class.tolerations,
             'timeout': uai_class.timeout,
             'service_account': uai_class.service_account,
+            'replicas': uai_class.replicas,
         }
 
     def delete_class(self, class_id):
@@ -883,7 +911,8 @@ class UasManager(UasBase):
                      volume_list=None,
                      tolerations=None,
                      timeout=None,
-                     service_account=None):
+                     service_account=None,
+                     replicas="1"):
         """Create a UAI Class
 
         """
@@ -893,11 +922,11 @@ class UasManager(UasBase):
             "opt_ports = %s, uai_creation_class = %s, "
             "uai_compute_network = %s, resource_id = %s, volume_list = %s, "
             "tolerations = %s, timeout = %s, "
-            "service_account = %s",
+            "service_account = %s, replicas = %s",
             comment, default, public_ip, image_id, priority_class_name,
             namespace, opt_ports, uai_creation_class, uai_compute_network,
             resource_id, volume_list, tolerations, timeout,
-            service_account
+            service_account, replicas
         )
         self.uas_cfg.get_config()
         if image_id is None:
@@ -923,6 +952,7 @@ class UasManager(UasBase):
             self._validate_volume_list(volume_list)
         if timeout:
             self._validate_timeout(timeout)
+        self._validate_replicas(replicas)
         timeout = json.loads(timeout) if timeout is not None else None
         opt_ports_list = [
             port.strip()
@@ -971,7 +1001,8 @@ class UasManager(UasBase):
             volume_list=volume_list,
             tolerations=tolerations,
             timeout=timeout,
-            service_account=service_account
+            service_account=service_account,
+            replicas=int(replicas)
         )
         if default:
             default_class = UAIClass.get_default()
@@ -1002,7 +1033,8 @@ class UasManager(UasBase):
                      volume_list=None,
                      tolerations=None,
                      timeout=None,
-                     service_account=None):
+                     service_account=None,
+                     replicas=None):
         """Update a UAI Class
 
         """
@@ -1012,11 +1044,11 @@ class UasManager(UasBase):
             "namespace = %s, opt_ports = %s, uai_creation_class = %s, "
             "uai_compute_network = %s, resource_id = %s, volume_list = %s, "
             "tolerations = %s, timeout = %s, "
-            "service_account = %s",
+            "service_account = %s, replicas = %s",
             class_id, comment, default, public_ip, image_id,
             priority_class_name, namespace, opt_ports, uai_creation_class,
             uai_compute_network, resource_id, volume_list, tolerations,
-            timeout, service_account
+            timeout, service_account, replicas
         )
         self.uas_cfg.get_config()
         uai_class = UAIClass.get(class_id)
@@ -1102,6 +1134,10 @@ class UasManager(UasBase):
         if service_account is not None:
             self._validate_service_account(service_account)
             uai_class.service_account = service_account
+            changed = True
+        if replicas is not None:
+            self._validate_replicas(replicas)
+            uai_class.replicas = int(replicas)
             changed = True
         if changed:
             if default:  # this implies that default is not None
