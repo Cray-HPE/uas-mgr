@@ -26,7 +26,29 @@ from etcd3_model import Etcd3Model
 from swagger_server.uas_data_model.populated_config import PopulatedConfig
 
 
+# pylint: disable=too-few-public-methods
+class ExpandableStub:
+    """An expandable stub class to be used when attempting to expand a
+    UASDataModel class instance whose object_id cannot be found.  The
+    expand method produces a string indicating the kind and requested
+    object ID of the missing object.
+
+    """
+    def __init__(self, kind, object_id):
+        """constructor"""
+        self.kind = kind.default
+        self.object_id = object_id
+
+    def expand(self):
+        """Produce a string indicating that the object of kind 'self.kind' and
+        the object ID 'self.object_id' is unknown.
+
+        """
+        return "<unknown %s instance, ID = '%s'>" % (self.kind, self.object_id)
+
+
 class UASDataModel(Etcd3Model):
+
     """UAS Configuration Data Item Base Class
 
     This provides some common base items for any Etcd3Model in UAS and
@@ -65,6 +87,10 @@ class UASDataModel(Etcd3Model):
       Etcd3Model parent as presented.
 
     """
+    # Each data model has a 'kind' that describes it.  Make a default 'kind'
+    # here to set the tone.
+    kind = None
+
     # Methods for managing ETCD registration of classes
     @classmethod
     def _is_registered(cls):
@@ -130,3 +156,20 @@ class UASDataModel(Etcd3Model):
         if not self._is_registered():
             self.register()
         super().put()
+
+    # pylint: disable=arguments-differ
+    @classmethod
+    def get(cls, object_id, expandable=False):
+        """Wrap the Etcd3Model.get() method with something that will, if
+        requested, return an expandable object instead of None when
+        the object_id is not found.  The expandable object will be a
+        class in which the 'kind' value of the derived class and the
+        requested 'object_id' are embedded so that its expand method
+        can report the missing object instead of failing with an
+        exception for calling expand() on a NoneType.
+
+        """
+        ret = super().get(object_id)
+        if ret is None and expandable:
+            ret = ExpandableStub(cls.kind, object_id)
+        return ret

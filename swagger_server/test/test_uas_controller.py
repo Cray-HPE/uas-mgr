@@ -465,7 +465,7 @@ class TestUasController(unittest.TestCase):
 
         """
         with app.test_request_context('/'):
-            resp = uas_ctl.get_uas_class_admin(class_id=class_id)
+            resp = uas_ctl.delete_uas_class_admin(class_id=class_id)
             self.assertIn('class_id', resp)
             self.assertEqual(class_id, resp['class_id'])
             uai_creation_class = resp.get('uai_creation_class', None)
@@ -473,17 +473,14 @@ class TestUasController(unittest.TestCase):
             resource_id = resp.get('resource_id', None)
             volume_list = resp.get('volume_list', [])
             image_id = resp.get("image_id", None)
-            if image_id:
-                self.__delete_test_image(image_id)
-            if resource_id:
-                self.__delete_test_resource(resource_id)
             if uai_creation_class:
                 self.__delete_test_class(uai_creation_class)
+            if resource_id:
+                self.__delete_test_resource(resource_id)
+            if image_id:
+                self.__delete_test_image(image_id)
             for volume_id in volume_list:
                 self.__delete_test_volume(volume_id)
-            resp = uas_ctl.delete_uas_class_admin(class_id=class_id)
-        self.assertIn('class_id', resp)
-        self.assertEqual(class_id, resp['class_id'])
 
     # pylint: disable=missing-docstring
     def test_get_uas_class_admin(self):
