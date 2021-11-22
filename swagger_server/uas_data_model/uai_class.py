@@ -149,6 +149,7 @@ class UAIClass(UASDataModel):
             'uai_creation_class': self.uai_creation_class,
             'uai_compute_network': self.uai_compute_network,
             'image_id': self.image_id,
+            'priority_class_name': self.priority_class_name,
             'resource_id': self.resource_id,
             'volume_list': self.volume_list,
             'tolerations': self.tolerations,

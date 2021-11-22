@@ -31,6 +31,7 @@ from swagger_server.uas_lib.uai_instance import UAIInstance
 from swagger_server.uas_data_model.uai_volume import UAIVolume
 from swagger_server.uas_data_model.uai_image import UAIImage
 from swagger_server.uas_data_model.populated_config import PopulatedConfig
+from swagger_server.uas_data_model.uas_data_model import ExpandableStub
 
 
 class TestUasCfg(unittest.TestCase):
@@ -500,6 +501,20 @@ class TestUasCfg(unittest.TestCase):
         self.__reset_runtime_config(self.uas_cfg_svc)
         self.assertEqual(self.uas_cfg_svc.get_uai_namespace(), "default")
         self.__reset_runtime_config()
+
+    # pylint: disable=missing-docstring
+    def test_data_model_expandable_get(self):
+        bad_id = 'invalid-object-id'
+        ret = UAIImage.get(bad_id)
+        self.assertIs(ret, None)
+        ret = UAIImage.get(bad_id, expandable=True)
+        self.assertIsInstance(ret, ExpandableStub)
+        desc = ret.expand()
+        self.assertIsInstance(desc, str)
+        self.assertIn("<unknown ", desc)
+        self.assertIn(UAIImage.kind.default, desc)
+        self.assertEqual(UAIImage.kind.default, "UAIImage")
+        self.assertIn(bad_id, desc)
 
 
 if __name__ == '__main__':

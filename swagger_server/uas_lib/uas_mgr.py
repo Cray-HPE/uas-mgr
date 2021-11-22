@@ -170,11 +170,7 @@ class UasManager(UasBase):
         if img is None:
             abort(404, "image '%s' does not exist" % image_id)
         img.remove() # don't use img.delete() you actually want it removed
-        ret = {
-            'image_id': img.image_id,
-            'imagename': img.imagename,
-            'default': img.default
-        }
+        ret = img.expand()
         logger.debug("deleted image: %s", ret)
         return ret
 
@@ -204,11 +200,7 @@ class UasManager(UasBase):
         # Now create the new image...
         img = UAIImage(imagename=imagename, default=default)
         img.put()
-        ret = {
-            'image_id': img.image_id,
-            'imagename': img.imagename,
-            'default': img.default
-        }
+        ret = img.expand()
         logger.debug("created (registered) UAI image: %s", ret)
         return ret
 
@@ -258,11 +250,7 @@ class UasManager(UasBase):
                         tmp.default = False
                         tmp.put()
             img.put()
-        ret = {
-            'image_id': img.image_id,
-            'imagename': img.imagename,
-            'default': img.default
-        }
+        ret = img.expand()
         logger.debug("Updated image %s: %s", image_id, ret)
         return ret
 
@@ -275,11 +263,7 @@ class UasManager(UasBase):
         img = UAIImage.get(image_id)
         if img is None:
             abort(404, "image '%s' does not exist" % image_id)
-        ret = {
-            'image_id': img.image_id,
-            'imagename': img.imagename,
-            'default': img.default
-        }
+        ret = img.expand()
         logger.debug("get UAI image '%s': %s", image_id, ret)
         return ret
 
@@ -328,12 +312,7 @@ class UasManager(UasBase):
         if vol is None:
             abort(404, "volume '%s' does not exist" % volume_id)
         vol.remove() # don't use vol.delete() you actually want it removed
-        ret = {
-            'volume_id': vol.volume_id,
-            'volumename': vol.volumename,
-            'mount_path': vol.mount_path,
-            'volume_description': vol.volume_description
-        }
+        ret = vol.expand()
         logger.debug("deleted volume '%s': %s", volume_id, ret)
         return ret
 
@@ -381,12 +360,7 @@ class UasManager(UasBase):
             volume_description=vol_desc
         )
         vol.put()
-        ret = {
-            'volume_id': vol.volume_id,
-            'volumename': vol.volumename,
-            'mount_path': vol.mount_path,
-            'volume_description': vol.volume_description
-        }
+        ret = vol.expand()
         logger.debug("created volume '%s': %s", volumename, ret)
         return ret
 
@@ -420,6 +394,7 @@ class UasManager(UasBase):
                         "Kubernetes documentation for more information."
                     )
             tmp = UAIVolume.get_by_name(volumename)
+            # pylint: disable=no-member
             if tmp is not None and tmp.volume_id != vol.volume_id:
                 abort(409, "volume named '%s' already exists" % volumename)
             vol.volumename = volumename
@@ -448,12 +423,7 @@ class UasManager(UasBase):
             changed = True
         if changed:
             vol.put()
-        ret = {
-            'volume_id': vol.volume_id,
-            'volumename': vol.volumename,
-            'mount_path': vol.mount_path,
-            'volume_description': vol.volume_description
-        }
+        ret = vol.expand()
         logger.debug("updated volume '%s': %s", volume_id, ret)
         return ret
 
@@ -469,12 +439,7 @@ class UasManager(UasBase):
                 404,
                 "Unknown volume '%s'" % volume_id
             )
-        ret = {
-            'volume_id': vol.volume_id,
-            'volumename': vol.volumename,
-            'mount_path': vol.mount_path,
-            'volume_description': vol.volume_description
-        }
+        ret = vol.expand()
         logger.debug("got volume '%s': %s", volume_id, ret)
         return ret
 
@@ -529,12 +494,7 @@ class UasManager(UasBase):
 
         # Good to go...
         resource.remove() # don't use x.delete() you actually want it removed
-        ret = {
-            'resource_id': resource.resource_id,
-            'comment': resource.comment,
-            'limit': resource.limit,
-            'request': resource.request
-        }
+        ret = resource.expand()
         logger.debug("deleted resource '%s': %s", resource_id, ret)
         return ret
 
@@ -575,12 +535,7 @@ class UasManager(UasBase):
             request=request
         )
         resource.put()
-        ret = {
-            'resource_id': resource.resource_id,
-            'comment': resource.comment,
-            'limit': resource.limit,
-            'request': resource.request
-        }
+        ret = resource.expand()
         logger.debug("created resource: %s", ret)
         return ret
 
@@ -630,12 +585,7 @@ class UasManager(UasBase):
             changed = True
         if changed:
             resource.put()
-        ret = {
-            'resource_id': resource.resource_id,
-            'comment': resource.comment,
-            'limit': resource.limit,
-            'request': resource.request
-        }
+        ret = resource.expand()
         logger.debug("updated resource '%s': %s", resource_id, ret)
         return ret
 
@@ -651,12 +601,7 @@ class UasManager(UasBase):
                 404,
                 "Unknown resource '%s'" % resource_id
             )
-        ret = {
-            'resource_id': resource.resource_id,
-            'comment': resource.comment,
-            'limit': resource.limit,
-            'request': resource.request
-        }
+        ret = resource.expand()
         logger.debug("got resource '%s': %s", resource_id, ret)
         return ret
 
@@ -670,11 +615,7 @@ class UasManager(UasBase):
         resources = [] if resources is None else resources
         # pylint: disable=no-member
         ret = [
-            {
-                'comment': resource.comment,
-                'limit': resource.limit,
-                'request': resource.request
-            }
+            resource.expand()
             for resource in resources
         ]
         logger.debug("got list of resources: %s", ret)
@@ -842,45 +783,28 @@ class UasManager(UasBase):
         in that it knows how to dig into the sub-objects.
 
         """
-        comment = "" if uai_class.comment is None else uai_class.comment
-        default = False if uai_class.default is None else uai_class.default
-        public_ip = (
-            False if uai_class.public_ip is None
-            else uai_class.public_ip
+        ret = uai_class.expand()
+        ret['comment'] = uai_class.comment or ""
+        ret['default'] = uai_class.default or False
+        ret['public_ip'] = uai_class.public_ip or False
+        ret['uai_compute_network'] = uai_class.uai_compute_network or False
+        ret['uai_image'] = UAIImage.get(
+            uai_class.image_id, expandable=True
+        ).expand()
+        ret['resource_config'] = (
+            None if uai_class.resource_id is None
+            else UAIResource.get(
+                    uai_class.resource_id, expandable=True
+            ).expand()
         )
-        volume_mounts = (
+        ret['volume_mounts'] = (
             [] if uai_class.volume_list is None
             else [
-                    UAIVolume.get(vol).expand()
+                    UAIVolume.get(vol, expandable=True).expand()
                     for vol in uai_class.volume_list
             ]
         )
-        resource_config = (
-            None if uai_class.resource_id is None
-            else UAIResource.get(uai_class.resource_id).expand()
-        )
-        uai_compute_network = (
-            False if uai_class.uai_compute_network is None
-            else uai_class.uai_compute_network
-        )
-        return {
-            'class_id': uai_class.class_id,
-            'comment': comment,
-            'default': default,
-            'public_ip': public_ip,
-            'priority_class_name': uai_class.priority_class_name,
-            'namespace': uai_class.namespace,
-            'opt_ports': uai_class.opt_ports,
-            'uai_creation_class': uai_class.uai_creation_class,
-            'uai_compute_network': uai_compute_network,
-            'uai_image': UAIImage.get(uai_class.image_id).expand(),
-            'resource_config': resource_config,
-            'volume_mounts': volume_mounts,
-            'tolerations': uai_class.tolerations,
-            'timeout': uai_class.timeout,
-            'service_account': uai_class.service_account,
-            'replicas': uai_class.replicas,
-        }
+        return ret
 
     def delete_class(self, class_id):
         """Delete a UAI Class
