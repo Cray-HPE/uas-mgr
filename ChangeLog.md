@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.1-release-3] - 2021-09-21
+- Update Dockerfile alpine 3.14.2 to 3.14
+
 ## [1.12.1-release-2] - 2021-09-21
 - Remove dependency on dstpiprepo for CSM 1.0.0
 
