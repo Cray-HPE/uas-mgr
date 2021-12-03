@@ -326,6 +326,7 @@ class UAIInstance:
         # that logic, I am picking one or the other here based on
         # whether 'public_ip' is true or false.
         service_type = "ssh" if uai_class.public_ip else "service"
+
         metadata = client.V1ObjectMeta(
             name=self.get_service_name(),
             labels=self.gen_labels(uai_class),
