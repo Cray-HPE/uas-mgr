@@ -23,9 +23,13 @@
 #
 # pylint: disable=missing-docstring
 
+import os
+import json
 import unittest
-
+import yaml
+import requests_mock
 from kubernetes import client
+import werkzeug
 from swagger_server.uas_lib.uas_cfg import UasCfg
 from swagger_server.uas_lib.uai_instance import UAIInstance
 from swagger_server.uas_data_model.uai_volume import UAIVolume
@@ -34,6 +38,8 @@ from swagger_server.uas_data_model.populated_config import PopulatedConfig
 from swagger_server.uas_data_model.uas_data_model import ExpandableStub
 
 
+# pylint: disable=too-many-public-methods
+@requests_mock.Mocker()
 class TestUasCfg(unittest.TestCase):
     """Tester for the UasCfg class
 
@@ -43,6 +49,9 @@ class TestUasCfg(unittest.TestCase):
         uas_cfg='swagger_server/test/cray-uas-mgr-empty.yaml'
     )
     uas_cfg_svc = UasCfg(uas_cfg='swagger_server/test/cray-uas-mgr-svc.yaml')
+    uas_cfg_svc_customer_access = UasCfg(
+        uas_cfg='swagger_server/test/cray-uas-mgr-svc-customer-access.yaml'
+    )
 
     @classmethod
     def __reset_runtime_config(cls, new_config=None):
@@ -70,8 +79,8 @@ class TestUasCfg(unittest.TestCase):
         if new_config is not None:
             new_config.get_config()
 
-    # pylint: disable=missing-docstring
-    def test_get_config(self):
+    # pylint: disable=missing-docstring,unused-argument
+    def test_get_config(self, mocker):
         # Just make sure calling get_config() doesn't die on all the
         # configs...
         self.__reset_runtime_config()
@@ -82,8 +91,8 @@ class TestUasCfg(unittest.TestCase):
         _ = self.uas_cfg_svc.get_config()
         self.__reset_runtime_config()
 
-    # pylint: disable=missing-docstring
-    def test_get_images(self):
+    # pylint: disable=missing-docstring,unused-argument
+    def test_get_images(self, mocker):
         self.__reset_runtime_config(self.uas_cfg)
         images = self.uas_cfg.get_images()
         self.assertIsNone(images)
@@ -93,8 +102,8 @@ class TestUasCfg(unittest.TestCase):
         self.assertEqual(images, None)
         self.__reset_runtime_config()
 
-    # pylint: disable=missing-docstring
-    def test_get_default_image(self):
+    # pylint: disable=missing-docstring,unused-argument
+    def test_get_default_image(self, mocker):
         self.__reset_runtime_config(self.uas_cfg)
         image = self.uas_cfg.get_default_image()
         self.assertIsNone(image)
@@ -103,8 +112,8 @@ class TestUasCfg(unittest.TestCase):
         self.assertIsNone(image)
         self.__reset_runtime_config()
 
-    # pylint: disable=missing-docstring
-    def test_validate_image_no_defaults(self):
+    # pylint: disable=missing-docstring,unused-argument
+    def test_validate_image_no_defaults(self, mocker):
         self.__reset_runtime_config(self.uas_cfg)
         self.assertFalse(
             self.uas_cfg.validate_image(
@@ -113,15 +122,15 @@ class TestUasCfg(unittest.TestCase):
         )
         self.__reset_runtime_config()
 
-    # pylint: disable=missing-docstring
-    def test_validate_image_false(self):
+    # pylint: disable=missing-docstring,unused-argument
+    def test_validate_image_false(self, mocker):
         self.__reset_runtime_config(self.uas_cfg)
         self.assertFalse(self.uas_cfg.validate_image('not-an-image'))
         self.assertFalse(self.uas_cfg.validate_image(''))
         self.__reset_runtime_config()
 
-    # pylint: disable=missing-docstring
-    def test_get_external_ip(self):
+    # pylint: disable=missing-docstring,unused-argument
+    def test_get_external_ip(self, mocker):
         self.__reset_runtime_config(self.uas_cfg)
         self.assertEqual('10.100.240.14',
                          self.uas_cfg.get_external_ip())
@@ -129,8 +138,8 @@ class TestUasCfg(unittest.TestCase):
         self.assertEqual(self.uas_cfg_empty.get_external_ip(), None)
         self.__reset_runtime_config()
 
-    # pylint: disable=missing-docstring
-    def test_gen_volume_mounts(self):
+    # pylint: disable=missing-docstring,unused-argument
+    def test_gen_volume_mounts(self, mocker):
         self.__reset_runtime_config(self.uas_cfg_svc)
         volumes = UAIVolume.get_all()
         volumes = [] if volumes is None else volumes
@@ -151,8 +160,8 @@ class TestUasCfg(unittest.TestCase):
         )
         self.__reset_runtime_config()
 
-    # pylint: disable=missing-docstring
-    def test_get_volumes(self):
+    # pylint: disable=missing-docstring,unused-argument
+    def test_get_volumes(self, mocker):
         self.__reset_runtime_config(self.uas_cfg_svc)
         volumes = UAIVolume.get_all()
         volumes = [] if volumes is None else volumes
@@ -176,8 +185,8 @@ class TestUasCfg(unittest.TestCase):
         self.assertEqual([], self.uas_cfg_empty.gen_volumes(volume_list))
         self.__reset_runtime_config()
 
-    # pylint: disable=missing-docstring
-    def test_gen_port_entry(self):
+    # pylint: disable=missing-docstring,unused-argument
+    def test_gen_port_entry(self, mocker):
         self.__reset_runtime_config(self.uas_cfg)
         dcp = self.uas_cfg.gen_port_entry(
             self.uas_cfg.get_default_port(),
@@ -200,8 +209,8 @@ class TestUasCfg(unittest.TestCase):
         self.assertIsInstance(sp, client.V1ServicePort)
         self.__reset_runtime_config()
 
-    # pylint: disable=missing-docstring
-    def test_uas_cfg_gen_port_list(self):
+    # pylint: disable=missing-docstring,unused-argument
+    def test_uas_cfg_gen_port_list(self, mocker):
         self.__reset_runtime_config(self.uas_cfg)
         port_list = self.uas_cfg.gen_port_list(
             service_type="ssh",
@@ -238,8 +247,8 @@ class TestUasCfg(unittest.TestCase):
         self.assertEqual(1, len(self.uas_cfg.gen_port_list()))
         self.__reset_runtime_config()
 
-    # pylint: disable=missing-docstring
-    def test_uas_cfg_svc_gen_port_list(self):
+    # pylint: disable=missing-docstring,unused-argument
+    def test_uas_cfg_svc_gen_port_list(self, mocker):
         # a slightly different way of testing from above
         self.__reset_runtime_config(self.uas_cfg_svc)
         port_list = self.uas_cfg_svc.gen_port_list(
@@ -267,23 +276,23 @@ class TestUasCfg(unittest.TestCase):
             self.assertEqual(30123, pl.container_port)
         self.__reset_runtime_config()
 
-    # pylint: disable=missing-docstring
-    def test_create_readiness_probe(self):
+    # pylint: disable=missing-docstring,unused-argument
+    def test_create_readiness_probe(self, mocker):
         self.__reset_runtime_config(self.uas_cfg)
         probe = self.uas_cfg.create_readiness_probe()
         self.assertIsInstance(probe, client.V1Probe)
         self.assertIsInstance(probe.tcp_socket, client.V1TCPSocketAction)
         self.__reset_runtime_config()
 
-    # pylint: disable=missing-docstring
-    def test_get_valid_optional_ports(self):
+    # pylint: disable=missing-docstring,unused-argument
+    def test_get_valid_optional_ports(self, mocker):
         self.__reset_runtime_config(self.uas_cfg)
         port_list = self.uas_cfg.get_valid_optional_ports()
         self.assertListEqual(port_list, [80, 443, 8888])
         self.__reset_runtime_config()
 
-    # pylint: disable=missing-docstring
-    def test_get_service_type(self):
+    # pylint: disable=missing-docstring,unused-argument
+    def test_get_service_type(self, mocker):
         self.__reset_runtime_config(self.uas_cfg)
         svc_type = self.uas_cfg.get_svc_type(service_type="ssh")
         self.assertEqual(svc_type['svc_type'], "NodePort")
@@ -296,18 +305,77 @@ class TestUasCfg(unittest.TestCase):
         svc_type = self.uas_cfg_svc.get_svc_type(service_type="ssh")
         self.assertEqual(svc_type['ip_pool'], "customer")
         self.assertEqual(svc_type['svc_type'], "LoadBalancer")
+        self.__reset_runtime_config(self.uas_cfg_svc_customer_access)
+        svc_type = self.uas_cfg_svc_customer_access.get_svc_type(
+            service_type="ssh"
+        )
+        self.assertEqual(svc_type['ip_pool'], "customer-access")
+        self.assertEqual(svc_type['svc_type'], "LoadBalancer")
+        self.__reset_runtime_config()
+
+    @staticmethod
+    # pylint: disable=missing-docstring
+    def __load_bican_cases():
+        require_bican = os.environ.get('REQUIRE_BICAN', "false").lower()
+        expected_key = (
+            'expected_pool_soft' if  require_bican == "false"
+            else 'expected_pool_hard'
+        )
+        bican_cases = "swagger_server/test/bican_cases.yaml"
+        with open(bican_cases, 'r', encoding='utf-8') as infile:
+            cases = yaml.load(infile, Loader=yaml.FullLoader)['bican_cases']
+        return [(case[expected_key], case['networks']) for case in cases]
+
+    # pylint: disable=missing-docstring
+    def __get_service_types_bican(self, mocker):
+        bican_cases = self.__load_bican_cases()
+        self.assertTrue(bican_cases) # not empty or None to be sure test is run
+        self.__reset_runtime_config(self.uas_cfg_svc_customer_access)
+        for expected_pool, networks in bican_cases:
+            mocker.get(
+                "http://cray-sls/v1/networks",
+                text=json.dumps(networks),
+                status_code=200
+            )
+            if expected_pool is None:
+                with self.assertRaises(werkzeug.exceptions.BadRequest):
+                    svc_type = self.uas_cfg_svc_customer_access.get_svc_type(
+                        service_type="ssh"
+                    )
+            else:
+                svc_type = self.uas_cfg_svc_customer_access.get_svc_type(
+                    service_type="ssh"
+                )
+                self.assertEqual(svc_type['ip_pool'], expected_pool)
+                self.assertEqual(svc_type['svc_type'], "LoadBalancer")
         self.__reset_runtime_config()
 
     # pylint: disable=missing-docstring
-    def test_is_valid_host_path_mount_type(self):
+    def test_get_service_type_bican_no_require(self, mocker):
+        if 'REQUIRE_BICAN' in os.environ:
+            del os.environ['REQUIRE_BICAN']
+        self.__get_service_types_bican(mocker)
+
+    # pylint: disable=missing-docstring
+    def test_get_service_type_bican_require_false(self, mocker):
+        os.environ['REQUIRE_BICAN'] = "False" # use weird case to test lower
+        self.__get_service_types_bican(mocker)
+
+    # pylint: disable=missing-docstring
+    def test_get_service_type_bican_require_true(self, mocker):
+        os.environ['REQUIRE_BICAN'] = "True" # use weird case to test lower
+        self.__get_service_types_bican(mocker)
+
+    # pylint: disable=missing-docstring,unused-argument
+    def test_is_valid_host_path_mount_type(self, mocker):
         self.assertTrue(UAIVolume.is_valid_host_path_mount_type('FileOrCreate'))
         self.assertTrue(UAIVolume.is_valid_host_path_mount_type('DirectoryOrCreate'))
         self.assertFalse(UAIVolume.is_valid_host_path_mount_type('Wrong'))
         self.assertFalse(UAIVolume.is_valid_host_path_mount_type(''))
         self.assertFalse(UAIVolume.is_valid_host_path_mount_type(None))
 
-    # pylint: disable=missing-docstring
-    def test_validate_ssh_key(self):
+    # pylint: disable=missing-docstring,unused-argument
+    def test_validate_ssh_key(self, mocker):
         self.__reset_runtime_config(self.uas_cfg)
         self.assertFalse(UAIInstance.validate_ssh_key(None))
         self.assertFalse(UAIInstance.validate_ssh_key(""))
@@ -348,8 +416,8 @@ class TestUasCfg(unittest.TestCase):
             self.assertFalse(UAIInstance.validate_ssh_key(privateKey))
         self.__reset_runtime_config()
 
-    # pylint: disable=missing-docstring
-    def test_is_valid_volume_name(self):
+    # pylint: disable=missing-docstring,unused-argument
+    def test_is_valid_volume_name(self, mocker):
         # Capital letters are bad
         self.assertFalse(UAIVolume.is_valid_volume_name('NoCaps'))
         # can't have some of these
@@ -380,8 +448,8 @@ class TestUasCfg(unittest.TestCase):
         # 0 length not allowed
         self.assertFalse(UAIVolume.is_valid_volume_name(''))
 
-    # pylint: disable=missing-docstring
-    def test_vol_desc_errors(self):
+    # pylint: disable=missing-docstring,unused-argument
+    def test_vol_desc_errors(self, mocker):
         # No Source Type Specified
         err = UAIVolume.vol_desc_errors({})
         self.assertEqual(
@@ -494,16 +562,16 @@ class TestUasCfg(unittest.TestCase):
         )
         self.assertIs(err, None)
 
-    # pylint: disable=missing-docstring
-    def test_get_uai_namespace(self):
+    # pylint: disable=missing-docstring,unused-argument
+    def test_get_uai_namespace(self, mocker):
         self.__reset_runtime_config(self.uas_cfg)
         self.assertEqual(self.uas_cfg.get_uai_namespace(), "somens")
         self.__reset_runtime_config(self.uas_cfg_svc)
         self.assertEqual(self.uas_cfg_svc.get_uai_namespace(), "default")
         self.__reset_runtime_config()
 
-    # pylint: disable=missing-docstring
-    def test_data_model_expandable_get(self):
+    # pylint: disable=missing-docstring,unused-argument
+    def test_data_model_expandable_get(self, mocker):
         bad_id = 'invalid-object-id'
         ret = UAIImage.get(bad_id)
         self.assertIs(ret, None)
