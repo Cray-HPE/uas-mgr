@@ -51,7 +51,9 @@ unit_test_clean:
 
 chart_setup:
 	mkdir -p ${CHART_PATH}/.packaged
-	printf "\nglobal:\n  appVersion: ${VERSION}" >> ${CHART_PATH}/${CHART_NAME}/values.yaml
+	grep -v -e 'global:' -e 'appVersion:' ${CHART_PATH}/${CHART_NAME}/values.yaml > /tmp/values.yaml-${VERSION}
+	printf "\nglobal:\n  appVersion: ${VERSION}" >>  /tmp/values.yaml-${VERSION}
+	cp /tmp/values.yaml-${VERSION} ${CHART_PATH}/${CHART_NAME}/values.yaml
 
 chart_package:
 	helm dep up ${CHART_PATH}/${CHART_NAME}
