@@ -24,7 +24,7 @@
 #########################
 ### Base
 #########################
-FROM alpine:3.14.2 as base
+FROM alpine:3.14 as base
 
 # packages needed to run the app & install deps
 ENV BASE_PACKAGES g++ gcc libffi-dev linux-headers musl-dev openssl-dev python3 python3-dev py3-pip
@@ -42,6 +42,7 @@ WORKDIR /usr/src/app
 COPY requirements.txt /usr/src/app/
 # don't build cryptography Rust library
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST 1
+RUN pip install --upgrade pip
 RUN pip3 install --no-cache-dir \
                  --extra-index-url https://artifactory.algol60.net/artifactory/csm-python-modules/simple \
                  --trusted-host artifactory.algol60.net -r requirements.txt
