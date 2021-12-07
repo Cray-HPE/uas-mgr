@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [1.16.3] - 2021-12-07
+- The following vulnerabilities are fixed with a dockerfile update:
+  - https://snyk.io/vuln/SNYK-ALPINE314-BUSYBOX-1920733
+  - https://snyk.io/vuln/SNYK-ALPINE314-BUSYBOX-1920734
+  - https://snyk.io/vuln/SNYK-ALPINE314-BUSYBOX-1920744
+  - https://snyk.io/vuln/SNYK-ALPINE314-BUSYBOX-1920745
+  - https://snyk.io/vuln/SNYK-ALPINE314-BUSYBOX-1920755
 
 ## [1.16.1] - 2021-11-12
 - Fix missing reference handling when doing deep expansion of UAI Classes
