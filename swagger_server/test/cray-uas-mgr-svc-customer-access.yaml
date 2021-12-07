@@ -8,6 +8,8 @@ uas_ssh_type: "LoadBalancer"
 
 uas_ssh_lb_pool: "customer-access"
 
+dns_domain: "my-system.my-site.net"
+
 volume_mounts:
   - name: scratch
     mount_path: /scratch

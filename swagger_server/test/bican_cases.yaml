@@ -1,6 +1,7 @@
 bican_cases:
 - expected_pool_soft: "customer-access"
   expected_pool_hard: "customer-access"
+  expected_subdomain: "can.my-system.my-site.net"
   networks:
   - Name: "BICAN"
     FullName: "SystemDefaultRoute points the network name of the default route"
@@ -16,6 +17,7 @@ bican_cases:
       SystemDefaultRoute: "CAN"
 - expected_pool_soft: "customer-high-speed"
   expected_pool_hard: "customer-high-speed"
+  expected_subdomain: "chn.my-system.my-site.net"
   networks:
   - Name: "BICAN"
     FullName: "SystemDefaultRoute points the network name of the default route"
@@ -31,6 +33,7 @@ bican_cases:
       SystemDefaultRoute: "CHN"
 - expected_pool_soft: "customer-access"
   expected_pool_hard: "customer-access"
+  expected_subdomain: "can.my-system.my-site.net"
   networks:
   - Name: "BICAN"
     FullName: "SystemDefaultRoute points the network name of the default route"
@@ -46,6 +49,7 @@ bican_cases:
       SystemDefaultRoute: "CMN"
 - expected_pool_soft: "customer-access"
   expected_pool_hard: null
+  expected_subdomain: "can.my-system.my-site.net"
   networks:
   - Name: "BICAN"
     FullName: "SystemDefaultRoute points the network name of the default route"
@@ -61,6 +65,7 @@ bican_cases:
       SystemDefaultRoute: "BAD_VALUE"
 - expected_pool_soft: "customer-access"
   expected_pool_hard: null
+  expected_subdomain: "can.my-system.my-site.net"
   networks:
   - Name: "some_other_network"
     FullName: "network to verify that a non-empty list with no BICAN works"
@@ -76,7 +81,9 @@ bican_cases:
       SystemDefaultRoute: "CHN"
 - expected_pool_soft: "customer-access"
   expected_pool_hard: null
+  expected_subdomain: "can.my-system.my-site.net"
   networks: []
 - expected_pool_soft: "customer-access"
   expected_pool_hard: null
+  expected_subdomain: "can.my-system.my-site.net"
   networks: null

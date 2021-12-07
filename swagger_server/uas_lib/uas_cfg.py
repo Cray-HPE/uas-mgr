@@ -346,8 +346,10 @@ class UasCfg:
         """Get the service type for UAIs from the config.
 
         """
+        subdomain_map = {}
+        domain = "local"
         cfg = self.get_config()
-        svc_type = {'svc_type': None, 'ip_pool': None, 'valid': False}
+        svc_type = {'svc_type': None, 'ip_pool': None, 'valid': False, 'sub_domain': None}
         if not cfg:
             # Return defaults if no configuration exists
             if service_type == "service":
@@ -363,6 +365,12 @@ class UasCfg:
                 svc_type['svc_type'] = cfg.get('uas_ssh_type', 'NodePort')
                 if svc_type['svc_type'] == "LoadBalancer":
                     svc_type['ip_pool'] = cfg.get('uas_ssh_lb_pool', None)
+            domain = cfg.get('dns_domain', 'local')
+            subdomain_map = {
+                'customer-access': 'can' + '.' + domain,
+                'customer-high-speed': 'chn' + '.' + domain,
+                'customer-management': 'cmn' + '.' + domain,
+            }
         svc_type['valid'] = svc_type['svc_type'] in ['NodePort',
                                                      'ClusterIP',
                                                      'LoadBalancer']
@@ -375,6 +383,12 @@ class UasCfg:
             svc_type['ip_pool'] if svc_type['ip_pool'] != 'customer-access'
             else self.__get_bican_pool()
         )
+
+        # Based on the IP pool requested, set up a DNS sub-domain for the UAI to
+        # reside on.  This is used for external DNS if the UAI has a public IP
+        # address.
+        svc_type['subdomain'] = subdomain_map.get(svc_type['ip_pool'], None)
+
         return svc_type
 
     @staticmethod

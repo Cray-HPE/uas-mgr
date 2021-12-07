@@ -6,6 +6,7 @@ uasConfig:
     - 30123
   uas_ssh_type: "LoadBalancer"
   uas_ssh_lb_pool: "customer-access"
+  dns_domain: "local"  # override this with the system FQDN (e.g. 'my-system.my-site.org')
 
 # Fail secure (true) or compatible (false) if no BICAN
 # can be detected

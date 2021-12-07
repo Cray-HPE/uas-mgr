@@ -21,6 +21,14 @@ data:
     # will use.
     uas_ip: "{{ .Values.uasConfig.ip }}"
 
+    # UAS System DNS domain name e.g. 'my-system.my-site.net' which will be
+    # used in conjunction with a customer network specifier ('cmn', 'chn' or
+    # 'can') and a UAI name to compose an external DNS name for public IP UAIs.
+    # For example:
+    #
+    #    uai-broker-7657fa61.can.my-system.my-site.net
+    dns_domain: "{{ .Values.uasConfig.dns_domain }}"
+
     # UAS Ports
     # This section defines the ports that the UAS instance services will expose
     # for user access.

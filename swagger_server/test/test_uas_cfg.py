@@ -324,14 +324,21 @@ class TestUasCfg(unittest.TestCase):
         bican_cases = "swagger_server/test/bican_cases.yaml"
         with open(bican_cases, 'r', encoding='utf-8') as infile:
             cases = yaml.load(infile, Loader=yaml.FullLoader)['bican_cases']
-        return [(case[expected_key], case['networks']) for case in cases]
+        return [
+            (
+                case[expected_key],
+                case['expected_subdomain'],
+                case['networks']
+            )
+            for case in cases
+        ]
 
     # pylint: disable=missing-docstring
     def __get_service_types_bican(self, mocker):
         bican_cases = self.__load_bican_cases()
         self.assertTrue(bican_cases) # not empty or None to be sure test is run
         self.__reset_runtime_config(self.uas_cfg_svc_customer_access)
-        for expected_pool, networks in bican_cases:
+        for expected_pool, expected_subdomain, networks in bican_cases:
             mocker.get(
                 "http://cray-sls/v1/networks",
                 text=json.dumps(networks),
@@ -348,6 +355,7 @@ class TestUasCfg(unittest.TestCase):
                 )
                 self.assertEqual(svc_type['ip_pool'], expected_pool)
                 self.assertEqual(svc_type['svc_type'], "LoadBalancer")
+                self.assertEqual(svc_type['subdomain'], expected_subdomain)
         self.__reset_runtime_config()
 
     # pylint: disable=missing-docstring

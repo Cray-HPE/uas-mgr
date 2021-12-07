@@ -342,6 +342,8 @@ class UAIInstance:
         # svc_type is a dict with the following fields:
         #   'svc_type': (NodePort, ClusterIP, or LoadBalancer)
         #   'ip_pool': (None, or a specific pool)  Valid only for LoadBalancer.
+        #   'subdomain': the externaldns sub-domain that matches the ip-pool.  Valid
+        #                only for LoadBalancer.
         #   'valid': (True or False) is svc_type is valid or not
         svc_type = uas_cfg.get_svc_type(service_type)
         if not svc_type['valid']:
@@ -358,8 +360,10 @@ class UAIInstance:
         if svc_type['svc_type'] == "LoadBalancer" and svc_type['ip_pool']:
             # A specific IP pool is given, update the metadata with
             # annotations
+            hostname = self.job_name + '.' + svc_type['subdomain']
             metadata.annotations = {
-                "metallb.universe.tf/address-pool": svc_type['ip_pool']
+                "metallb.universe.tf/address-pool": svc_type['ip_pool'],
+                "external-dns.alpha.kubernetes.io/hostname": hostname,
             }
         spec = client.V1ServiceSpec(
             selector={'app': self.job_name},
