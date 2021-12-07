@@ -99,7 +99,7 @@ cray-service:
     cray-uas-mgr:
       name: cray-uas-mgr
       image:
-        repository: cray/cray-uas-mgr
+        repository: artifactory.algol60.net/csm-docker/stable/cray-uas-mgr
       env:
         # The following ENV variable settings are taken from
         # 'templates/env_configmap.yaml' which, in turn takes
@@ -155,6 +155,3 @@ cray-service:
 
   etcdCluster:
     enabled: true
-
-global:
-  appVersion: 1.13.4
