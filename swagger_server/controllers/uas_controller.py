@@ -34,7 +34,7 @@ from swagger_server.uas_lib.uas_cfg import UasCfg
 uas_cfg = UasCfg()  # pylint: disable=invalid-name
 
 
-def create_uai(publickey=None, imagename=None, ports=None):
+def create_uai(publickey=None, imagename=None, ports=None, uai_name=None):
     """Create a new UAI for user
 
     Create a new UAI for the user
@@ -50,7 +50,8 @@ def create_uai(publickey=None, imagename=None, ports=None):
     """
     uai_response = UaiManager().create_uai(public_key=publickey,
                                            imagename=imagename,
-                                           opt_ports=ports)
+                                           opt_ports=ports,
+                                           uai_name=uai_name)
     return uai_response
 
 
@@ -161,7 +162,8 @@ def delete_all_uais(username=None):
 def create_uai_admin(class_id=None,
                      owner=None,
                      passwd_str=None,
-                     publickey_str=None):
+                     publickey_str=None,
+                     uai_name=None):
     """ Create a UAI Administratively
 
     :param class_id: the ID (UUID) of the class used to create the UAI
@@ -178,7 +180,8 @@ def create_uai_admin(class_id=None,
         class_id=class_id,
         owner=owner,
         passwd_str=passwd_str,
-        public_key_str=publickey_str
+        public_key_str=publickey_str,
+        uai_name=uai_name
     )
 
 

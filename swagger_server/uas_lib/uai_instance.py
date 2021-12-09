@@ -26,6 +26,7 @@ Container class for UAI Instances
 import os
 import json
 import uuid
+import re
 from flask import abort
 import sshpubkeys
 import sshpubkeys.exceptions as sshExceptions
@@ -95,7 +96,8 @@ class UAIInstance:
                 abort(400, "Invalid ssh public key.")
         return public_key_str
 
-    def __init__(self, owner=None, public_key=None, passwd_str=None):
+    def __init__(self, owner=None, public_key=None, passwd_str=None,
+                 uai_name=None):
         """Constructor
 
         """
@@ -107,7 +109,14 @@ class UAIInstance:
         self.passwd_str = passwd_str
         dep_id = str(uuid.uuid4().hex[:8])
         dep_owner = "no-owner" if owner is None else self.owner
-        self.job_name = 'uai-' + dep_owner + '-' + dep_id
+        self.job_name = (
+            uai_name if uai_name else
+            'uai-' + dep_owner + '-' + dep_id
+        )
+        regex = re.compile('^(?![0-9]+$)(?!-)[a-z0-9-]{1,63}(?<!-)$')
+        if not regex.match(self.job_name):
+            abort(400, "'%s' is not a valid UAI name" % self.job_name)
+
 
     def get_service_name(self):
         """ Compute the service name of a UAI based on UAI parameters.

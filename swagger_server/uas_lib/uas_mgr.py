@@ -71,18 +71,20 @@ class UasManager(UasBase):
         logger.debug("uai's deleted: %s'", resp_list)
         return resp_list
 
+    # pylint: disable=too-many-arguments
     def create_uai(self,
                    class_id=None,
                    owner=None,
                    passwd_str=None,
-                   public_key_str=None):
+                   public_key_str=None,
+                   uai_name=None):
         """Create a new UAI
 
         """
         logger.debug(
             "create UAI class_id = %s, owner = %s, passwd_str = %s, "
-            "public_key_str = %s",
-            class_id, owner, passwd_str, public_key_str
+            "public_key_str = %s, uai_name = '%s'",
+            class_id, owner, passwd_str, public_key_str, uai_name
         )
         self.uas_cfg.get_config()
         missing = ""
@@ -97,7 +99,8 @@ class UasManager(UasBase):
         uai_instance = UAIInstance(
             owner=owner,
             passwd_str=passwd_str,
-            public_key=public_key_str
+            public_key=public_key_str,
+            uai_name=uai_name
         )
         ret = self.deploy_uai(uai_class, uai_instance, self.uas_cfg)
         logger.debug("uai's created: %s'", ret)
