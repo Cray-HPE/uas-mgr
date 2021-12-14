@@ -509,7 +509,8 @@ class TestUasController(unittest.TestCase):
                 default=default,
                 public_ip=public_ip,
                 priority_class_name=priority_class_name,
-                namespace=namespace
+                namespace=namespace,
+                service_account="service-account"
             )
             self.assertIsInstance(resp, dict)
             self.assertIn('class_id', resp)
@@ -527,6 +528,8 @@ class TestUasController(unittest.TestCase):
             )
             self.assertIn('namespace', resp)
             self.assertEqual(namespace, resp['namespace'])
+            self.assertIn('service_account', resp)
+            self.assertEqual('service-account', resp['service_account'])
             self.__delete_test_class(class_id)
 
     # pylint: disable=missing-docstring
