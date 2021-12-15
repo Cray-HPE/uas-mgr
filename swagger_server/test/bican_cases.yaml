@@ -1,0 +1,89 @@
+bican_cases:
+- expected_pool_soft: "customer-access"
+  expected_pool_hard: "customer-access"
+  expected_subdomain: "can.my-system.my-site.net"
+  networks:
+  - Name: "BICAN"
+    FullName: "SystemDefaultRoute points the network name of the default route"
+    IPRanges:
+    - "0.0.0.0/0"
+    Type: "ethernet"
+    ExtraProperties:
+      CIDR: "0.0.0.0/0"
+      VlanRange:
+      - 0
+      MTU: 9000
+      Subnets: []
+      SystemDefaultRoute: "CAN"
+- expected_pool_soft: "customer-high-speed"
+  expected_pool_hard: "customer-high-speed"
+  expected_subdomain: "chn.my-system.my-site.net"
+  networks:
+  - Name: "BICAN"
+    FullName: "SystemDefaultRoute points the network name of the default route"
+    IPRanges:
+    - "0.0.0.0/0"
+    Type: "ethernet"
+    ExtraProperties:
+      CIDR: "0.0.0.0/0"
+      VlanRange:
+      - 0
+      MTU: 9000
+      Subnets: []
+      SystemDefaultRoute: "CHN"
+- expected_pool_soft: "customer-access"
+  expected_pool_hard: "customer-access"
+  expected_subdomain: "can.my-system.my-site.net"
+  networks:
+  - Name: "BICAN"
+    FullName: "SystemDefaultRoute points the network name of the default route"
+    IPRanges:
+    - "0.0.0.0/0"
+    Type: "ethernet"
+    ExtraProperties:
+      CIDR: "0.0.0.0/0"
+      VlanRange:
+      - 0
+      MTU: 9000
+      Subnets: []
+      SystemDefaultRoute: "CMN"
+- expected_pool_soft: "customer-access"
+  expected_pool_hard: null
+  expected_subdomain: "can.my-system.my-site.net"
+  networks:
+  - Name: "BICAN"
+    FullName: "SystemDefaultRoute points the network name of the default route"
+    IPRanges:
+    - "0.0.0.0/0"
+    Type: "ethernet"
+    ExtraProperties:
+      CIDR: "0.0.0.0/0"
+      VlanRange:
+      - 0
+      MTU: 9000
+      Subnets: []
+      SystemDefaultRoute: "BAD_VALUE"
+- expected_pool_soft: "customer-access"
+  expected_pool_hard: null
+  expected_subdomain: "can.my-system.my-site.net"
+  networks:
+  - Name: "some_other_network"
+    FullName: "network to verify that a non-empty list with no BICAN works"
+    IPRanges:
+    - "0.0.0.0/0"
+    Type: "ethernet"
+    ExtraProperties:
+      CIDR: "0.0.0.0/0"
+      VlanRange:
+      - 0
+      MTU: 9000
+      Subnets: []
+      SystemDefaultRoute: "CHN"
+- expected_pool_soft: "customer-access"
+  expected_pool_hard: null
+  expected_subdomain: "can.my-system.my-site.net"
+  networks: []
+- expected_pool_soft: "customer-access"
+  expected_pool_hard: null
+  expected_subdomain: "can.my-system.my-site.net"
+  networks: null

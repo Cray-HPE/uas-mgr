@@ -122,7 +122,7 @@ class TestUasMgr(unittest.TestCase):
             },
             labels
         )
-        uai_instance = UAIInstance(owner="test_user")
+        uai_instance = UAIInstance(owner="test-user")
         labels = uai_instance.gen_labels()
         self.__compare_dicts(
             {
@@ -168,24 +168,24 @@ class TestUasMgr(unittest.TestCase):
 
     #pylint: disable=missing-docstring
     def test_uai_instance(self):
-        passwd_str = "user::1234:5678:User Name:/user/home/directory:/user/shell"
+        passwd_str = "test-user::1234:5678:User Name:/user/home/directory:/user/shell"
         # Test with an io.Bytes() public key
         self.public_key.seek(0)
         uai_instance = UAIInstance(
-            owner="test_user",
+            owner="test-user",
             passwd_str=passwd_str,
             public_key=self.public_key
         )
-        self.assertEqual(uai_instance.owner, "test_user")
+        self.assertEqual(uai_instance.owner, "test-user")
         self.assertEqual(uai_instance.passwd_str, passwd_str)
         self.assertEqual(uai_instance.public_key_str, self.public_key_str)
         # Test with a string public key
         uai_instance = UAIInstance(
-            owner="test_user",
+            owner="test-user",
             passwd_str=passwd_str,
             public_key=self.public_key_str
         )
-        self.assertEqual(uai_instance.owner, "test_user")
+        self.assertEqual(uai_instance.owner, "test-user")
         self.assertEqual(uai_instance.passwd_str, passwd_str)
         self.assertEqual(uai_instance.public_key_str, self.public_key_str)
 
@@ -193,8 +193,8 @@ class TestUasMgr(unittest.TestCase):
     def test_get_env(self):
         self.public_key.seek(0)
         uai_instance = UAIInstance(
-            owner="test_user",
-            passwd_str="user::1234:5678:User Name:/user/home/directory:/user/shell",
+            owner="test-user",
+            passwd_str="test-user::1234:5678:User Name:/user/home/directory:/user/shell",
             public_key=self.public_key
         )
         uai_class = UAIClass(
@@ -219,8 +219,8 @@ class TestUasMgr(unittest.TestCase):
         image.put()
         self.public_key.seek(0)
         uai_instance = UAIInstance(
-            owner="test_user",
-            passwd_str="user::1234:5678:User Name:/user/home/directory:/user/shell",
+            owner="test-user",
+            passwd_str="test-user::1234:5678:User Name:/user/home/directory:/user/shell",
             public_key=self.public_key
         )
         uai_class = UAIClass(
@@ -287,8 +287,8 @@ class TestUasMgr(unittest.TestCase):
     def test_create_service_object(self):
         self.public_key.seek(0)
         uai_instance = UAIInstance(
-            owner="test_user",
-            passwd_str="user::1234:5678:User Name:/user/home/directory:/user/shell",
+            owner="test-user",
+            passwd_str="test-user::1234:5678:User Name:/user/home/directory:/user/shell",
             public_key=self.public_key
         )
         uai_class = UAIClass(

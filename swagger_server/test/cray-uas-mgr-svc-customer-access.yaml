@@ -1,0 +1,34 @@
+---
+uas_ip: 10.100.240.14
+
+uas_ports:
+  - 30123
+
+uas_ssh_type: "LoadBalancer"
+
+uas_ssh_lb_pool: "customer-access"
+
+dns_domain: "my-system.my-site.net"
+
+volume_mounts:
+  - name: scratch
+    mount_path: /scratch
+    host_path: /scratch
+  - name: lus
+    mount_path: /lus/snx11023
+    host_path: /lus/snx11023
+  - name: slurm-config
+    mount_path: /etc/slurm
+    config_map: slurm-map
+  - name: munge-key
+    mount_path: /root/slurm_config/munge
+    secret_name: munge-secret
+  - name: time
+    mount_path: /etc/localtime
+    host_path: /etc/localtime
+    type: FileOrCreate
+
+uas_images:
+  default_image: "dtr.dev.cray.com:443/cray/cray-uas-sles15:latest"
+  images:
+    - "dtr.dev.cray.com:443/cray/cray-uas-sles15:latest"

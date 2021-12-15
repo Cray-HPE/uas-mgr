@@ -6,6 +6,11 @@ uasConfig:
     - 30123
   uas_ssh_type: "LoadBalancer"
   uas_ssh_lb_pool: "customer-access"
+  dns_domain: "local"  # override this with the system FQDN (e.g. 'my-system.my-site.org')
+
+# Fail secure (true) or compatible (false) if no BICAN
+# can be detected
+  require_bican: false
 
 # UAI namespace
   uai_namespace: "user"
@@ -120,6 +125,11 @@ cray-service:
             configMapKeyRef:
               name: cray-uas-mgr-config
               key: cray-uas-mgr.logging_level
+        - name: REQUIRE_BICAN
+          valueFrom:
+            configMapKeyRef:
+              name: cray-uas-mgr-config
+              key: cray-uas-mgr.require_bican
       ports:
         - name: http
           containerPort: 8088

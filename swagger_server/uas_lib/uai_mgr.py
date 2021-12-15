@@ -131,14 +131,14 @@ class UaiManager(UasBase):
         return uai_class
 
     # pylint: disable=too-many-branches,too-many-statements,too-many-locals
-    def create_uai(self, public_key, imagename, opt_ports):
+    def create_uai(self, public_key, imagename, opt_ports, uai_name):
         """Create a new UAI
 
         """
         logger.debug(
             "creating a new UAI, legacy mode, public_key = %s, "
-            "image_name = %s, opt_port = %s",
-            public_key, imagename, opt_ports
+            "image_name = %s, opt_port = %s, uai_name = '%s'",
+            public_key, imagename, opt_ports, uai_name
         )
         if not public_key:
             logger.warning("create_uai - missing public key")
@@ -178,7 +178,8 @@ class UaiManager(UasBase):
         uai_instance = UAIInstance(
             owner=self.username,
             public_key=public_key,
-            passwd_str=self.passwd
+            passwd_str=self.passwd,
+            uai_name=uai_name
         )
         ret = self.deploy_uai(uai_class, uai_instance, self.uas_cfg)
         logger.debug("created UAI (legacy mode): %s", ret)

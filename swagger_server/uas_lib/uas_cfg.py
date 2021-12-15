@@ -23,10 +23,12 @@
    Manages Cray User Access Node instances.
 """
 
-
+import os
+import json
 import yaml
 from flask import abort
 from kubernetes import client
+import requests
 from swagger_server.uas_lib.uas_logging import logger
 from swagger_server.uas_data_model.uai_volume import UAIVolume
 from swagger_server.uas_data_model.uai_image import UAIImage
@@ -253,12 +255,101 @@ class UasCfg:
             for port in cfg_ports
         ]
 
+    @staticmethod
+    def __get_sls_networks():
+        """Call into the SLS to get the list of configured networks
+
+        """
+        logger.debug("retrieving SLS network data")
+        try:
+            response = requests.get("http://cray-sls/v1/networks")
+            # raise exception for 4XX and 5XX errors
+            response.raise_for_status()
+        except requests.exceptions.RequestException as err:
+            logger.warning(
+                "retrieving BICAN information %r %r", type(err), err
+            )
+            return []
+        except Exception as err:  # pylint: disable=broad-except
+            logger.warning(
+                "retrieving BICAN information %r %r", type(err), err
+            )
+            return []
+        try:
+            ret = response.json() or []
+        except json.decoder.JSONDecodeError as err:
+            logger.warning(
+                "decoding BICAN information %r %r", type(err), err
+            )
+            return []
+        logger.debug("retrieved SLS network data: %s", ret)
+        return ret
+
+    @classmethod
+    def __get_bican_pool(cls):
+        """Learn the Bifurcated CAN address pool to be
+        used (CHN or CAN) for user access.  If the pool can't be
+        learned, then either use a default of 'customer_access' if
+        REQUIRE_BICAN is false or not set, or fail with an informative
+        error message.
+
+        """
+        # Declare a default BiCAN setting to use if none can be found.
+        # Note that the SystemDefaultRoute (which would normally be
+        # 'CAN' or 'CHN' is None here, that signals that no BiCAN
+        # config was found in case we are enforcing BiCAN existence.
+        default_props = {
+            'SystemDefaultRoute': None
+        }
+        default_bican = {
+            'Name': "BICAN",
+            'ExtraProperties': default_props,
+        }
+        pool_map = {
+            'CAN': "customer-access",
+            'CHN': "customer-high-speed",
+            'CMN': "customer-access",
+        }
+        logger.debug("getting require_bican")
+        require_bican = os.environ.get('REQUIRE_BICAN', 'false').lower()
+        logger.debug("require_bican = %s", require_bican)
+        default_pool = (
+            "customer-access" if require_bican == 'false'
+            else None
+        )
+        logger.debug("default_pool = %s", default_pool)
+        networks = cls.__get_sls_networks()
+        bican_list = [net for net in networks if net['Name'] == "BICAN"]
+        bican = bican_list[0] if bican_list else default_bican
+        bican_props = bican.get('ExtraProperties', default_props)
+        logger.debug("bican_props: %s", bican_props)
+        pool = pool_map.get(bican_props['SystemDefaultRoute'], default_pool)
+        logger.debug("pool = %s", pool)
+        if pool is None:
+            # Didn't find a pool and this system doesn't allow a
+            # default pool so fail here.
+            logger.error(
+                "can't find valid BiCAN config in SLS: networks = %s",
+                networks
+            )
+            msg = (
+                "Bifurcated CAN configuration is required on the host system "
+                "and could not be found.  If there is no Bifurcated "
+                "CAN on this platform, ask your system administrator "
+                "to set 'require_bican' to false in the site "
+                "customizations for cray-uas-mgr."
+            )
+            abort(400, msg)
+        return pool
+
     def get_svc_type(self, service_type=None):
         """Get the service type for UAIs from the config.
 
         """
+        subdomain_map = {}
+        domain = "local"
         cfg = self.get_config()
-        svc_type = {'svc_type': None, 'ip_pool': None, 'valid': False}
+        svc_type = {'svc_type': None, 'ip_pool': None, 'valid': False, 'sub_domain': None}
         if not cfg:
             # Return defaults if no configuration exists
             if service_type == "service":
@@ -274,9 +365,30 @@ class UasCfg:
                 svc_type['svc_type'] = cfg.get('uas_ssh_type', 'NodePort')
                 if svc_type['svc_type'] == "LoadBalancer":
                     svc_type['ip_pool'] = cfg.get('uas_ssh_lb_pool', None)
+            domain = cfg.get('dns_domain', 'local')
+            subdomain_map = {
+                'customer-access': 'can' + '.' + domain,
+                'customer-high-speed': 'chn' + '.' + domain,
+                'customer-management': 'cmn' + '.' + domain,
+            }
         svc_type['valid'] = svc_type['svc_type'] in ['NodePort',
                                                      'ClusterIP',
                                                      'LoadBalancer']
+        # Automatic switching between CHN and CAN for Bifurcated CAN support.
+        # If the configuration says `customer_access` for the LB IP Pool, then
+        # set it based on what the BICAN configuration says.  Otherwise, leave
+        # it alone because someone actually bothered to make it something
+        # else (or we aren't on the LB at all).
+        svc_type['ip_pool'] = (
+            svc_type['ip_pool'] if svc_type['ip_pool'] != 'customer-access'
+            else self.__get_bican_pool()
+        )
+
+        # Based on the IP pool requested, set up a DNS sub-domain for the UAI to
+        # reside on.  This is used for external DNS if the UAI has a public IP
+        # address.
+        svc_type['subdomain'] = subdomain_map.get(svc_type['ip_pool'], None)
+
         return svc_type
 
     @staticmethod

@@ -308,7 +308,7 @@ info:
     Delete the specified resource limit / request configuration from the
     list of available choices.
 
-  version: "1.16.4"
+  version: "1.17.0"
 
 servers:
   - url: "/apis/uas-mgr/v1"
@@ -644,6 +644,22 @@ paths:
           The SSH Public key used to authorize use of the UAI through SSH.  This is a
           string in the form of a public key, for example the contents of an id_rsa.pub
           file.
+      - name: "uai_name"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+        description: |
+          An optional name to be assigned to the UAI on creation.  If this is
+          not specified, a default name of the form <owner>-uai-<short-uuid>
+          is used.  The UAI name is used both as the name of the UAI in the
+          UAS and as the external DNS hostname of a publicly accessible UAI.
+          If the requested UAI name is the same as an already running UAI,
+          no new UAI is created, but the information about the existing UAI
+          is returned.  UAI names may contain up to 63 lower case alphanumeric
+          or '-' characters, and must start and end with an alphanumeric
+          character.
+        example: "my-broker"
       responses:
         201:
           description: "UAI Created"
