@@ -769,7 +769,7 @@ class UasManager(UasBase):
 
         """
         valid_re = re.compile(r"^[a-zA-Z0-9-]+$")
-        if valid_re.match(service_account) is not None:
+        if valid_re.match(service_account) is None:
             abort(
                 400,
                 "Invalid service account name '%s'" %
@@ -877,6 +877,8 @@ class UasManager(UasBase):
         if timeout:
             self._validate_timeout(timeout)
         self._validate_replicas(replicas)
+        if service_account is not None:
+            self._validate_service_account(service_account)
         timeout = json.loads(timeout) if timeout is not None else None
         opt_ports_list = [
             port.strip()
