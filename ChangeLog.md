@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [1.18.0] - 2021-12-15
+- Took over PSP, ClusterRole and RoleRef for `uas` namespace from cray-psp
+
 ## [1.17.0] - 2021-12-15
 - Add Bifurcated CAN support for UAIs
 

@@ -13,3 +13,68 @@ spec:
   egress:
    - hosts:
      - 'services/*'
+---
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: uas-default-psp
+spec:
+  allowPrivilegeEscalation: true
+  allowedCapabilities:
+  - NET_ADMIN
+  - NET_RAW
+  allowedHostPaths:
+  - pathPrefix: /lustre
+  - pathPrefix: /root/registry
+  - pathPrefix: /lib/modules
+  - pathPrefix: /
+  - pathPrefix: /var/lib/nfsroot/nmd
+  - pathPrefix: /lus
+  - pathPrefix: /var/tmp/cps-local
+  fsGroup:
+    rule: RunAsAny
+  hostNetwork: true
+  privileged: true
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  volumes:
+  - configMap
+  - emptyDir
+  - projected
+  - secret
+  - downwardAPI
+  - persistentVolumeClaim
+  - hostPath
+  - flexVolume
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: uas-default-psp
+rules:
+- apiGroups:
+  - policy
+  resourceNames:
+  - uas-default-psp
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: uas-default-psp
+  namespace: uas
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: uas-default-psp
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: uas
