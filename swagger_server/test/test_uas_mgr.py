@@ -2,7 +2,7 @@
 
 # MIT License
 #
-# (C) Copyright [2020] Hewlett Packard Enterprise Development LP
+# (C) Copyright [2020-2022] Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -35,6 +35,7 @@ import flask
 from swagger_server.uas_lib.uai_mgr import UaiManager
 from swagger_server.uas_lib.uas_mgr import UasManager
 from swagger_server.uas_lib.uai_instance import UAIInstance
+from swagger_server.uas_lib.vault import get_vault_path
 from swagger_server.uas_data_model.uai_class import UAIClass
 from swagger_server.uas_data_model.uai_image import UAIImage
 
@@ -201,12 +202,15 @@ class TestUasMgr(unittest.TestCase):
             uai_creation_class=str(uuid.uuid4())
         )
         env = uai_instance.get_env(uai_class)
+        vault_path = get_vault_path(uai_class.uai_creation_class)
         self.__check_env(
             {
                 'UAS_NAME': uai_instance.get_service_name(),
                 'UAS_PASSWD': uai_instance.passwd_str,
                 'UAS_PUBKEY': uai_instance.public_key_str,
-                'UAI_CREATION_CLASS': uai_class.uai_creation_class
+                'UAI_CREATION_CLASS': uai_class.uai_creation_class,
+                'UAI_REPLICAS': str(uai_class.replicas),
+                'UAI_SHARED_SECRET_PATH': vault_path,
             },
             env
         )
@@ -263,6 +267,7 @@ class TestUasMgr(unittest.TestCase):
                 'UAS_NAME': uai_instance.get_service_name(),
                 'UAS_PASSWD': uai_instance.passwd_str,
                 'UAS_PUBKEY': uai_instance.public_key_str,
+                'UAI_REPLICAS': str(uai_class.replicas),
             },
             template.spec.containers[0].env
         )

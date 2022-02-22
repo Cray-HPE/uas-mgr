@@ -1,6 +1,6 @@
 # MIT License
 #
-# (C) Copyright [2020] Hewlett Packard Enterprise Development LP
+# (C) Copyright [2020-2022] Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,7 @@ from flask import abort
 from kubernetes import client
 from swagger_server.uas_lib.uas_base import UasBase
 from swagger_server.uas_lib.uai_instance import UAIInstance
+from swagger_server.uas_lib.vault import remove_vault_data
 from swagger_server.uas_data_model.uai_image import UAIImage
 from swagger_server.uas_data_model.uai_volume import UAIVolume
 from swagger_server.uas_data_model.uai_resource import UAIResource
@@ -819,6 +820,7 @@ class UasManager(UasBase):
         if uai_class is None:
             abort(404, "UAI Class '%s' does not exist" % class_id)
         uai_class.remove() # don't use x.delete() you actually want it removed
+        remove_vault_data(class_id)
         ret = self._expanded_uai_class(uai_class)
         logger.debug("deleted UAI class '%s': %s", class_id, ret)
         return ret
@@ -1136,6 +1138,7 @@ class UasManager(UasBase):
         uai_classes = [] if uai_classes is None else uai_classes
         for uai_class in uai_classes:
             uai_class.remove()
+            remove_vault_data(uai_class)
         cfgs = PopulatedConfig.get_all()
         cfgs = [] if cfgs is None else cfgs
         for cfg in cfgs:
