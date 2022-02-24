@@ -5,7 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-## [1.18.0] - 2021-12-15
+## [1.19.0] - 2022-02-24
+- Add logic for managing Broker UAI shared secrets
+
+## [1.18.0] - 2022-02-01
 - Took over PSP, ClusterRole and RoleRef for `uas` namespace from cray-psp
 
 ## [1.17.0] - 2021-12-15
