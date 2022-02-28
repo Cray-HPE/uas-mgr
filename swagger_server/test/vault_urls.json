@@ -1,0 +1,135 @@
+{
+    "get": {
+        "http://cray-vault.vault:8200/v1/secret/broker-uai/90328aa4-7628-40d9-8a98-6589d794b782": {
+            "response": {
+                "request_id": "ad4003b7-1fb3-368a-1b47-4a6623f4ce88",
+                "lease_id": "",
+                "renewable": false,
+                "lease_duration": 0,
+                "data": {
+                    "keys": [
+                        "host",
+                        "internal/"
+                    ]
+                },
+                "wrap_info": null,
+                "warnings": null,
+                "auth": null
+            },
+            "params": {
+                "list": true
+            }
+        },
+        "http://cray-vault.vault:8200/v1/secret/broker-uai/90328aa4-7628-40d9-8a98-6589d794b782/internal/": {
+            "response": {
+                "request_id": "057b1802-2472-9236-da98-dfc28cf557bf",
+                "lease_id": "",
+                "renewable": false,
+                "lease_duration": 0,
+                "data": {
+                    "keys": [
+                        "vshasta"
+                    ]
+                },
+                "wrap_info": null,
+                "warnings": null,
+                "auth": null
+            },
+            "params": {
+                "list": true
+            }
+        },
+        "http://cray-vault.vault:8200/v1/secret/broker-uai/90328aa4-7628-40d9-8a98-6589d794b782/host": {
+            "response": {
+                "errors": []
+            },
+            "params": {
+                "list": true
+            }
+        },
+        "http://cray-vault.vault:8200/v1/secret/broker-uai/90328aa4-7628-40d9-8a98-6589d794b782/internal/vshasta": {
+            "response": {
+                "errors": []
+            },
+            "params": {
+                "list": true
+            }
+        },
+        "http://cray-vault.vault:8200/v1/secret/broker-uai/90328aa4-7628-40d9-8a98-6589d794b782/host": {
+            "response": {
+                "request_id": "56b076d9-f733-583d-6a6e-2ba6f606da1d",
+                "lease_id": "",
+                "renewable": false,
+                "lease_duration": 2764800,
+                "data": {
+                    "ssh_host_dsa_key": "DSA PRIVATE-KEY-DATA",
+                    "ssh_host_dsa_key.pub": "DSA PUBLIC-KEY DATA",
+                    "ssh_host_ecdsa_key": "ECDSA PRIVATE-KEY-DATA",
+                    "ssh_host_ecdsa_key.pub": "ECDSA PUBLIC-KEY-DATA",
+                    "ssh_host_ed25519_key": "ED25519 PRIVATE-KEY-DATA",
+                    "ssh_host_ed25519_key.pub": "ED25519 PUBLIC-KEY-DATA",
+                    "ssh_host_rsa_key": "RSA PRIVATE-KEY-DATA",
+                    "ssh_host_rsa_key.pub": "RSA PUBLIC-KEY-DATA"
+                },
+                "wrap_info": null,
+                "warnings": null,
+                "auth": null
+            }
+        },
+        "http://cray-vault.vault:8200/v1/secret/broker-uai/90328aa4-7628-40d9-8a98-6589d794b782/internal/vshasta": {
+            "response": {
+                "request_id": "d2204eaf-2616-9155-cdf1-71522d546043",
+                "lease_id": "",
+                "renewable": false,
+                "lease_duration": 2764800,
+                "data": {
+                    "id_rsa": "RSA PRIVATE-KEY-DATA",
+                    "id_rsa.pub": "RSA PUBLIC-KEY-DATA"
+                },
+                "wrap_info": null,
+                "warnings": null,
+                "auth": null
+            }
+        }
+    },
+    "post": {
+        "http://cray-vault.vault:8200/v1/auth/kubernetes/login": {
+            "response": {
+                "auth": {
+                    "accessor": "JvonXDzMkSeUXqxap26UtL1p",
+                    "client_token": "VALID VAULT TOKEN",
+                    "entity_id": "7b5124e8-ac91-3698-4126-5ebccdbec4c6",
+                    "lease_duration": 259200,
+                    "metadata": {
+                        "role": "uas",
+                        "service_account_name": "default",
+                        "service_account_namespace": "uas",
+                        "service_account_secret_name": "default-token-zrbj7",
+                        "service_account_uid": "bb1e07fd-9e05-4700-a277-0470ce105196"
+                    },
+                    "orphan": true,
+                    "policies": [
+                        "allow_secrets",
+                        "allow_transit",
+                        "default"
+                    ],
+                    "renewable": true,
+                    "token_policies": [
+                        "allow_secrets",
+                        "allow_transit",
+                        "default"
+                    ],
+                    "token_type": "service"
+                },
+                "data": null,
+                "lease_duration": 0,
+                "lease_id": "",
+                "renewable": false,
+                "request_id": "f3750745-6bc7-d1bb-dcc0-5e6b583a789d",
+                "warnings": null,
+                "wrap_info": null
+            }
+        }
+    },
+    "delete": {}
+}

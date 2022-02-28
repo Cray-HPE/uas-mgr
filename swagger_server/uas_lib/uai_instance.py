@@ -1,6 +1,6 @@
 # MIT License
 #
-# (C) Copyright [2021] Hewlett Packard Enterprise Development LP
+# (C) Copyright [2021-2022] Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -33,6 +33,7 @@ import sshpubkeys.exceptions as sshExceptions
 from kubernetes import client
 from swagger_server.uas_lib.uas_logging import logger
 from swagger_server.uas_lib.uas_auth import UAS_AUTH_LOGGER
+from swagger_server.uas_lib.vault import get_vault_path
 from swagger_server.uas_data_model.uai_resource import UAIResource
 from swagger_server.uas_data_model.uai_image import UAIImage
 
@@ -147,6 +148,19 @@ class UAIInstance:
                 client.V1EnvVar(
                     name='UAI_CREATION_CLASS',
                     value=uai_class.uai_creation_class
+                )
+            )
+            env.append(
+                client.V1EnvVar(
+                    name='UAI_SHARED_SECRET_PATH',
+                    value=get_vault_path(uai_class.uai_creation_class)
+                )
+            )
+        if uai_class.replicas is not None:
+            env.append(
+                client.V1EnvVar(
+                    name='UAI_REPLICAS',
+                    value=str(uai_class.replicas)
                 )
             )
         timeout = (
