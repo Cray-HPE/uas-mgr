@@ -24,7 +24,7 @@
 #########################
 ### Base
 #########################
-FROM alpine:3.14 as base
+FROM alpine:3.15 as base
 
 # packages needed to run the app & install deps
 ENV BASE_PACKAGES g++ gcc libffi-dev linux-headers musl-dev openssl-dev python3 python3-dev py3-pip
