@@ -1,7 +1,6 @@
-# Cray User Access Service Dockerfile
 # MIT License
 #
-# (C) Copyright [2020] Hewlett Packard Enterprise Development LP
+# (C) Copyright [2020-2022] Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -21,10 +20,12 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
+# Cray User Access Service Dockerfile
+
 #########################
 ### Base
 #########################
-FROM alpine:3.14 as base
+FROM alpine:3.15 as base
 
 # packages needed to run the app & install deps
 ENV BASE_PACKAGES g++ gcc libffi-dev linux-headers musl-dev openssl-dev python3 python3-dev py3-pip
