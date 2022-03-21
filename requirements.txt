@@ -6,4 +6,4 @@ requests == 2.25.1
 sshpubkeys >= 3.1.0
 etcd3_model >= 1.0.0
 flask < 2.0.0
-
+markupsafe == 2.0.1
