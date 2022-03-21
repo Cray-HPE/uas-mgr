@@ -1,6 +1,6 @@
 # MIT License
 #
-# (C) Copyright [2020] Hewlett Packard Enterprise Development LP
+# (C) Copyright [2020-2022] Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -130,7 +130,7 @@ class UAIClass(UASDataModel):
         uai_classes = UAIClass.get_all()
         if uai_classes is not None:
             for uai_class in uai_classes:
-                if uai_class.default:
+                if uai_class.default:  # pylint: disable=no-member
                     return uai_class
         return None
 
