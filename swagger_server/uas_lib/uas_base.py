@@ -26,6 +26,7 @@ Copyright 2020 Hewlett Packard Enterprise Development LP
 """
 
 import time
+import uuid
 from datetime import datetime, timezone
 from flask import abort
 from kubernetes import config, client
@@ -536,37 +537,31 @@ class UasBase:
             )
         return uai_info
 
-    def select_jobs(self,
-                    labels=None,
-                    host=None,
-                    fields=None):
-        """Get a list of UAI names from the specified host (if any) that meet
-        the criteria in the specified labels (if any) and fields (if
-        any).  The values of 'labels' and 'fields' are lists of
-        'label' and 'field' selectors. If 'fields' is None then only
-        terminated UAIs will selected.
+    def retrieve_jobs(self, labels=None, fields=None, retries=1, retry_delay=10):
+        """Get a list of job objects from the specified host (if any) that
+        meet the criteria specified in labels (if any) and fields (if
+        any).
 
         """
-        fields = ["status.successful=0"] if fields is None else fields
+        resp = []
         field_selector = ','.join(fields) or None
-        labels = [] if labels is None else labels
-        # Has to be a UAI (uas=managed) at least, along with any other
-        # labels specified.
-        label_selector = "uas=managed"
-        if labels:
-            label_selector = "%s,%s" % (label_selector, ','.join(labels))
+        label_selector = ','.join(labels) or None
         try:
             logger.info(
-                "listing jobs matching: host %s,"
-                " labels %s, fields %s",
-                host,
+                "listing jobs matching: labels %s, fields %s",
                 label_selector,
                 field_selector
             )
-            resp = self.batch_v1.list_job_for_all_namespaces(
-                label_selector=label_selector,
-                field_selector=field_selector
-            )
+            while True:
+                resp = self.batch_v1.list_job_for_all_namespaces(
+                    label_selector=label_selector,
+                    field_selector=field_selector
+                )
+                retries -= 1
+                if retries > 0 and not resp.items:
+                    time.sleep(retry_delay)
+                    continue
+                break
         except ApiException as err:
             if err.status != 404:
                 logger.error(
@@ -574,7 +569,27 @@ class UasBase:
                     err.reason
                 )
                 abort(err.status, "Failed to get job list")
-        return [job.metadata.name for job in resp.items]
+        return resp.items
+
+    # pylint: disable=unused-argument
+    def select_jobs(self, labels=None, host=None, fields=None):
+        """Get a list of UAI jobnames from the specified host (if any) that
+        meet the criteria in the specified labels (if any) and fields
+        (if any).  The values of 'labels' and 'fields' are lists of
+        'label' and 'field' selectors. If 'fields' is None then only
+        terminated Jobs will selected.  Only jobs that can be UAIs are
+        selected.
+
+        """
+        # Default to running UAIs ("status.successful=0") unless otherwise
+        # specified.
+        fields = ["status.successful=0"] if fields is None else fields
+        labels = [] if labels is None else labels
+        # Has to be a UAI (uas=managed) at least, along with any other
+        # labels specified.
+        labels.append("uas=managed")
+        jobs = self.retrieve_jobs(labels=labels, fields=fields)
+        return [job.metadata.name for job in jobs]
 
     def get_uai_namespace(self, job_name):
         """Determine the namespace a named UAI is deployed in.
@@ -632,3 +647,116 @@ class UasBase:
                 message = "Successfully deleted %s" % job_name
             resp_list.append(message)
         return resp_list
+
+
+    @staticmethod
+    def strip_job(job):
+        """Strip information out of a job object to allow it to be used again
+        to launch a new job.
+
+        """
+        job.spec.selector={}
+        job.spec.template.metadata.labels={}
+        job.metadata.annotations = {}
+        job.metadata.cluster_name = None
+        job.metadata.creation_timestamp = None
+        job.metadata.deletion_grace_period_seconds = None
+        job.metadata.deletion_timestamp = None
+        job.metadata.finalizers = None
+        job.metadata.generate_name = None
+        job.metadata.generation = None
+        job.metadata.labels = {}
+        job.metadata.managed_fields = []
+        job.metadata.owner_references = None
+        job.metadata.resource_version = None
+        job.metadata.self_link = None
+        job.metadata.uid = None
+        return job
+
+
+    def restore_default_config(self):
+        """ Restore default configuration by re-running the update-uas job
+        that was run at the latest upgrade / install.
+
+        """
+        # Looking for an update-uas job that was created by helm.
+        # Those are the official shipped jobs.  The re-runs will not
+        # have that labeling, so they won't show up in this list.
+        labels = [
+            "app.kubernetes.io/instance=update-uas",
+            "app.kubernetes.io/managed-by=Helm",
+        ]
+        fields = ["status.successful!=0"]
+        # There can be a race if update-uas just started before we
+        # got here where update-uas is not finished yet so it won't
+        # show up.  Give it a few minutes to come around if it is
+        # not there.
+        jobs = self.retrieve_jobs(labels=labels, fields=fields, retries=18)
+        if not jobs:
+            abort(
+                504,
+                "unable to find update-uas template job to "
+                "restore default configuration, try re-running "
+                "the configuration delete operation."
+            )
+        # Upgrades and downgrades of update-uas in Helm will remove
+        # the previously existing update-uas job, so there should only
+        # ever be one such job, but if multiple jobs are found, the
+        # most recently executed one will be used to construct the job
+        # used to restore configuration.  Sort jobs by creation timestamp
+        jobs.sort(
+            key=lambda job: job.metadata.creation_timestamp, reverse=True
+        )
+
+        # Prepare the first job to be used to launch the restore job
+        job = self.strip_job(jobs[0])
+        jobname = "restore-uas-%s" % str(uuid.uuid4())
+        job.metadata.name = jobname
+        job.metadata.labels = { 'uas': "restore-config" }
+        job.metadata.namespace = "services"
+
+        # Launch the job to let it restore the configuration
+        try:
+            logger.info(
+                "creating configuration recovery job %s in namespace %s",
+                job.metadata.name,
+                job.metadata.namespace
+            )
+            self.batch_v1.create_namespaced_job(
+                body=job,
+                namespace=job.metadata.namespace
+            )
+        except ApiException as err:
+            logger.error(
+                "Failed to create configuration recovery job %s: %s",
+                job.metadata.name,
+                err.reason
+            )
+            logger.debug("config recovery job = \n%s", job)
+            abort(
+                err.status,
+                "Failed to create configuration recovery job %s: %s" % (
+                    job.metadata.name, err.reason
+                )
+            )
+        # Wait for and clean up the recovery job (and any other completed
+        # recovery jobs) before returning.  Don't return until the one we
+        # spawned completes or times out.
+        labels = [
+            "uas=restore-config",
+        ]
+        fields = ["status.successful!=0"]
+        # We will time out if the job never seems to complete.  We will keep
+        # trying for 6 to 10 minutes between the retries in retrieving jobs
+        # and the retries looking for the one we are trying to find.  The main
+        # thing here is, of some old jobs are found, we want to clean them up
+        # and then go back for the one we are looking for at least twice.
+        found = False
+        for _ in range(0, 3):
+            # Give the job a few minutes to complete with retries...
+            jobs = self.retrieve_jobs(labels=labels, fields=fields, retries=18)
+            for job in jobs:
+                self.delete_job(job.metadata.name, job.metadata.namespace)
+                found = found or job.metadata.name == jobname
+            if found:
+                break
