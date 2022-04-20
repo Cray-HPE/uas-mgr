@@ -1,6 +1,7 @@
+#
 # MIT License
 #
-# (C) Copyright [2020-2022] Hewlett Packard Enterprise Development LP
+# (C) Copyright 2020-2022 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -19,6 +20,7 @@
 # OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
+#
 """
 Class that implements UAS functions not requiring user attributes
 """
@@ -1122,6 +1124,15 @@ class UasManager(UasBase):
         """
         logger.debug("resetting UAS config to factory defaults")
         self.uas_cfg.get_config()
+        # Delete all the classes first, since they are the consumers
+        # of all the rest.  This avoids conflicts when removing the
+        # images, volumes and resources.
+        uai_classes = UAIClass.get_all()
+        uai_classes = [] if uai_classes is None else uai_classes
+        for uai_class in uai_classes:
+            uai_class.remove()
+            remove_vault_data(uai_class.class_id) # pylint: disable=no-member
+
         vols = UAIVolume.get_all()
         vols = [] if vols is None else vols
         for vol in vols:
@@ -1134,13 +1145,10 @@ class UasManager(UasBase):
         resources = [] if resources is None else resources
         for resource in resources:
             resource.remove()
-        uai_classes = UAIClass.get_all()
-        uai_classes = [] if uai_classes is None else uai_classes
-        for uai_class in uai_classes:
-            uai_class.remove()
-            remove_vault_data(uai_class)
         cfgs = PopulatedConfig.get_all()
         cfgs = [] if cfgs is None else cfgs
         for cfg in cfgs:
             cfg.remove()
+        logger.debug("Re-running the update-uas job to restore the defaults")
+        self.restore_default_config()
         logger.debug("UAS config has been reset to factory defaults")
