@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.22.0] - 2022-08-02
+- Change macvlan to netattachdef and change defaults to ipvlan and the hsn
+
 ## [1.21.0] - 2022-05-10
 - Change to rolling version of Alpine 3
 

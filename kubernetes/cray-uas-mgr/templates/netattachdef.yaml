@@ -1,0 +1,44 @@
+{{- if .Values.uasConfig.use_netattachdef }}
+---
+# Based on https://github.com/intel/multus-cni/blob/master/examples/netattachdef-conf.yml
+# Macvlan definition for UAS on the node management network
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: netattachdef-uas-conf
+  namespace: {{ .Values.uasConfig.uai_namespace }}
+spec:
+  config: '{
+      "cniVersion": "0.3.0",
+      "type": "{{ .Values.uasConfig.uai_netattachdef_type }}",
+      "master": "{{ .Values.uasConfig.uai_netattachdef_interface }}",
+      "mode": "{{ .Values.uasConfig.uai_netattachdef_mode }}",
+      "ipam": {
+        "type": "host-local",
+        "subnet": "{{ .Values.uasConfig.uai_netattachdef_network }}",
+  {{- if hasKey .Values.uasConfig "uai_netattachdef_dhcp_start" }}
+        "rangeStart": "{{ .Values.uasConfig.uai_netattachdef_dhcp_start }}",
+        "rangeEnd": "{{ .Values.uasConfig.uai_netattachdef_dhcp_end }}",
+  {{- else }}
+        "rangeStart": "{{ .Values.uasConfig.uai_netattachdef_range_start }}",
+        "rangeEnd": "{{ .Values.uasConfig.uai_netattachdef_range_end }}",
+  {{- end }}
+        "routes": [
+  {{- if hasKey .Values.uasConfig "uai_netattachdef_mtn_network" }}
+           {
+             "dst": "{{ .Values.uasConfig.uai_netattachdef_mtn_network }}",
+             "gw: "{{ .Values.uasConfig.uai_netattachdef_mtn_gateway }}"
+           }
+  {{- else }}
+    {{- range $index, $route := .Values.uasConfig.uai_netattachdef_routes }}
+           {{- if ne $index 0 }},{{ end }}
+           {
+              "dst": "{{ $route.dst }}",
+              "gw": "{{ $route.gw  }}"
+           }
+    {{- end }}
+  {{- end }}
+        ]
+      }
+  }'
+{{- end }}

@@ -218,16 +218,16 @@ class UAIInstance:
         """Construct a pod template specification for a UAI of the given class.
 
         """
-        # If we are using macvlan then set that up in an annotation in
+        # If we are using netattachdef then set that up in an annotation in
         # the metadata of the job, otherwise, the annotations will be
-        # None. USE_MACVLAN comes from config in the Helm chart.  We
+        # None. USE_NETATTACHDEF comes from config in the Helm chart.  We
         # only set this up in UAIs also have the 'uai_compute_network'
         # flag. Some UAIs aren't on that network.
         meta_annotations = None
-        if os.environ.get('USE_MACVLAN', 'true').lower() == 'true' and \
+        if os.environ.get('USE_NETATTACHDEF', 'true').lower() == 'true' and \
            uai_class.uai_compute_network:
             meta_annotations = {
-                'k8s.v1.cni.cncf.io/networks': 'macvlan-uas-nmn-conf@nmn1'
+                'k8s.v1.cni.cncf.io/networks': 'netattachdef-uas-conf@netattachdef'
             }
 
         pod_metadata = client.V1ObjectMeta(

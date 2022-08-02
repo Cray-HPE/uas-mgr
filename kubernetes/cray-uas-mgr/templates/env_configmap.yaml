@@ -4,6 +4,6 @@ metadata:
   name: cray-uas-mgr-config
 data:
   # Settings injected into the 'cray-uas-mgr' container environment
-  cray-uas-mgr.use_macvlan: "{{ .Values.uasConfig.use_macvlan }}"
+  cray-uas-mgr.use_netattachdef: "{{ .Values.uasConfig.use_netattachdef }}"
   cray-uas-mgr.logging_level: "{{ .Values.uasConfig.logging_level }}"
   cray-uas-mgr.require_bican: "{{ .Values.uasConfig.require_bican }}"

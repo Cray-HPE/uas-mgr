@@ -6,7 +6,7 @@
         2. [Special Purpose UAIs](#main-concepts-specialpurpose)
         3. [Elements of a UAI](#main-concepts-elements)
         4. [UAI Host Nodes](#main-concepts-hostnodes)
-        5. [UAI Network Attachments (macvlans)](#main-concepts-netattach)
+        5. [UAI Network Attachments (netattachdefs)](#main-concepts-netattach)
     2. [UAI Host Node Selection](#main-hostnodes)
         1. [Identifying UAI Host Nodes](#main-hostnodes-identifying)
         2. [Specifying UAI Host Nodes](#main-hostnodes-specifying)
@@ -123,9 +123,9 @@ All of the above can be customized on a given set of UAIs by defining a UAI clas
 
 UAIs run on Kubernetes worker nodes.  There is a mechanism using Kubernetes labels to prevent UAIs from running on a specific worker node, however.  Any Kubernetes node that is not labeled to prevent UAIs from running on it is considered to be a UAI host node.  The administrator of a given site may control the set of UAI host nodes by labeling kubernetes worker nodes appropriately.
 
-### UAI Network Attachments (macvlans) <a name="main-concepts-netattach"></a>
+### UAI Network Attachments (netattachdefs) <a name="main-concepts-netattach"></a>
 
-UAIs need to be able to reach compute nodes across the node managment network (NMN).  When the compute node NMN is structured as multiple subnets, this requires routing form the UAIs to those subnets.  The default route in a UAI goes to the public network through the customer access network (CAN) so that will not work for reaching compute nodes.  To solve this problem, UAS installs Kubernetes network attachments within the Kubernetes `user` namespace, one of which is used by UAIs.  The type of network attachment used on Shasta hardware for this purpose is a `macvlan` network attachment, so this is often referred to on Shasta systems as "macvlans".  This network attachment integrates the UAI into the NMN on the UAI host node where the UAI is running and assigns the UAI an IP address on that network.  It also installs a set of routes in the UAI that are used to reach the compute node subnets on the NMN.
+UAIs need to be able to reach compute nodes across the high speed network (HSN).  When the compute node HSN is structured as multiple subnets, this requires routing from the UAIs to those subnets.  The default route in a UAI goes to the public network through the customer access network (CAN) so that will not work for reaching compute nodes.  To solve this problem, UAS installs Kubernetes network attachments within the Kubernetes `user` namespace, one of which is used by UAIs.  The type of network attachment used on Shasta hardware for this purpose is an `ipvlan` network attachment, so this is often referred to on Shasta systems as "netattachdefs".  This network attachment integrates the UAI into the HSN on the UAI host node where the UAI is running and assigns the UAI an IP address on that network.  It also installs a set of routes in the UAI that are used to reach the compute node subnets on the HSN.
 
 ## UAI Host Node Selection <a name="main-hostnodes"></a>
 
@@ -240,38 +240,34 @@ spec:
   
     ...
     
-    macvlansetup:
-      nmn_subnet: 10.252.2.0/23
-      nmn_supernet: 10.252.0.0/17
-      nmn_supernet_gateway: 10.252.0.1
-      nmn_vlan: vlan002
-      # NOTE: the term DHCP here is misleading, this is merely
-      #       a range of reserved IPs for UAIs that should not
-      #       be handed out to others becase the network
-      #       attachment will hand them out to UAIs.
-      nmn_dhcp_start: 10.252.2.10
-      nmn_dhcp_end: 10.252.3.254
+    netattachdefsetup:
+      subnet: 10.252.2.0/23
+      supernet: 10.252.0.0/17
+      supernet_gateway: 10.252.0.1
+      vlan: hsn0
+      netattachdef_reservation_start: 10.252.2.10
+      netattachdef_reservation_start: 10.252.3.254
       routes:
       - dst: 10.92.100.0/24
         gw:  10.252.0.1
       - dst: 10.106.0.0/17
         gw:  10.252.0.1
       - dst: 10.104.0.0/17
-        gw: 10.252.0.1
+        gw:  10.252.0.1
 ```
 
-The `nmn_subnet` value shown here is not of interest to this discussion.
+The `subnet` value shown here is not of interest to this discussion.
 
 These values, in turn, feed into the following translation to UAS Helm chart settings:
 
 ```
       cray-uas-mgr:
         uasConfig:
-          uai_macvlan_interface: '{{ wlm.macvlansetup.nmn_vlan }}'
-          uai_macvlan_network: '{{ wlm.macvlansetup.nmn_supernet }}'
-          uai_macvlan_range_start: '{{ wlm.macvlansetup.nmn_dhcp_start }}'
-          uai_macvlan_range_end: '{{ wlm.macvlansetup.nmn_dhcp_end }}'
-          uai_macvlan_routes: '{{ wlm.macvlansetup.routes }}'
+          uai_netattachdef_interface: '{{ wlm.netattachdefsetup.vlan }}'
+          uai_netattachdef_network: '{{ wlm.netattachdefsetup.supernet }}'
+          uai_netattachdef_range_start: '{{ wlm.netattachdefsetup.netattachdef_reservation_start }}'
+          uai_netattachdef_range_end: '{{ wlm.netattachdefsetup.netattachdef_reservation_end }}'
+          uai_netattachdef_routes: '{{ wlm.netattachdefsetup.routes }}'
 ```
 
 ### UAS Helm Chart <a name="main-netattach-helm"></a>
@@ -285,16 +281,16 @@ kind: NetworkAttachmentDefinition
 spec:
   config: '{
       "cniVersion": "0.3.0",
-      "type": "macvlan",
-      "master": "{{ .Values.uasConfig.uai_macvlan_interface }}",
+      "type": "netattachdef",
+      "master": "{{ .Values.uasConfig.uai_netattachdef_interface }}",
       "mode": "bridge",
       "ipam": {
         "type": "host-local",
-        "subnet": "{{ .Values.uasConfig.uai_macvlan_network }}",
-        "rangeStart": "{{ .Values.uasConfig.uai_macvlan_range_start }}",
-        "rangeEnd": "{{ .Values.uasConfig.uai_macvlan_range_end }}",
+        "subnet": "{{ .Values.uasConfig.uai_netattachdef_network }}",
+        "rangeStart": "{{ .Values.uasConfig.uai_netattachdef_range_start }}",
+        "rangeEnd": "{{ .Values.uasConfig.uai_netattachdef_range_end }}",
         "routes": [
-{{- range $index, $route := .Values.uasConfig.uai_macvlan_routes }}
+{{- range $index, $route := .Values.uasConfig.uai_netattachdef_routes }}
   {{- range $key, $value := $route }}
            {
               "{{ $key }}": "{{ $value }}",
@@ -310,7 +306,7 @@ The `range` templating in the `routes` section expands the routes from `customiz
 
 ### UAI Network Attachment in Kubernetes <a name="main-netattach-kubernetes"></a>
 
-All of this produces a network attachment definition in Kubernetes called `macvlan-uas-nmn-conf` which is used by UAS.  Here are the contents that would result from the above data:
+All of this produces a network attachment definition in Kubernetes called `netattachdef-uas-conf` which is used by UAS.  Here are the contents that would result from the above data:
 
 ```
 apiVersion: v1
@@ -321,37 +317,37 @@ items:
   spec:
     config: '{
       "cniVersion": "0.3.0",
-      "type": "macvlan",
-      "master": "vlan002",
-      "mode": "bridge",
+      "type": "netattachdef",
+      "master": "hsn0",
+      "mode": "l2",
       "ipam": {
         "type": "host-local",
-        "subnet": "10.252.0.0/17",
-        "rangeStart": "10.252.124.10",
-        "rangeEnd": "10.252.125.244",
+        "subnet": "10.253.0.0/15",
+        "rangeStart": "10.253.124.10",
+        "rangeEnd": "10.253.125.244",
         "routes": [
           {
             "dst": "10.92.100.0/24",
-            "gw":  "10.252.0.1"
+            "gw":  "10.253.253.1"
           },
           {
             "dst": "10.106.0.0/17",
-            "gw":  "10.252.0.1"
+            "gw":  "10.253.253.1"
           },
           {
             "dst": "10.104.0.0/17",
-            "gw": "10.252.0.1"
+            "gw": "10.253.253.1"
           }
         ]
       }
     }'
-...
+    ...
 ```
 
-The above tells Kubernetes to assign UAI IP addresses in the range `10.252.2.10` through `10.252.3.244` on the network attachment, and permits those UAIs to reach compute nodes on any of four possible NMN subnets:
+The above tells Kubernetes to assign UAI IP addresses in the range `10.253.124.10` through `10.252.125.244` on the network attachment, and prevents those UAIs from reaching the following network:
 
-- directly through the NMN subnet hosting the UAI host node itself (`10.252.0.0/17` here)
-- through the gateway in the local NMN subnet (`10.252.0.1` here) to
+- directly through the HSN subnet hosting the UAI host node itself (`10.252.0.0/17` here)
+- through the gateway in the local HSN subnet (`10.253.253.1` here) to
     - `10.92.100.0/24`
     - `10.106.0.0/17`
     - `10.104.0.0/17`
@@ -1104,7 +1100,7 @@ command.  The `comment` field is a free form string describing the UAI class.  T
 ncn-m001-pit:~ # cray uas create
 ```
 
-command is used to create an end-user UAI for a user.  Setting a class to default gives the administrator fine grained control over the behavior of end-user UAIs that are created by authorized users in [legacy mode](#main-uaimanagement-legacymode).  The `namespace` field specifies the Kubernetes namespace in which this UAI will run.  It has the default setting of `user` here.  The `opt_ports` field is an empty list of TCP port numbers that will be opened on the external IP address of the UAI when it runs.  This controls whether services other than SSH can be run and reached publicly on the UAI.  The `priority_class_name` `"uai_priority"` is the default <a href="https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass">Kubernetes priority class</a> of UAIs.  If it were a different class, it would affect both Kubernetes default resource limit / request assignments and Kubernetes scheduling priority for the UAI.  The `public_ip` field is a flag that indicates whether the UAI should be given an external IP address LoadBalancer service so that clients outside the Kubernetes cluster can reach it, or only be given a Kubernetes Cluster-IP address.  For the most part, this controls whether the UAI is reachable by SSH from external clients, but it also controls whether the ports in `opt_ports` are reachable as well. The `resource_config` field is not set, but could be set to a resource specification to override namespace defaults on Kubernetes resource requests / limits.  The `uai_compute_network` flag indicates whether this UAI uses the macvlan mechanism to gain access to the Shasta compute node network.  This needs to be `true` to support workload management.  The `uai_creation_class` field is used by [broker UIAs](#main-uaimanagement-brokermode-brokerclasses) to tell the broker what kind of UAI to create when automatically generating a UAI.
+command is used to create an end-user UAI for a user.  Setting a class to default gives the administrator fine grained control over the behavior of end-user UAIs that are created by authorized users in [legacy mode](#main-uaimanagement-legacymode).  The `namespace` field specifies the Kubernetes namespace in which this UAI will run.  It has the default setting of `user` here.  The `opt_ports` field is an empty list of TCP port numbers that will be opened on the external IP address of the UAI when it runs.  This controls whether services other than SSH can be run and reached publicly on the UAI.  The `priority_class_name` `"uai_priority"` is the default <a href="https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass">Kubernetes priority class</a> of UAIs.  If it were a different class, it would affect both Kubernetes default resource limit / request assignments and Kubernetes scheduling priority for the UAI.  The `public_ip` field is a flag that indicates whether the UAI should be given an external IP address LoadBalancer service so that clients outside the Kubernetes cluster can reach it, or only be given a Kubernetes Cluster-IP address.  For the most part, this controls whether the UAI is reachable by SSH from external clients, but it also controls whether the ports in `opt_ports` are reachable as well. The `resource_config` field is not set, but could be set to a resource specification to override namespace defaults on Kubernetes resource requests / limits.  The `uai_compute_network` flag indicates whether this UAI uses the netattachdef mechanism to gain access to the Shasta compute node network.  This needs to be `true` to support workload management.  The `uai_creation_class` field is used by [broker UIAs](#main-uaimanagement-brokermode-brokerclasses) to tell the broker what kind of UAI to create when automatically generating a UAI.
 
 After all these individual items, we see the UAI Image to be used to create UIAs of this class:
 
