@@ -67,7 +67,7 @@ class TestUasMgr(unittest.TestCase):
         uai_mgr = UaiManager()
         uas_mgr = UasManager()
 
-    # pylint: disable=missing-docstring,no-self-use
+    # pylint: disable=missing-docstring
     def test_uas_mgr_init(self):
         return
 

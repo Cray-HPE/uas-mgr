@@ -63,7 +63,7 @@ def __vault_authenticate():
         'role': "services"
     }
     try:
-        response = requests.post(login_url, data=login_payload)
+        response = requests.post(login_url, data=login_payload, timeout=10)
             # raise exception for 4XX and 5XX errors
         response.raise_for_status()
     except requests.exceptions.RequestException as err:
@@ -102,7 +102,7 @@ def __get_vault_children(path, client_token):
     url = os.path.join("http://cray-vault.vault:8200/v1", path)
     params = {"list": "true"}
     try:
-        response = requests.get(url, headers=headers, params=params)
+        response = requests.get(url, headers=headers, params=params, timeout=10)
             # raise exception for 4XX and 5XX errors
         response.raise_for_status()
     except requests.exceptions.RequestException as err:
@@ -132,7 +132,7 @@ def __delete_vault_path(path, client_token):
     headers = {"X-Vault-Token": "%s" % client_token }
     url = os.path.join("http://cray-vault.vault:8200/v1", path)
     try:
-        response = requests.delete(url, headers=headers)
+        response = requests.delete(url, headers=headers, timeout=10)
             # raise exception for 4XX and 5XX errors
         response.raise_for_status()
     except requests.exceptions.RequestException as err:

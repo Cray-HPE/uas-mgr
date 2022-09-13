@@ -90,7 +90,7 @@ def mocked_requests_post(*args, **kwargs):
 
 # This will be used by the mock to replace requests.delete
 #
-#  pylint: disable=unused-argument,unused-private-member,no-self-use
+#  pylint: disable=unused-argument,unused-private-member
 def mocked_requests_delete(*args, **kwargs):
     return MockResponse(None, 204, args[0])
 
@@ -111,7 +111,7 @@ class TestVault(unittest.TestCase):
     @mock.patch('requests.post', side_effect=mocked_requests_post)
     @mock.patch('requests.delete', side_effect=mocked_requests_delete)
     @mock.patch('builtins.open', mock_open(read_data="VALID SA TOKEN"))
-    #pylint: disable=no-self-use,unused-argument
+    #pylint: disable=unused-argument
     def test_remove_vault_data(self, m_get, m_post, m_delete):
         """Verify that the happy path for removing data from vault doesn't
         crash.  It can fail, because there is very little checking inside to
@@ -124,7 +124,7 @@ class TestVault(unittest.TestCase):
     @mock.patch('requests.post', side_effect=mocked_requests_post)
     @mock.patch('requests.delete', side_effect=mocked_requests_delete)
     @mock.patch('builtins.open', mock_open(read_data="VALID SA TOKEN"))
-    #pylint: disable=no-self-use,unused-argument
+    #pylint: disable=unused-argument
     def test_remove_vault_data_bad_path(self, m_get, m_post, m_delete):
         """Verify that the case where we pass a non-existent path to vault
         when removing data doesn't crash.  It can fail, because there
@@ -138,7 +138,7 @@ class TestVault(unittest.TestCase):
     @mock.patch('requests.post', side_effect=mocked_requests_post)
     @mock.patch('requests.delete', side_effect=mocked_requests_delete)
     @mock.patch('builtins.open', mock_open(read_data="INVALID SA TOKEN"))
-    # pylint: disable=no-self-use,unused-argument
+    # pylint: disable=unused-argument
     def test_remove_vault_data_bad_sa_token(self, m_get, m_post, m_delete):
         """Verify that the case where we can't log into vault when removing
         data doesn't crash.  It can fail, because there is very little
