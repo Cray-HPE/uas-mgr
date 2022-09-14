@@ -262,7 +262,7 @@ class UasCfg:
         """
         logger.debug("retrieving SLS network data")
         try:
-            response = requests.get("http://cray-sls/v1/networks")
+            response = requests.get("http://cray-sls/v1/networks", timeout=10)
             # raise exception for 4XX and 5XX errors
             response.raise_for_status()
         except requests.exceptions.RequestException as err:

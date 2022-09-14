@@ -110,7 +110,7 @@ class UasAuth:
         url = 'https://' + host + self.endpoint
         try:
             response = requests.post(url, verify=self.cacert,
-                                     headers=headers)
+                                     headers=headers, timeout=10)
             # raise exception for 4XX and 5XX errors
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
