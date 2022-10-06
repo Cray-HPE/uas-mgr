@@ -227,7 +227,11 @@ class UAIInstance:
         if os.environ.get('USE_MACVLAN', 'true').lower() == 'true' and \
            uai_class.uai_compute_network:
             meta_annotations = {
-                'k8s.v1.cni.cncf.io/networks': 'macvlan-uas-nmn-conf@nmn1'
+                'k8s.v1.cni.cncf.io/networks': 'macvlan-uas-nmn-conf@nmn1,macvlan-uas-chn-conf@chn1'
+            }
+        else:
+            meta_annotations = {
+                'k8s.v1.cni.cncf.io/networks': 'macvlan-uas-chn-conf@chn1'
             }
 
         pod_metadata = client.V1ObjectMeta(
