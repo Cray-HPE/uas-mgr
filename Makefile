@@ -26,6 +26,9 @@ UNIT_TEST_NAME ?= cray-uas-mgr-unit-test
 # DOCKER
 NAME ?= cray-uas-mgr
 VERSION ?= $(shell cat .version)
+ifneq ($(wildcard ${HOME}/.netrc),)
+	DOCKER_ARGS ?= --secret id=netrc,src=${HOME}/.netrc
+endif 
 
 # Chart
 CHART_NAME ?= cray-uas-mgr
