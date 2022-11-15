@@ -44,7 +44,7 @@ COPY requirements.txt /usr/src/app/
 # don't build cryptography Rust library
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST 1
 RUN pip install --upgrade pip
-RUN pip3 install --no-cache-dir \
+RUN --mount=type=secret,id=netrc,target=/root/.netrc pip3 install --no-cache-dir \
                  --extra-index-url https://artifactory.algol60.net/artifactory/csm-python-modules/simple \
                  --trusted-host artifactory.algol60.net -r requirements.txt
 
@@ -56,7 +56,7 @@ COPY pylintrc test-requirements.txt .coveragerc /usr/src/app/
 # Allow the use of either pypi or DST here because this is not part of the
 # production delivered code, so it is less critical that everything be
 # strictly Cray provided.
-RUN pip3 install --no-cache-dir \
+RUN --mount=type=secret,id=netrc,target=/root/.netrc pip3 install --no-cache-dir \
                  --extra-index-url https://artifactory.algol60.net/artifactory/csm-python-modules/simple \
                  --trusted-host artifactory.algol60.net -r test-requirements.txt
 
