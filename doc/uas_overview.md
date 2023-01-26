@@ -38,7 +38,7 @@
         4. [UAI Classes](#main-uasconfig-classes)
             1. [Listing UAI Classes](#main-uasconfig-classes-list)
             2. [Adding a UAI Class](#main-uasconfig-classes-add)
-            3. [Examinig a UAI Class](#main-uasconfig-classes-examine)
+            3. [Examining a UAI Class](#main-uasconfig-classes-examine)
             4. [Updating a UAI Class](#main-uasconfig-classes-update)
             5. [Deleting a UAI Class](#main-uasconfig-classes-delete)
     5. [UAI Management](#main-uaimanagement)
@@ -121,11 +121,11 @@ All of the above can be customized on a given set of UAIs by defining a UAI clas
 
 ### UAI Host Nodes <a name="main-concepts-hostnodes"></a>
 
-UAIs run on Kubernetes worker nodes.  There is a mechanism using Kubernetes labels to prevent UAIs from running on a specific worker node, however.  Any Kubernetes node that is not labeled to prevent UAIs from running on it is considered to be a UAI host node.  The administrator of a given site may control the set of UAI host nodes by labeling kubernetes worker nodes appropriately.
+UAIs run on Kubernetes worker nodes.  There is a mechanism using Kubernetes labels to prevent UAIs from running on a specific worker node, however.  Any Kubernetes node that is not labeled to prevent UAIs from running on it is considered to be a UAI host node.  The administrator of a given site may control the set of UAI host nodes by labeling Kubernetes worker nodes appropriately.
 
 ### UAI Network Attachments (macvlans) <a name="main-concepts-netattach"></a>
 
-UAIs need to be able to reach compute nodes across the node managment network (NMN).  When the compute node NMN is structured as multiple subnets, this requires routing form the UAIs to those subnets.  The default route in a UAI goes to the public network through the customer access network (CAN) so that will not work for reaching compute nodes.  To solve this problem, UAS installs Kubernetes network attachments within the Kubernetes `user` namespace, one of which is used by UAIs.  The type of network attachment used on Shasta hardware for this purpose is a `macvlan` network attachment, so this is often referred to on Shasta systems as "macvlans".  This network attachment integrates the UAI into the NMN on the UAI host node where the UAI is running and assigns the UAI an IP address on that network.  It also installs a set of routes in the UAI that are used to reach the compute node subnets on the NMN.
+UAIs need to be able to reach compute nodes across the node management network (NMN).  When the compute node NMN is structured as multiple subnets, this requires routing form the UAIs to those subnets.  The default route in a UAI goes to the public network through the customer access network (CAN) so that will not work for reaching compute nodes.  To solve this problem, UAS installs Kubernetes network attachments within the Kubernetes `user` namespace, one of which is used by UAIs.  The type of network attachment used on Shasta hardware for this purpose is a `macvlan` network attachment, so this is often referred to on Shasta systems as "macvlans".  This network attachment integrates the UAI into the NMN on the UAI host node where the UAI is running and assigns the UAI an IP address on that network.  It also installs a set of routes in the UAI that are used to reach the compute node subnets on the NMN.
 
 ## UAI Host Node Selection <a name="main-hostnodes"></a>
 
@@ -174,7 +174,7 @@ ncn-m001:~ # /opt/cray/csm/scripts/node_management/make_node_groups --help
 getopt: unrecognized option '--help'
 usage: make_node_groups [-m][-s][-u][w][-A][-R][-N]
 Where:
-  -m - creates a node group for managment master nodes
+  -m - creates a node group for management master nodes
 
   -s - creates a node group for management storage nodes
 
@@ -402,7 +402,7 @@ imagename = "registry.local/cray/custom-end-user-uai:latest"
 
 The output shown above shows three image registrations.  Each has an `imagename` indicating the image to be used to construct a UAI.
 
-    NOTE: simply registering a UAI image name does not make the image available. The image must also be created and stored in the container registry.  This is covered in [???where???].
+    NOTE: simply registering a UAI image name does not make the image available. The image must also be created and stored in the container registry.
 
 There is also a `default` flag.  If this flag is `true` the image will be used  whenever a UAI is created without specifying an image or UAI class as part of the creation.  Finally, there is an `image_id`, which identifies this image registration for later inspection, update, or deletion and for linking the image to a [UAI class](#main-uasconfig-classes).
 
@@ -505,8 +505,10 @@ ncn-m001-pit:~ # cray uas admin config volumes list
 Here is an example of the output from this command:
 
 ```
-ncn-m001-pit:~ # cray uas admin config volumes list
+ncn-m001-pit:~ # cray uas admin config volumes list --format toml
+```
 
+```toml
 [[results]]
 mount_path = "/lus"
 volume_id = "2b23a260-e064-4f3e-bee5-3da8e3664f29"
@@ -560,14 +562,15 @@ volumename = "timezone"
 [results.volume_description.host_path]
 path = "/etc/localtime"
 type = "FileOrCreate"
-
 ```
 
 This TOML formatted output can be challenging to read, so it may be more reasonable to obtain the information in YAML format:
 
 ```
 ncn-m001-pit:~ # cray uas admin config volumes list --format yaml
+```
 
+```yaml
 - mount_path: /lus
   volume_description:
     host_path:
@@ -620,7 +623,9 @@ or JSON format:
 
 ```
 ncn-m001-pit:~ # cray uas admin config volumes list --format json
+```
 
+```json
 [
   {
     "mount_path": "/lus",
@@ -739,6 +744,9 @@ The `--format` option can be used here to obtain formats other than TOML that ma
 
 ```
 ncn-m001-pit:~ # cray uas admin config volumes describe a0066f48-9867-4155-9268-d001a4430f5c --format json
+```
+
+```json
 {
   "mount_path": "/host_files/host_passwd",
   "volume_description": {
@@ -797,7 +805,10 @@ ncn-m001-pit:~ # cray uas admin config resources list
 for example:
 
 ```
-ncn-m001-pit:~ # cray uas admin config resources list
+ncn-m001-pit:~ # cray uas admin config resources list --format toml
+```
+
+```toml
 [[results]]
 comment = "my first example resource specification"
 limit = "{\"cpu\": \"300m\", \"memory\": \"250Mi\"}"
@@ -827,7 +838,7 @@ For example:
 ncn-m001-pit:~ # cray uas admin config resources create --request '{"cpu": "300m", "memory": "250Mi"}' --limit '{"cpu": "300m", "memory": "250Mi"}' --comment "my first example resource specification"
 ```
 
-This specifies a request / limit pair that requests and is constrained to 300 mili-CPUs (0.3 CPUs) and 250 MiB of memory (`250 * 1024 * 1024` bytes) for any UAI created with this limit specification.  By keeping the request and the limit the same, this ensures that a host node will not be oversubscribed by UAIs.  It is also legitimate to request less than the limit, though that risks over-subscription and is not recommended in most cases.  If the request is greater than the limit, UAIs created with the request specification will never be scheduled because they will not be able to provide the requested resources.
+This specifies a request / limit pair that requests and is constrained to 300 milliCPUs (0.3 CPUs) and 250 MiB of memory (`250 * 1024 * 1024` bytes) for any UAI created with this limit specification.  By keeping the request and the limit the same, this ensures that a host node will not be oversubscribed by UAIs.  It is also legitimate to request less than the limit, though that risks over-subscription and is not recommended in most cases.  If the request is greater than the limit, UAIs created with the request specification will never be scheduled because they will not be able to provide the requested resources.
 
 All of the configurable parts are optional when adding a resource specification.  If none are provided, an empty resource specification with only a `resource_id` will be created.
 
@@ -842,7 +853,10 @@ ncn-m001-pit:~ # cray uas admin config resources describe <resource-id>
 for example:
 
 ```
-ncn-m001-pit:~ # cray uas admin config resources describe 85645ff3-1ce0-4f49-9c23-05b8a2d31849
+ncn-m001-pit:~ # cray uas admin config resources describe 85645ff3-1ce0-4f49-9c23-05b8a2d31849 --format toml
+```
+
+```toml
 comment = "my first example resource specification"
 limit = "{\"cpu\": \"300m\", \"memory\": \"250Mi\"}"
 request = "{\"cpu\": \"300m\", \"memory\": \"250Mi\"}"
@@ -904,6 +918,9 @@ for example (using JSON format because it is a bit easier to read):
 
 ```
 ncn-m001-pit:~ # cray uas admin config classes list --format json
+```
+
+```json
 [
   {
     "class_id": "05496a5f-7e35-435d-a802-882c6425e5b2",
@@ -1079,7 +1096,7 @@ In the above output, there are three UAI classes:
 
 Taking apart the non-brokered end-user UAI class, the first part is:
 
-```
+```json
     "class_id": "bb28a35a-6cbc-4c30-84b0-6050314af76b",
     "comment": "Non-Brokered UAI User Class",
     "default": false,
@@ -1098,17 +1115,12 @@ The `class_id` field is the identifier used to refer to this class when examinin
 ncn-m001-pit:~ # cray uas admin uais create
 ```
 
-command.  The `comment` field is a free form string describing the UAI class.  The `default` field is a flag indicating whether this class is the default class.  The default class will be applied, overriding both the default UAI image and any specified image name, when the
-
-```
-ncn-m001-pit:~ # cray uas create
-```
-
+command.  The `comment` field is a free form string describing the UAI class.  The `default` field is a flag indicating whether this class is the default class.  The default class will be applied, overriding both the default UAI image and any specified image name, when the `cray uas create`
 command is used to create an end-user UAI for a user.  Setting a class to default gives the administrator fine grained control over the behavior of end-user UAIs that are created by authorized users in [legacy mode](#main-uaimanagement-legacymode).  The `namespace` field specifies the Kubernetes namespace in which this UAI will run.  It has the default setting of `user` here.  The `opt_ports` field is an empty list of TCP port numbers that will be opened on the external IP address of the UAI when it runs.  This controls whether services other than SSH can be run and reached publicly on the UAI.  The `priority_class_name` `"uai_priority"` is the default <a href="https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass">Kubernetes priority class</a> of UAIs.  If it were a different class, it would affect both Kubernetes default resource limit / request assignments and Kubernetes scheduling priority for the UAI.  The `public_ip` field is a flag that indicates whether the UAI should be given an external IP address LoadBalancer service so that clients outside the Kubernetes cluster can reach it, or only be given a Kubernetes Cluster-IP address.  For the most part, this controls whether the UAI is reachable by SSH from external clients, but it also controls whether the ports in `opt_ports` are reachable as well. The `resource_config` field is not set, but could be set to a resource specification to override namespace defaults on Kubernetes resource requests / limits.  The `uai_compute_network` flag indicates whether this UAI uses the macvlan mechanism to gain access to the Shasta compute node network.  This needs to be `true` to support workload management.  The `uai_creation_class` field is used by [broker UIAs](#main-uaimanagement-brokermode-brokerclasses) to tell the broker what kind of UAI to create when automatically generating a UAI.
 
 After all these individual items, we see the UAI Image to be used to create UIAs of this class:
 
-```
+```json
     "uai_image": {
       "default": true,
       "image_id": "ff86596e-9699-46e8-9d49-9cb20203df8c",
@@ -1118,7 +1130,7 @@ After all these individual items, we see the UAI Image to be used to create UIAs
 
 Finally we see a list of volumes that will show up in UAIs created using this class:
 
-```
+```json
     "volume_mounts": [
       {
         "mount_path": "/etc/localtime",
@@ -1190,7 +1202,7 @@ where `--image-id <image-id>` specifies the UAI image identifier of the UAI imag
 
 Only the `--image-id` option is required to create a UAI class.  In that case, a UAI class with the specified UAI Image and no volumes will be created.
 
-#### Examinig a UAI Class <a name="main-uasconfig-classes-examine"></a>
+#### Examining a UAI Class <a name="main-uasconfig-classes-examine"></a>
 
 To examine an existing UAI class, use a command of the following form
 
@@ -1202,6 +1214,9 @@ For example:
 
 ```
 ncn-m001-pit:~ # cray uas admin config classes describe --format yaml bb28a35a-6cbc-4c30-84b0-6050314af76b
+```
+
+```yaml
 class_id: bb28a35a-6cbc-4c30-84b0-6050314af76b
 comment: Non-Brokered UAI User Class
 default: false
@@ -1312,7 +1327,10 @@ where `[options]` include the following selection options:
 For example:
 
 ```
-ncn-m001-pit:~ # cray uas admin uais list --owner vers
+ncn-m001-pit:~ # cray uas admin uais list --owner vers --format toml
+```
+
+```toml
 [[results]]
 uai_age = "6h22m"
 uai_connect_string = "ssh vers@10.28.212.166"
@@ -1350,7 +1368,10 @@ cray uas admin uais describe <uai-name>
 for example:
 
 ```
-ncn-m001-pit:~ # cray uas admin uais describe uai-vers-715fa89d
+ncn-m001-pit:~ # cray uas admin uais describe uai-vers-715fa89d --format toml
+```
+
+```toml
 uai_age = "2d23h"
 uai_connect_string = "ssh vers@10.28.212.166"
 uai_host = "ncn-w001"
@@ -1362,7 +1383,6 @@ uai_status = "Running: Ready"
 username = "vers"
 
 [uai_portmap]
-
 ```
 
 #### Deleting UAIs <a name="main-uaimanagement-adminuai-delete"></a>
@@ -1382,7 +1402,10 @@ where options may be
 for example:
 
 ```
-ncn-m001-pit:~ # cray uas admin uais delete --uai-list 'uai-vers-715fa89d,uai-ctuser-0aed4970'
+ncn-m001-pit:~ # cray uas admin uais delete --uai-list 'uai-vers-715fa89d,uai-ctuser-0aed4970' --format toml
+```
+
+```toml
 results = [ "Successfully deleted uai-vers-715fa89d", "Successfully deleted uai-ctuser-0aed4970",]
 ```
 
@@ -1421,6 +1444,9 @@ For an example minimal system, here is an example set of volumes and an example 
 
 ```
 ncn-m001-pit:~ # cray uas admin config volumes list --format json
+```
+
+```json
 [
   {
     "mount_path": "/etc/localtime",
@@ -1445,8 +1471,13 @@ ncn-m001-pit:~ # cray uas admin config volumes list --format json
     "volumename": "lustre"
   }
 ]
+```
 
-ncn-m001-pit:~ # cray uas admin config images list
+```
+ncn-m001-pit:~ # cray uas admin config images list --format toml
+```
+
+```toml
 [[results]]
 default = false
 image_id = "c5dcb261-5271-49b3-9347-afe7f3e31941"
@@ -1461,8 +1492,13 @@ imagename = "dtr.dev.cray.com/cray/cray-uas-sles15:latest"
 default = true
 image_id = "ff86596e-9699-46e8-9d49-9cb20203df8c"
 imagename = "dtr.dev.cray.com/cray/cray-uai-sles15sp1:latest"
+```
 
-ncn-m001-pit:~ # cray uas admin config classes create --image-id ff86596e-9699-46e8-9d49-9cb20203df8c --volume-list '55a02475-5770-4a77-b621-f92c5082475c,9fff2d24-77d9-467f-869a-235ddcd37ad7' --uai-compute-network yes --public-ip yes --comment "my default legacy mode uai class" --default yes
+```
+ncn-m001-pit:~ # cray uas admin config classes create --image-id ff86596e-9699-46e8-9d49-9cb20203df8c --volume-list '55a02475-5770-4a77-b621-f92c5082475c,9fff2d24-77d9-467f-869a-235ddcd37ad7' --uai-compute-network yes --public-ip yes --comment "my default legacy mode uai class" --default yes --format toml
+```
+
+```toml
 class_id = "e2ea4845-5951-4c79-93d7-186ced8ce8ad"
 comment = "my default legacy mode uai class"
 default = true
@@ -1500,6 +1536,9 @@ Here is an example of a default UAI class configured for Slurm support if Slurm 
 
 ```
 ncn-m001-pit:~ # cray uas admin config volumes list --format json
+```
+
+```json
 [
   {
     "mount_path": "/etc/localtime",
@@ -1544,8 +1583,13 @@ ncn-m001-pit:~ # cray uas admin config volumes list --format json
     "volumename": "slurm-config"
   }
 ]
+```
 
-ncn-m001-pit:~ # cray uas admin config images list
+```
+ncn-m001-pit:~ # cray uas admin config images list --format toml
+```
+
+```toml
 [[results]]
 default = false
 image_id = "c5dcb261-5271-49b3-9347-afe7f3e31941"
@@ -1560,8 +1604,13 @@ imagename = "dtr.dev.cray.com/cray/cray-uas-sles15:latest"
 default = true
 image_id = "ff86596e-9699-46e8-9d49-9cb20203df8c"
 imagename = "dtr.dev.cray.com/cray/cray-uai-sles15sp1:latest"
+```
 
-ncn-m001-pit:~ # cray uas admin config classes create --image-id ff86596e-9699-46e8-9d49-9cb20203df8c --volume-list '55a02475-5770-4a77-b621-f92c5082475c,9fff2d24-77d9-467f-869a-235ddcd37ad7,7aeaf158-ad8d-4f0d-bae6-47f8fffbd1ad,ea97325c-2b1d-418a-b3b5-3f6488f4a9e2' --uai-compute-network yes --public-ip yes --comment "my default legacy mode uai class" --default yes
+```
+ncn-m001-pit:~ # cray uas admin config classes create --image-id ff86596e-9699-46e8-9d49-9cb20203df8c --volume-list '55a02475-5770-4a77-b621-f92c5082475c,9fff2d24-77d9-467f-869a-235ddcd37ad7,7aeaf158-ad8d-4f0d-bae6-47f8fffbd1ad,ea97325c-2b1d-418a-b3b5-3f6488f4a9e2' --uai-compute-network yes --public-ip yes --comment "my default legacy mode uai class" --default yes --format toml
+```
+
+```toml
 class_id = "c0a6dfbc-f74c-4f2c-8c8e-e278ff0e14c6"
 comment = "my default legacy mode uai class"
 default = true
@@ -1635,10 +1684,18 @@ Username: vers
 Password: 
 Success!
 
-vers:~ $ cray uas list
-results = []
+vers:~ $ cray uas list --format toml
+```
 
-vers:~ $ cray uas create --publickey ~/.ssh/id_rsa.pub 
+```toml
+results = []
+```
+
+```
+vers:~ $ cray uas create --publickey ~/.ssh/id_rsa.pub --format toml
+```
+
+```toml
 uai_age = "0m"
 uai_connect_string = "ssh vers@10.103.13.157"
 uai_host = "ncn-w001"
@@ -1650,8 +1707,13 @@ uai_status = "Waiting"
 username = "vers"
 
 [uai_portmap]
+```
 
-vers:~ $ cray uas list
+```
+vers:~ $ cray uas list --format toml
+```
+
+```toml
 [[results]]
 uai_age = "0m"
 uai_connect_string = "ssh vers@10.103.13.157"
@@ -1662,8 +1724,9 @@ uai_msg = ""
 uai_name = "uai-vers-8ee103bf"
 uai_status = "Running: Ready"
 username = "vers"
+```
 
-
+```
 vers:~ $ ssh vers@10.103.13.157
 The authenticity of host '10.103.13.157 (10.103.13.157)' can't be established.
 ECDSA key fingerprint is SHA256:XQukF3V1q0Hh/aTiFmijhLMcaOzwAL+HjbM66YR4mAg.
@@ -1679,7 +1742,10 @@ nid000003
 vers@uai-vers-8ee103bf-95b5d774-88ssd:~ > exit
 logout
 Connection to 10.103.13.157 closed.
-vers:~ $ cray uas delete --uai-list uai-vers-8ee103bf
+vers:~ $ cray uas delete --uai-list uai-vers-8ee103bf --format toml
+```
+
+```toml
 results = [ "Successfully deleted uai-vers-8ee103bf",]
 ```
 
@@ -1695,7 +1761,10 @@ user:~ $ cray uas images list
 
 For example:
 ```
-vers:~ $ cray uas images list
+vers:~ $ cray uas images list --format toml
+```
+
+```toml
 default_image = "dtr.dev.cray.com/cray/cray-uai-sles15sp1:latest"
 image_list = [ "dtr.dev.cray.com/cray/cray-uai-broker:latest", "dtr.dev.cray.com/cray/cray-uas-sles15:latest", "dtr.dev.cray.com/cray/cray-uai-sles15sp1:latest",]
 ```
@@ -1711,11 +1780,19 @@ user:~ $ cray uas create --publickey <path> --imagename <image-name>
 where `<image-name>` is the name shown above in the list of UAI images.  For example:
 
 ```
-vers:~ $ cray uas images list
+vers:~ $ cray uas images list --format toml
+```
+
+```toml
 default_image = "dtr.dev.cray.com/cray/cray-uai-sles15sp1:latest"
 image_list = [ "dtr.dev.cray.com/cray/cray-uai-broker:latest", "dtr.dev.cray.com/cray/cray-uas-sles15:latest", "dtr.dev.cray.com/cray/cray-uai-sles15sp1:latest",]
+```
 
-vers:~ $ cray uas create --publickey ~/.ssh/id_rsa.pub --imagename dtr.dev.cray.com/cray/cray-uas-sles15:latest
+```
+vers:~ $ cray uas create --publickey ~/.ssh/id_rsa.pub --imagename dtr.dev.cray.com/cray/cray-uas-sles15:latest --format toml
+```
+
+```toml
 uai_connect_string = "ssh vers@10.103.13.160"
 uai_host = "ncn-w001"
 uai_img = "dtr.dev.cray.com/cray/cray-uas-sles15:latest"
@@ -1830,7 +1907,10 @@ ncn-m001-pit:~ # kubectl create secret generic -n uas broker-sssd-conf --from-fi
 Next make a volume for the secret in the UAS configuration:
 
 ```
-ncn-m001-pit:~ # cray uas admin config volumes create --mount-path /etc/sssd --volume-description '{"secret": {"secret_name": "broker-sssd-conf", "default_mode": 384}}' --volumename broker-sssd-config 
+ncn-m001-pit:~ # cray uas admin config volumes create --mount-path /etc/sssd --volume-description '{"secret": {"secret_name": "broker-sssd-conf", "default_mode": 384}}' --volumename broker-sssd-config --format toml
+```
+
+```toml
 mount_path = "/etc/sssd"
 volume_id = "4dc6691e-e7d9-4af3-acde-fc6d308dd7b4"
 volumename = "broker-sssd-config"
@@ -1848,7 +1928,10 @@ Two important things to notice here are:
 The last part that is needed is a UAI class for the broker UAI with the updated configuration in the volume list.  For this we need the image-id of the broker UAI image, the volume-ids of the volumes to be added to the broker class and the class-id of the end-user UAI class managed by the broker:
 
 ```
-ncn-m001-pit:~ # cray uas admin config images list
+ncn-m001-pit:~ # cray uas admin config images list --format toml
+```
+
+```toml
 [[results]]
 default = false
 image_id = "c5dcb261-5271-49b3-9347-afe7f3e31941"
@@ -1863,7 +1946,9 @@ imagename = "dtr.dev.cray.com/cray/cray-uas-sles15:latest"
 default = true
 image_id = "ff86596e-9699-46e8-9d49-9cb20203df8c"
 imagename = "dtr.dev.cray.com/cray/cray-uai-sles15sp1:latest"
+```
 
+```
 ncn-m001-pit:~ # cray uas admin config volumes list | grep -e volume_id -e volumename
 volume_id = "4dc6691e-e7d9-4af3-acde-fc6d308dd7b4"
 volumename = "broker-sssd-config"
@@ -1886,7 +1971,10 @@ comment = "Non-Brokered UAI User Class"
 Using that information create the broker UAI class
 
 ```
-ncn-m001-pit:~ # cray uas admin config classes create --image-id c5dcb261-5271-49b3-9347-afe7f3e31941 --volume-list '4dc6691e-e7d9-4af3-acde-fc6d308dd7b4,55a02475-5770-4a77-b621-f92c5082475c,9fff2d24-77d9-467f-869a-235ddcd37ad7' --uai-compute-network no --public-ip yes --comment "UAI broker class" --uai-creation-class a623a04a-8ff0-425e-94cc-4409bdd49d9c --namespace uas
+ncn-m001-pit:~ # cray uas admin config classes create --image-id c5dcb261-5271-49b3-9347-afe7f3e31941 --volume-list '4dc6691e-e7d9-4af3-acde-fc6d308dd7b4,55a02475-5770-4a77-b621-f92c5082475c,9fff2d24-77d9-467f-869a-235ddcd37ad7' --uai-compute-network no --public-ip yes --comment "UAI broker class" --uai-creation-class a623a04a-8ff0-425e-94cc-4409bdd49d9c --namespace uas --format toml
+```
+
+```toml
 class_id = "74970cdc-9f94-4d51-8f20-96326212b468"
 comment = "UAI broker class"
 default = false
@@ -1938,7 +2026,10 @@ ncn-m001-pit:~ # cray uas admin uais create --class-id <class-id> [--owner <name
 To make the broker obvious in the list of UAIs, giving it an owner name of `broker` is handy.  The owner name on a broker is used for naming and listing, but nothing else, so this is a convenient convention.  Here is an example using the class created above:
 
 ```
-ncn-m001-pit:~ # cray uas admin uais create --class-id 74970cdc-9f94-4d51-8f20-96326212b468 --owner broker
+ncn-m001-pit:~ # cray uas admin uais create --class-id 74970cdc-9f94-4d51-8f20-96326212b468 --owner broker --format toml
+```
+
+```toml
 uai_connect_string = "ssh broker@10.103.13.162"
 uai_img = "dtr.dev.cray.com/cray/cray-uai-broker:latest"
 uai_ip = "10.103.13.162"
@@ -2833,9 +2924,9 @@ The procedure is to find the name of the UAI in question, use that with `kubectl
 
 If problems occur while making or working with a custom end-user UAI image some basic troubleshooting questions to ask are:
 
-* Does SESSION_NAME match an actual entry in "cray bos v1 sessiontemplate list"?
-* Is SESSION_ID set to an appropriate uuid format? Did the awk command not parse the uuid correctly?
-* Did the file /etc/security/limits.d/99-slingshot-network.conf get removed from the tarball correctly?
-* Does the ENTRYPOINT /usr/bin/uai-ssh.sh exist?
+* Does SESSION_NAME match an actual entry in `cray bos v1 sessiontemplate list`?
+* Is SESSION_ID set to an appropriate UUID format? Did the `awk` command not parse the UUID correctly?
+* Did the file `/etc/security/limits.d/99-slingshot-network.conf` get removed from the tarball correctly?
+* Does the ENTRYPOINT `/usr/bin/uai-ssh.sh` exist?
 * Did the container image get pushed and registered with UAS?
 * Did the creation process run from a real worker or master node as opposed to a LiveCD node?

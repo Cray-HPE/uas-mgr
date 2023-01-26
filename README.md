@@ -134,7 +134,7 @@ image: uan-ci.us.cray.com:5000/cray-user-access-service:my_version
 ```
 
 5. Pull the cray-user-access-service image from the local docker
-registry to all kubernetes masters.
+registry to all Kubernetes masters.
 (uan-ci.us.cray.com:5000/cray-user-access-service:my_version): <br>
 **Note:**
 This download (pull) must be performed on all nodes in the Kubernetes
@@ -148,7 +148,7 @@ docker pull uan-ci.us.cray.com:5000/cray-user-access-service:my_version
 and start the Cray User Access Service:
 
 ```bash
-kubctl create -f cray-uas-deployment.yaml
+kubectl create -f cray-uas-deployment.yaml
 ```
 
 7. In a browser window, enter the following URL.  You should see the

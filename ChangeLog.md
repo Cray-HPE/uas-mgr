@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Language linting of API spec and other documentation (no content changes)
 
 ## [1.21.0] - 2022-05-10
 - Change to rolling version of Alpine 3
@@ -72,7 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Switch to MIT License in preparation for releasing to GitHub
 
 ## [1.11.7] - 2021-02-14
-- CASMUAS-210 Helm Chart fixes to reapair macvlan route generation
+- CASMUAS-210 Helm Chart fixes to repair macvlan route generation
 
 ## [1.11.6] - 2021-02-11
 - CASMUAS-210 Helm Chart changes to support multiple macvlan routes
@@ -87,7 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CASMUAS-196 Add uai_compute_network and sidecar configuration for UAS namespace
 
 ## [1.11.2] - 2020-11-10
-- CASMUAS-183 Add Administrative UAI Managememt APIs to UAS
+- CASMUAS-183 Add Administrative UAI Management APIs to UAS
 
 ## [1.11.1] - 2020-10-26
 - CASMUAS-182 Add support for configured UIA / Broker Classes in UAS
@@ -367,9 +368,9 @@ CASMUAS-113: Remove cray_uai_hosts tasks and role from playbook
 - Check for Ready & Labeled nodes
 - Add BUILD_NUMBER & git hash to Release
 - CASMUSER-1365: add UAI Diagnostics
-- STP-644: wording tweeks
+- STP-644: wording tweaks
 - STP-644: minor tweek
-- STP-644: Minor tag tweeks
+- STP-644: Minor tag tweaks
 - STP-644: Minor punctuation changes. Move ? to comments.
 - work in progress
 - swagger.yaml edited online with Bitbucket
