@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2020-2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2020-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -77,7 +77,7 @@ info:
 
     ### /admin/config/images
 
-    This is where an administrator can list, create, get or delete UAI
+    This is where an administrator can list, create, get, or delete UAI
     image entries in the list of available container image names.
 
     ### /admin/config/volumes
@@ -125,7 +125,7 @@ info:
     the specified (or default) UAI image.  This happens if no default
     Class is configured (see Administrative Workflow).  If a
     default Class is configured, a POST on the /uas path creates a
-    UAI using the UAI Image, volume list and resource limits and
+    UAI using the UAI image, volume list, and resource limits and
     requests (if any) configured in the default Class.
 
     #### GET /uas
@@ -178,17 +178,17 @@ info:
     
     UAS Configuration covers the following:
 
-    * UAI Images
+    * UAI images
     * Volume Mounts
     * Resource Limits and Requests
     * UAI / Broker Classes
 
-    UAI Images are the container images used to create UAIs.  In the
+    UAI images are the container images used to create UAIs.  In the
     Single User Workflow (above) when no default Class is defined,
-    the user can request a specific UAI Image to be used.  In the
-    Administrative Workflow, a UAI Image can be associated with a UAI / Broker
+    the user can request a specific UAI image to be used.  In the
+    Administrative Workflow, a UAI image can be associated with a UAI / Broker
     Class and will then be used to create any UAI based on that class.
-    At most 1 UAI Image may be marked as the 'default' image, which
+    At most 1 UAI image may be marked as the 'default' image, which
     will cause it to be used when creating a UAI in the Single User
     Workflow if no image is specified in the POST on the /uas path and
     no default Class is configured.
@@ -215,7 +215,7 @@ info:
     instead of the UAI namespace default setting.
 
     UAI / Broker Classes allow administrators to define templates for creating
-    UAIs that define the UAI Image to be used, the list of Volume
+    UAIs that define the UAI image to be used, the list of Volume
     Mounts to be mounted in the UAI and the Resource Limits and
     Requests to be used when scheduling the UAI.  At most one UAI / Broker
     Class may be marked as 'default' in which case it will be used
@@ -355,7 +355,7 @@ paths:
     post:
       summary: "Create a UAI"
       description: |
-        Create a new UAI using the specified image.  It will be accessable
+        Create a new UAI using the specified image.  It will be accessible
         via ssh, and projected onto ports, if ports are specified.
       operationId: "create_uai"
       tags:
@@ -372,7 +372,7 @@ paths:
         in: "query"
         description: |
           Additional ports to project from the UAI besides ssh. Restricted
-          to ports 80, 443 and 8888.
+          to ports 80, 443, and 8888.
         required: false
         schema:
           type: "string"
@@ -414,7 +414,7 @@ paths:
       - "uas"
       parameters:
       - name: "uai_list"
-        description: "comma separated list of UAI names"
+        description: "comma-separated list of UAI names"
         in: "query"
         required: true
         style: form
@@ -622,7 +622,7 @@ paths:
           UAS system services and allow SSH connections from any
           user.  Alternatively, the username may be used to label a Broker
           UAI as needed by the site.  Whether or not the username is used
-          within a UAI is determined by the code running in the UAI Image.
+          within a UAI is determined by the code running in the UAI image.
           Brokers UAIs will generally not be used in the running Broker UAI
           but will be used in formatting the UAI name and similar activities.
         example: "swilliams"
@@ -707,7 +707,7 @@ paths:
         example: "swilliams"
       - name: "uai_list"
         description: |
-          Comma separated list of UAI names.  If this is supplied 'owner'
+          Comma-separated list of UAI names.  If this is supplied 'owner'
           and 'class-id' are ignored.
         in: "query"
         required: false
@@ -1116,7 +1116,7 @@ paths:
         description: |
           The name of the volume as it is applied to the UAI
           Kubernetes pod.  Must conform to Kubernetes volume
-          naming conventions (see Kuberneted documentation for
+          naming conventions (see Kubernetes documentation for
           details).
         required: false
         schema:
@@ -1526,7 +1526,7 @@ paths:
       - name: "opt_ports"
         in: "query"
         description: |
-          A comma separated list of port numbers on which software running in a
+          A comma-separated list of port numbers on which software running in a
           UAI created using this class may listen.  Unlike `ports` in the
           Single User UAI creation API, the port numbers here are not constrained
           by any configured range of available ports.  Any valid port number is
@@ -1573,7 +1573,7 @@ paths:
         example:  "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
       - name: "volume_list"
         description: |
-          Optional comma separated list of volume-ids specifying the
+          Optional comma-separated list of volume-ids specifying the
           volume mounts to be included in the UAIs created using this
           Class.  Defaults to an empty list if not specified, in
           which case none of the available volume mounts will be mounted
@@ -1607,7 +1607,7 @@ paths:
             Optional JSON string containing a timeout specification
             for UAIs created using this class.  The value contains a
             JSON string specifying a map with three optional key /
-            value pairs, 'soft', 'hard' and 'warning'.  The 'soft'
+            value pairs, 'soft', 'hard', and 'warning'.  The 'soft'
             value specifies the number of seconds a UAI will run
             before it is eligible for termination due to being idle
             (i.e. no user is logged into it).  The 'hard' value
@@ -1833,7 +1833,7 @@ paths:
       - name: "opt_ports"
         in: "query"
         description: |
-          A comma separated list of port numbers on which software running in a
+          A comma-separated list of port numbers on which software running in a
           UAI created using this class may listen.  Unlike `ports` in the
           Single User UAI creation API, the port numbers here are not constrained
           by any configured range of available ports.  Any valid port number is
@@ -1877,7 +1877,7 @@ paths:
         example:  "af4e59ab-6275-47f9-8f4a-90911eba3f9c"
       - name: "volume_list"
         description: |
-          Comma separated list of volume-ids specifying the
+          Comma-separated list of volume-ids specifying the
           volume mounts to be included in the UAIs created using this
           UAI / Broker Class.
         in: "query"
@@ -1909,7 +1909,7 @@ paths:
             Optional JSON string containing a timeout specification
             for UAIs created using this class.  The value contains a
             JSON string specifying a map with three optional key /
-            value pairs, 'soft', 'hard' and 'warning'.  The 'soft'
+            value pairs, 'soft', 'hard', and 'warning'.  The 'soft'
             value specifies the number of seconds a UAI will run
             before it is eligible for termination due to being idle
             (i.e. no user is logged into it).  The 'hard' value
