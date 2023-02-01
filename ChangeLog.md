@@ -5,7 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.22.1] - 2023-02-01
 - Language linting of API spec and other documentation (no content changes)
+- Use authentication for csm-python-modules
+
+## [1.22.0] - 2022-09-13
+- Fix lint and unit test issues
 
 ## [1.21.0] - 2022-05-10
 - Change to rolling version of Alpine 3
