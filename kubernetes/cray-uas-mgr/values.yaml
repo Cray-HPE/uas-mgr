@@ -163,5 +163,45 @@ cray-service:
     prefix: /apis/uas-mgr/
     uri: /
 
-  etcdCluster:
+  etcdWaitContainer: true
+
+cray-etcd-base:
+  nameOverride: cray-uas-mgr
+  etcd:
     enabled: true
+    fullnameOverride: "cray-uas-mgr-bitnami-etcd"
+    persistence:
+      storage: 8Gi
+    disasterRecovery:
+      cronjob:
+        snapshotsDir: "/snapshots/cray-uas-mgr-bitnami-etcd"
+        schedule: "0 */1 * * *"
+        historyLimit: 1
+        snapshotHistoryLimit: 24
+    extraEnvVars:
+      - name: ETCD_HEARTBEAT_INTERVAL
+        value: "4200"
+      - name: ETCD_ELECTION_TIMEOUT
+        value: "21000"
+      - name: ETCD_MAX_SNAPSHOTS
+        value: "1"
+      - name: ETCD_QUOTA_BACKEND_BYTES
+        value: "10737418240"
+      - name: ETCD_SNAPSHOT_COUNT
+        value: "5000000"
+      - name: ETCD_SNAPSHOT_HISTORY_LIMIT
+        value: "24"
+    autoCompactionMode: revision
+    autoCompactionRetention: "100000"
+    extraVolumes:
+    - configMap:
+        defaultMode: 420
+        name: cray-uas-mgr-bitnami-etcd-config
+      name: etcd-config
+    resources:
+      limits:
+        cpu: 4
+        memory: 8Gi
+      requests:
+        cpu: 10m
+        memory: 64Mi
