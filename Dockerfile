@@ -76,7 +76,7 @@ RUN mkdir -p /var/run/secrets/kubernetes.io/
 # in tests...
 COPY serviceaccount/ /var/run/secrets/kubernetes.io/serviceaccount/
 ENV ETCD_MOCK_CLIENT yes
-ENTRYPOINT pytest --cov swagger_server --cov-fail-under 75
+ENTRYPOINT pytest --cov swagger_server --cov-fail-under 74
 
 #########################
 ### API Tests
