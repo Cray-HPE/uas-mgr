@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [1.23.0] - 2023-05-24
+- etcd base chart rebuild and fixes
+
+## [1.23.0] - 2023-05-24
 - Change to bitnami etcd chart
 
 ## [1.22.1] - 2023-02-01
