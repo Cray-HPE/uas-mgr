@@ -25,7 +25,7 @@
 #########################
 ### Base
 #########################
-FROM artifactory.algol60.net/csm-docker/stable/docker.io/library/alpine:3 as base
+FROM artifactory.algol60.net/csm-docker/stable/docker.io/library/alpine:3.18 as base
 
 # packages needed to run the app & install deps
 ENV BASE_PACKAGES g++ gcc libffi-dev linux-headers musl-dev openssl-dev python3 python3-dev py3-pip

@@ -6,7 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.23.0] - 2023-05-24
+## [1.23.2] - 2024-01-03
+- etcd base chart rebuild and fixes
+
+## [1.23.1] - 2023-05-24
 - etcd base chart rebuild and fixes
 
 ## [1.23.0] - 2023-05-24
