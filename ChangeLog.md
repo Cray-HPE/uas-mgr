@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.23.3] - 2024-09-04
+- update node-role.kubernetes.io/master to node-role.kubernetes.io/control-plane
+- fix misc. build issues
+
 ## [1.23.2] - 2024-01-03
 - etcd base chart rebuild and fixes
 
