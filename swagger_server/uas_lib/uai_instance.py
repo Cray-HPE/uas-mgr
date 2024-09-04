@@ -272,7 +272,7 @@ class UAIInstance:
             client.V1NodeSelectorTerm(
                 match_expressions=[
                     client.V1NodeSelectorRequirement(
-                        key='node-role.kubernetes.io/master',
+                        key='node-role.kubernetes.io/control-plane',
                         operator='DoesNotExist'
                     ),
                     client.V1NodeSelectorRequirement(
