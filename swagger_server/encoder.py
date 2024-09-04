@@ -24,8 +24,7 @@ JSON Encoder to support UAS
 """
 
 import six
-from connexion.apps.flask_app import FlaskJSONEncoder
-
+from connexion.jsonifier import JSONEncoder as FlaskJSONEncoder
 from swagger_server.models.base_model_ import Model
 
 
