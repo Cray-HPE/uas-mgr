@@ -43,7 +43,6 @@ WORKDIR /usr/src/app
 COPY requirements.txt /usr/src/app/
 # don't build cryptography Rust library
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST 1
-RUN pip install --upgrade pip
 RUN --mount=type=secret,id=netrc,target=/root/.netrc pip3 install --no-cache-dir \
                  --extra-index-url https://artifactory.algol60.net/artifactory/csm-python-modules/simple \
                  --trusted-host artifactory.algol60.net -r requirements.txt
